@@ -16,29 +16,14 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  AWS_REGION: us-east-1
+  TRIVY_VERSION: "0.69.3"                             # pinned Trivy scanner version
+  AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}   # GitHub secret AWS_REGION (falls back to us-east-1)
 
 jobs:
   # ---------------- 1) Images + deploy ----------------
-  prepare:
+  build:
     # continue only if terraform-infra succeeded (or this was started manually)
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
-    outputs:
-      registry: ${{ steps.id.outputs.registry }}
-    steps:
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-      - id: id
-        run: |
-          ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
-          echo "registry=${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com" >> "$GITHUB_OUTPUT"
-
-  build:
-    needs: prepare
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -47,9 +32,8 @@ jobs:
           - { name: auth,     context: services, args: "SERVICE=auth" }
           - { name: patient,  context: services, args: "SERVICE=patient" }
           - { name: billing,  context: services, args: "SERVICE=billing" }
+          - { name: appointment, context: services, args: "SERVICE=appointment" }
           - { name: frontend, context: frontend, args: "" }
-    env:
-      IMAGE: ${{ needs.prepare.outputs.registry }}/hospital-management-${{ matrix.name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -58,6 +42,13 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: false
+
+      - name: Work out the ECR image name (inside this job, no job outputs)
+        run: |
+          ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+          [ -n "$ACCOUNT" ] || { echo "::error::Could not read AWS account id - check AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY secrets"; exit 1; }
+          echo "IMAGE=${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/hospital-management-${{ matrix.name }}" >> "$GITHUB_ENV"
 
       - name: Create ECR repository if missing
         run: |
@@ -79,14 +70,26 @@ jobs:
           tags: ${{ env.IMAGE }}:${{ github.sha }}
           cache-to: type=gha,scope=${{ matrix.name }},mode=max
 
+      - name: Diagnose zlib1g (installed version vs. version available from Debian)
+        continue-on-error: true      # informational only; skipped quietly for the alpine frontend image
+        run: |
+          docker run --rm --user root --entrypoint sh "${IMAGE}:${GITHUB_SHA}" -c \
+            'command -v dpkg >/dev/null || { echo "not a Debian image - skipping"; exit 0; }
+             echo "INSTALLED: $(dpkg-query -W -f="\${Version}" zlib1g)"
+             apt-get update -qq >/dev/null 2>&1
+             apt-cache policy zlib1g | sed -n "1,4p"'
+
       - name: Trivy scan (fails on fixable CRITICAL/HIGH)
         uses: aquasecurity/trivy-action@0.35.0
         with:
+          version: v${{ env.TRIVY_VERSION }}
           image-ref: ${{ env.IMAGE }}:${{ github.sha }}
           format: table
           exit-code: "1"
           ignore-unfixed: true
           severity: CRITICAL,HIGH
+          # optional temporary exceptions: used only if a .trivyignore file exists in the repo root
+          trivyignores: ${{ hashFiles('.trivyignore') != '' && '.trivyignore' || '' }}
 
       - name: Tag + push to ECR (only if scan passed)
         uses: docker/build-push-action@v6
@@ -101,10 +104,9 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.name }}
 
   update-manifests:
-    needs: [prepare, build]
+    needs: build
     runs-on: ubuntu-latest
     env:
-      REGISTRY: ${{ needs.prepare.outputs.registry }}
       GH_USERNAME: ${{ secrets.GH_USERNAME || github.repository_owner }}
     steps:
       - uses: actions/checkout@v4
@@ -113,10 +115,22 @@ jobs:
           # GITHUB_TOKEN is created automatically by GitHub for every run.
           # Optional: add a repo secret named GH_PAT (a personal access token) to use that instead.
           token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: false
+      - name: Work out the ECR registry (inside this job, no job outputs)
+        run: |
+          ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+          [ -n "$ACCOUNT" ] || { echo "::error::Could not read AWS account id"; exit 1; }
+          echo "REGISTRY=${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com" >> "$GITHUB_ENV"
       - name: Write ECR image URLs, AWS account id and GitHub username into manifests
         run: |
           sed -i -E "s|image: [^ ]+/(hospital-management-[a-z]+):.*|image: ${REGISTRY}/\1:${GITHUB_SHA}|" k8s/*.yaml
           sed -i -E "s/ACCOUNT_ID|[0-9]{12}/${REGISTRY%%.*}/g" k8s/config.yaml
+          sed -i -E "s|AWS_REGION: .*|AWS_REGION: ${AWS_REGION}|; s|arn:aws:sns:[a-z0-9-]+:|arn:aws:sns:${AWS_REGION}:|" k8s/config.yaml
           sed -i -E "s|github.com/[^/]+/[^/]+\.git|github.com/${GITHUB_REPOSITORY}.git|" argocd/application.yaml
       - name: Commit manifests (ArgoCD picks this up)
         run: |
@@ -147,7 +161,7 @@ jobs:
           for i in $(seq 1 120); do
             OK=1
             [ "$(aws eks describe-cluster --name hms-eks --query cluster.status --output text 2>/dev/null)" = "ACTIVE" ] || OK=0
-            for d in auth patient billing; do
+            for d in auth patient billing appointment; do
               for n in ${d}db ${d}db-replica; do
                 [ "$(aws rds describe-db-instances --db-instance-identifier hms-$n --query 'DBInstances[0].DBInstanceStatus' --output text 2>/dev/null)" = "available" ] || OK=0
               done
@@ -188,7 +202,7 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
-          for d in auth patient billing; do
+          for d in auth patient billing appointment; do
             RW=$(aws rds describe-db-instances --db-instance-identifier hms-${d}db --query 'DBInstances[0].Endpoint.Address' --output text)
             RO=$(aws rds describe-db-instances --db-instance-identifier hms-${d}db-replica --query 'DBInstances[0].Endpoint.Address' --output text)
             echo "${d}: write=$RW read=$RO"
