@@ -70,6 +70,15 @@ jobs:
           tags: ${{ env.IMAGE }}:${{ github.sha }}
           cache-to: type=gha,scope=${{ matrix.name }},mode=max
 
+      - name: Diagnose zlib1g (installed version vs. version available from Debian)
+        continue-on-error: true      # informational only; skipped quietly for the alpine frontend image
+        run: |
+          docker run --rm --user root --entrypoint sh "${IMAGE}:${GITHUB_SHA}" -c \
+            'command -v dpkg >/dev/null || { echo "not a Debian image - skipping"; exit 0; }
+             echo "INSTALLED: $(dpkg-query -W -f="\${Version}" zlib1g)"
+             apt-get update -qq >/dev/null 2>&1
+             apt-cache policy zlib1g | sed -n "1,4p"'
+
       - name: Trivy scan (fails on fixable CRITICAL/HIGH)
         # Runs the pinned official Trivy image directly (no setup-trivy download step).
         # If a .trivyignore file exists in the repo root, its (expiring) exceptions are applied.
