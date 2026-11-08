@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hms
+  namespace: hms
+  annotations: {nginx.ingress.kubernetes.io/proxy-body-size: 10m}
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - {path: /auth,     pathType: Prefix, backend: {service: {name: auth-service,    port: {number: 80}}}}
+          - {path: /patients, pathType: Prefix, backend: {service: {name: patient-service, port: {number: 80}}}}
+          - {path: /doctors,  pathType: Prefix, backend: {service: {name: appointment-service, port: {number: 80}}}}
+          - {path: /appointments, pathType: Prefix, backend: {service: {name: appointment-service, port: {number: 80}}}}
+          - {path: /queue,    pathType: Prefix, backend: {service: {name: patient-service, port: {number: 80}}}}
+          - {path: /payments, pathType: Prefix, backend: {service: {name: billing-service, port: {number: 80}}}}
+          - {path: /,         pathType: Prefix, backend: {service: {name: frontend,        port: {number: 80}}}}

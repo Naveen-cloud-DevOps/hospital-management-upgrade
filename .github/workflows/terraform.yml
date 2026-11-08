@@ -1,0 +1,70 @@
+name: terraform-infra
+on:
+  push:
+    branches: [main]      # any push to main triggers it
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}   # GitHub secret AWS_REGION (falls back to us-east-1)
+
+jobs:
+  infra:
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+      TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
+      TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create S3 backend bucket
+        run: |
+          BUCKET="hms-tfstate-$(aws sts get-caller-identity --query Account --output text)"
+          echo "TF_BUCKET=$BUCKET" >> "$GITHUB_ENV"
+          if ! aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+            if [ "$AWS_REGION" = "us-east-1" ]; then
+              aws s3api create-bucket --bucket "$BUCKET"
+            else
+              aws s3api create-bucket --bucket "$BUCKET" --region "$AWS_REGION" \
+                --create-bucket-configuration LocationConstraint="$AWS_REGION"
+            fi
+            aws s3api put-bucket-versioning --bucket "$BUCKET" --versioning-configuration Status=Enabled
+            aws s3api put-bucket-encryption --bucket "$BUCKET" \
+              --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
+            aws s3api put-public-access-block --bucket "$BUCKET" \
+              --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+          fi
+
+      - name: Write terraform.tfvars from secret
+        env:
+          TFVARS: ${{ secrets.TFVARS }}
+        run: |
+          if [ -n "$TFVARS" ]; then printf '%s\n' "$TFVARS" > terraform.tfvars; fi
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+
+      - name: Terraform init
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=$TF_BUCKET" \
+            -backend-config="key=hospital-management/terraform.tfstate" \
+            -backend-config="region=$AWS_REGION" \
+            -backend-config="use_lockfile=true"
+
+      - run: terraform validate
+      - run: terraform plan -input=false -out=tfplan
+      - run: terraform apply -input=false -auto-approve tfplan

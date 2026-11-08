@@ -1,0 +1,8 @@
+.terraform/
+*.tfstate*
+tfplan
+__pycache__/
+
+# Terraform variable files - never commit; CI builds terraform.tfvars from the GitHub secret TFVARS
+*.tfvars
+*.tfvars.json

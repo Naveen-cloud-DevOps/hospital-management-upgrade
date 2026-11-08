@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hospital Management</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b5d6b'/%3E%3Cpath d='M4 17h6l3-8 5 15 3-7h7' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Telugu:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#10222f;--muted:#5b6e79;--line:#dde6ea;--bg:#f1f5f7;--surface:#fff;--brand:#0b5d6b;--brand-d:#08434d;--brand-l:#d8eff2;
+--amber:#8a5700;--amber-l:#fff1d6;--green:#1b6b45;--green-l:#ddf3e7;--red:#b3372e;--red-l:#fbe4e1;--r:14px}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;font:15px/1.5 "Figtree","Noto Sans Devanagari","Noto Sans Telugu",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,p{margin:0}
+:focus-visible{outline:3px solid #7cc4cf;outline-offset:2px}
+[hidden]{display:none!important}
+.grow{flex:1}
+
+/* buttons + fields */
+.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--brand);background:var(--brand);color:#fff;font-weight:600;padding:9px 16px;border-radius:10px;cursor:pointer;transition:background .15s}
+.btn:hover{background:var(--brand-d)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.ghost{background:#fff;color:var(--brand-d);border-color:var(--line)}
+.btn.ghost:hover{background:#f3f8f9}
+.btn.sm{padding:5px 11px;font-size:13px;border-radius:8px}
+.btn.block{width:100%;padding:12px 16px}
+.icon{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:10px;border:0;background:transparent;cursor:pointer;color:var(--muted)}
+.icon:hover{background:#eef3f5}
+.fld{display:grid;gap:5px;font-size:13.5px;font-weight:600;color:#33454f}
+.fld>span small{font-weight:400;color:var(--muted)}
+.fld input,.fld select,.fld textarea,.lang{width:100%;padding:10px 12px;border:1px solid #c5d3d9;border-radius:10px;background:#fff;font-weight:400;font-size:15px}
+.fld input:focus,.fld select:focus,.fld textarea:focus,.lang:focus{border-color:var(--brand);outline:3px solid #cfe9ed;outline-offset:0}
+.fld textarea{resize:vertical;min-height:84px}
+.lang{width:auto;padding:7px 10px;font-size:14px}
+.pw{position:relative}
+.pw input{padding-right:44px}
+.pw .eye{position:absolute;right:4px;top:3px}
+.meter{display:flex;gap:4px;margin-top:2px}
+.meter i{flex:1;height:4px;border-radius:2px;background:#e1e9ec}
+.meter.s1 i:nth-child(1){background:#d9534f}
+.meter.s2 i:nth-child(-n+2){background:#e0a100}
+.meter.s3 i{background:#2e9a62}
+.hint{font-size:12.5px;color:var(--muted);font-weight:400}
+.ferr{min-height:20px;color:var(--red);font-size:14px;font-weight:500}
+
+/* auth */
+.auth{display:grid;grid-template-columns:minmax(340px,1fr) minmax(380px,1fr);min-height:100vh}
+.auth-side{background:#0a3a46;color:#e6f4f6;padding:44px 52px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.auth-side h1{font-size:34px;line-height:1.15;font-weight:700;max-width:14em;margin-bottom:12px}
+.auth-side p{color:#a9cdd4;max-width:30em}
+.auth-side .ecg{position:absolute;left:-20px;right:-20px;top:36%;width:calc(100% + 40px);opacity:.5}
+.ecg polyline{fill:none;stroke:#3aa7b8;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.brandrow{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;position:relative}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--brand);display:grid;place-items:center;color:#fff;flex:none}
+.auth-side .logo{background:#12707f}
+.auth-main{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;position:relative}
+.auth-top{position:absolute;top:18px;right:20px}
+.auth-card{width:100%;max-width:410px}
+.auth-card .mob{display:none;margin-bottom:22px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:#e6edf0;border-radius:11px;padding:4px;margin-bottom:26px}
+.tabs button{border:0;background:transparent;padding:9px;border-radius:8px;font-weight:600;color:var(--muted);cursor:pointer}
+.tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px #0002}
+.auth-card h2{font-size:26px;font-weight:700;margin-bottom:4px}
+.auth-card .sub{color:var(--muted);margin-bottom:22px}
+.auth-card form{display:grid;gap:15px}
+.auth-card .alt{text-align:center;margin-top:18px;color:var(--muted);font-size:14px}
+.auth-card .alt button{border:0;background:none;color:var(--brand);font-weight:600;cursor:pointer;padding:0}
+.note{margin-top:20px;padding:12px 14px;border-radius:10px;background:#fff;border:1px solid var(--line);font-size:13px;color:var(--muted)}
+
+/* shell */
+.shell{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.side{background:#fff;border-right:1px solid var(--line);padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:22px}
+.side .brandrow{padding:0 8px}
+.nav{display:grid;gap:3px}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--muted);text-decoration:none;font-weight:500}
+.nav a:hover{background:#f3f7f8;color:var(--ink)}
+.nav a.on{background:var(--brand-l);color:var(--brand-d);font-weight:600}
+.side-foot{margin-top:auto;padding:12px;border-radius:12px;background:#f4f8f9;display:flex;gap:10px;align-items:center;min-width:0}
+.side-foot div{min-width:0;line-height:1.3}
+.side-foot b,.side-foot small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side-foot small{color:var(--muted)}
+.av{width:36px;height:36px;border-radius:50%;background:var(--brand-l);color:var(--brand-d);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.top{display:flex;align-items:center;gap:12px;padding:14px 32px;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.top h2{font-size:18px;font-weight:700}
+.content{padding:26px 32px 40px;max-width:1200px}
+.page-h{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.page-h h1{font-size:26px;font-weight:700}
+.page-h p{color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:20px;overflow:hidden}
+.panel-h{padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.panel-h h3{font-size:16px;font-weight:700}
+.panel-b{padding:20px}
+.cols{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start}
+.cols.even{grid-template-columns:1fr 1fr}
+.cols .panel{margin-bottom:0}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr)}
+.stat{padding:18px 22px;border-right:1px solid var(--line)}
+.stat:last-child{border-right:0}
+.stat b{display:block;font-size:30px;font-weight:700;line-height:1.1}
+.stat span{color:var(--muted);font-size:13.5px}
+
+.scroll{overflow:auto}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:13px;font-weight:600;color:var(--muted);padding:10px 16px;border-bottom:1px solid var(--line);background:#f8fafb;white-space:nowrap}
+.tbl td{padding:12px 16px;border-bottom:1px solid #eef2f4;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tr.click{cursor:pointer}
+.tbl tr.click:hover{background:#f6fafb}
+.who{display:flex;align-items:center;gap:11px;min-width:0}
+.who b{display:block;line-height:1.25}
+.who small{color:var(--muted)}
+.pill{display:inline-flex;align-items:center;padding:2px 10px;border-radius:99px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.pill.waiting{background:var(--amber-l);color:var(--amber)}
+.pill.in-progress{background:var(--brand-l);color:var(--brand-d)}
+.pill.done{background:var(--green-l);color:var(--green)}
+.pill.dx{background:#eef1f8;color:#40508a;margin:1px 3px 1px 0}
+.pill.role{background:#eef1f8;color:#40508a}
+.pill.admin{background:#f3e8fb;color:#6a2f93}
+.empty{padding:38px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+.empty .btn{margin-top:14px}
+.search{position:relative;flex:1;min-width:200px;max-width:380px}
+.search input{width:100%;padding:9px 12px 9px 38px;border:1px solid #c5d3d9;border-radius:10px;background:#fff}
+.search svg{position:absolute;left:12px;top:11px;color:var(--muted)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* queue tickets */
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+.col{background:#e7eef1;border-radius:var(--r);padding:12px}
+.col h3{font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;padding:4px 6px 12px}
+.col h3 em{font-style:normal;font-weight:600;background:#fff;border-radius:99px;padding:0 9px;color:var(--muted)}
+.ticket{background:#fff;border-radius:12px;display:grid;grid-template-columns:66px 1fr;margin-bottom:10px;border:1px solid var(--line)}
+.ticket .no{display:grid;place-items:center;font-size:27px;font-weight:700;color:var(--brand-d);border-right:2px dashed #c3d2d9;position:relative}
+.ticket .no::before,.ticket .no::after{content:"";position:absolute;right:-9px;width:16px;height:16px;border-radius:50%;background:#e7eef1}
+.ticket .no::before{top:-9px}
+.ticket .no::after{bottom:-9px}
+.ticket .info{padding:10px 12px;display:grid;gap:8px;min-width:0}
+.ticket .info b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ticket .btns{display:flex;gap:6px;flex-wrap:wrap}
+.mini{display:grid}
+.mini .row{display:flex;align-items:center;gap:12px;padding:11px 20px;border-bottom:1px solid #eef2f4}
+.mini .row:last-child{border-bottom:0}
+.mini .n{font-weight:700;color:var(--brand-d);width:34px}
+
+/* patient detail */
+.kv{display:grid;grid-template-columns:repeat(2,1fr);gap:16px 20px}
+.kv div small{display:block;color:var(--muted);font-size:12.5px}
+.kv div span{font-weight:500;word-break:break-word}
+.kv .full{grid-column:1/-1}
+.weeks{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:18px}
+.wk{border:1px dashed #b9c9d0;border-radius:12px;padding:10px;text-align:left;background:#fff;cursor:pointer;display:grid;gap:2px}
+.wk b{font-size:13px}
+.wk small{color:var(--muted);font-size:12px}
+.wk.done{border-style:solid;border-color:#bfe3cf;background:var(--green-l)}
+.wk.done small{color:var(--green)}
+.wk.sel{outline:3px solid #9fd0d8;outline-offset:1px}
+.wkview{border:1px solid var(--line);border-radius:12px;padding:16px;background:#fafcfc}
+.wkview form{display:grid;gap:14px}
+.photo-link{display:inline-flex;gap:6px;align-items:center;color:var(--brand);font-weight:600;text-decoration:none}
+
+/* form grids + chips */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg .full{grid-column:1/-1}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chipc{position:relative}
+.chipc input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.chipc span{display:inline-block;padding:7px 14px;border-radius:99px;border:1px solid #c5d3d9;background:#fff;font-weight:500;font-size:14px}
+.chipc input:checked+span{background:var(--brand);border-color:var(--brand);color:#fff}
+.chipc input:focus-visible+span{outline:3px solid #7cc4cf;outline-offset:2px}
+.seg{display:grid;grid-auto-flow:column;gap:6px}
+
+/* drawer + toasts */
+.scrim{position:fixed;inset:0;background:#0a1f2988;z-index:30;animation:fade .15s}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(580px,100%);background:#fff;z-index:31;display:flex;flex-direction:column;box-shadow:-12px 0 40px #0003;animation:slide .2s ease-out}
+.drawer>header{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+.drawer>header h2{flex:1;font-size:19px}
+.drawer-b{padding:20px;overflow:auto}
+.drawer-f{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+@keyframes slide{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.toasts{position:fixed;right:20px;bottom:20px;z-index:60;display:grid;gap:8px;max-width:calc(100% - 40px)}
+.toast{background:var(--ink);color:#fff;padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px #0004;animation:slide .2s}
+.toast.err{background:var(--red)}
+.toast a{color:#9fe0ea;font-weight:600}
+.loading{padding:60px;text-align:center;color:var(--muted)}
+
+.mailbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 32px;background:#fff6e0;border-bottom:1px solid #f0dcaa;color:#6b4a00;font-size:14px}
+.mailbar p{flex:1;min-width:220px}
+.ticks{list-style:none;padding:0;margin:0 0 18px;display:grid;gap:8px}
+.ticks li::before{content:"\2713";color:var(--green);font-weight:700;margin-right:10px}
+.rcpt{border:1px dashed #b9c9d0;border-radius:12px;padding:20px;background:#fff}
+.rcpt-h{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+.rcpt-h small{display:block;color:var(--muted)}
+.rcpt-amt{margin-top:18px;padding-top:14px;border-top:2px dashed #c3d2d9;display:flex;justify-content:space-between;align-items:baseline}
+.rcpt-amt b{font-size:28px}
+@media print{body *{visibility:hidden}#receiptPrint,#receiptPrint *{visibility:visible}#receiptPrint{position:fixed;left:0;top:0;width:100%;border:0}}
+@media(max-width:1000px){.cols,.cols.even{grid-template-columns:1fr}.board{grid-template-columns:1fr}}
+@media(max-width:860px){
+ .auth{grid-template-columns:1fr}.auth-side{display:none}.auth-card .mob{display:flex}
+ .shell{grid-template-columns:1fr}
+ .side{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;flex-direction:row;padding:6px 8px;gap:0;z-index:20;border-right:0;border-top:1px solid var(--line)}
+ .side .brandrow,.side-foot{display:none}
+ .nav{display:flex;width:100%;justify-content:space-around}
+ .nav a{flex-direction:column;gap:2px;font-size:11px;padding:6px 8px;text-align:center}
+ .content{padding:18px 14px 96px}.top{padding:12px 14px}.toasts{bottom:84px;right:14px}.mailbar{padding:10px 14px}
+ .stats{grid-template-columns:1fr 1fr}.stat:nth-child(2){border-right:0}.stat:nth-child(-n+2){border-bottom:1px solid var(--line)}
+ .fg,.kv{grid-template-columns:1fr}
+ .weeks{grid-template-columns:repeat(5,minmax(78px,1fr));overflow:auto}
+}
+.slots{display:flex;flex-wrap:wrap;gap:8px}.slot{border:1px solid var(--line,#d8e2e5);background:#fff;border-radius:10px;padding:8px 12px;font:inherit;cursor:pointer}.slot:hover:not(:disabled){border-color:var(--brand)}.slot.on{background:var(--brand);color:#fff;border-color:var(--brand)}.slot:disabled{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="overlay"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script>
+/* ---------- icons ---------- */
+const ICON={
+ grid:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+ users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+ clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+ card:'<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
+ file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+ shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+ plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+ search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+ out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+ x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+ eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+ cam:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+ pulse:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+ back:'<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+ cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+ mail:'<path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><polyline points="22,6 12,13 2,6"/>'
+};
+const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
+const logo=()=>`<span class="logo">${ic('pulse',20)}</span>`;
+
+/* ---------- translations (anything missing falls back to English) ---------- */
+const T={
+en:{app:'Hospital Management',tagline:'Patient records, the daily queue and payments in one place.',side_p:'Register patients, give out tokens, track five weeks of recovery and issue receipts - from any phone or computer.',
+ signin:'Sign in',signup:'Create account',signin_t:'Welcome back',signup_t:'Create your account',signin_sub:'Sign in to continue to your dashboard.',signup_sub:'Create a staff account to start recording patients.',
+ email:'Email address',password:'Password',confirm:'Confirm password',fullname:'Full name',pw_hint:'At least 8 characters',pw_mismatch:'The two passwords do not match.',
+ no_acc:'New here?',have_acc:'Already have an account?',signing:'Signing in…',creating:'Creating account…',welcome:'Account created. Welcome, {n}!',
+ acc_note:'New accounts get staff access. An administrator can add more admins from the Users page.',
+ dashboard:'Dashboard',patients:'Patients',queue:'Queue',payments:'Payments',reports:'Weekly report',users:'Users',logout:'Log out',
+ greet_m:'Good morning',greet_a:'Good afternoon',greet_e:'Good evening',greet_sub:"Here is what is happening at the clinic today.",
+ total_patients:'Patients on record',waiting:'Waiting',in_progress:'In consultation',done:'Done',collected:'Collected today',
+ new_patient:'New patient',add_queue:'Add to queue',search:'Search by name or mobile',save_patient:'Save patient',cancel:'Cancel',back:'All patients',
+ todays_queue:"Today's queue",recent:'Recently registered',view_all:'View all',
+ generate_token:'Generate token',record_payment:'Record payment',start:'Start',finish:'Mark done',reopen:'Reopen',
+ first_name:'First name',last_name:'Last name',age:'Age',gender:'Gender',mobile:'Mobile number',address:'Address',city:'City',state:'State',blood_group:'Blood group',
+ occupation:'Occupation',heard_about_us:'How did you hear about us?',referred_by:'Referred by',diseases:'Type of disease',select:'Select',
+ weekly:'Weekly progress',week:'Week',symptoms:'Symptoms',photo:'Photo',save_week:'Save week',locked:'Saved weeks cannot be changed.',not_rec:'Not recorded',recorded:'Recorded',
+ view_photo:'View photo',pick_week:'Pick a week to record its symptoms and photo.',
+ amount:'Amount',method:'Payment method',patient:'Patient',receipt:'Receipt',received_by:'Received by',date:'Date',save_payment:'Save payment',total:'Total',
+ name:'Name',role:'Role',add_user:'Add user',joined:'Joined',save:'Save',
+ empty_pts:'No patients yet',empty_pts_s:'Register the first patient to get started.',empty_q:'Nobody in the queue',empty_q_s:'Generate a token when a patient arrives.',
+ empty_pay:'No payments recorded yet',no_match:'No patients match your search',
+ registered:'Registered',by:'By',pick_patient:'Choose a patient',
+ token_made:'Token #{n} created for {p}',patient_saved:'Patient saved',week_saved:'Week {w} saved',pay_saved:'Payment saved.',user_added:'User added',receipt_link:'Open receipt #{n}',
+ account:'Account',mail_banner:'Turn on email alerts: AWS sent a confirmation email to {e}. Open it and click "Confirm subscription".',resend_mail:'Resend email',mail_done:"I've confirmed",
+ email_details:'Email details',receipt_title:'Payment receipt',print:'Print',download:'Download file',email_again:'Email again',emailed_to:'Emailed to',sent_to:'Sent to {e}',
+ no_patient_email:'This patient has no email on file, so the details were sent to you only.',test_mail:'Send test email',mail_h:'Email notifications',
+ mail_p:'Emails are sent through AWS. Each address must confirm once: AWS sends a message with a Confirm subscription link, and nothing arrives until it is clicked.',
+ mail_login:'A welcome email each time you sign in',mail_receipts:'A receipt whenever you record a payment',mail_appt:'Doctor name, date and time whenever you book an appointment',mail_details:'Patient details when you press Email details',
+ email_hint:'Optional. Registration details and receipts are emailed here. The patient must confirm one AWS email first.',view_receipt:'Receipt',pay_done:'Payment saved',
+ mail_resent:'Confirmation email sent to {e}',mail_test_sent:'Test email sent to {e}',
+ appointments:'Appointments',book_title:'Book a doctor',book_sub:'Pick a doctor, a date and a time. A confirmation email is sent to you straight away.',
+ doctor:'Doctor',pick_doctor:'Choose a doctor',appt_date:'Date',appt_time:'Time slot',pick_time:'Choose a date and a doctor to see free times',no_slots:'No free slots on this date',
+ appt_patient:'Patient name',reason:'Reason for visit',book_now:'Book appointment',booked_ok:'Booked with {d} on {dt} at {tm}. Confirmation sent to {e}',
+ my_appts:'My appointments',all_appts:'All appointments',no_appts:'No appointments yet',no_appts_s:'Book your first doctor appointment above.',
+ cancel_appt:'Cancel',complete_appt:'Mark completed',cancelled:'Cancelled',completed:'Completed',booked:'Booked',appt_cancelled:'Appointment cancelled. Email sent.',pick_all:'Choose a doctor, date and time.',
+ other:'Other',male:'Male',female:'Female',cash:'Cash',card_m:'Card',upi:'UPI'},
+hi:{tagline:'मरीज़ों का रिकॉर्ड, रोज़ की कतार और भुगतान - एक ही जगह।',signin:'साइन इन',signup:'खाता बनाएँ',signin_t:'वापसी पर स्वागत है',signup_t:'अपना खाता बनाएँ',email:'ईमेल पता',password:'पासवर्ड',confirm:'पासवर्ड दोबारा लिखें',fullname:'पूरा नाम',
+ dashboard:'डैशबोर्ड',patients:'मरीज़',queue:'कतार',payments:'भुगतान',reports:'साप्ताहिक रिपोर्ट',users:'उपयोगकर्ता',logout:'लॉग आउट',
+ greet_m:'सुप्रभात',greet_a:'नमस्कार',greet_e:'शुभ संध्या',total_patients:'दर्ज मरीज़',waiting:'प्रतीक्षा में',in_progress:'परामर्श में',done:'पूरा',collected:'आज की वसूली',
+ new_patient:'नया मरीज़',add_queue:'कतार में जोड़ें',search:'नाम या मोबाइल से खोजें',save_patient:'मरीज़ सहेजें',cancel:'रद्द करें',back:'सभी मरीज़',todays_queue:'आज की कतार',
+ generate_token:'टोकन बनाएँ',record_payment:'भुगतान दर्ज करें',start:'शुरू करें',finish:'पूरा करें',
+ first_name:'पहला नाम',last_name:'अंतिम नाम',age:'उम्र',gender:'लिंग',mobile:'मोबाइल नंबर',address:'पता',city:'शहर',state:'राज्य',blood_group:'रक्त समूह',occupation:'व्यवसाय',
+ heard_about_us:'हमारे बारे में कैसे सुना?',referred_by:'किसने भेजा',diseases:'बीमारी का प्रकार',weekly:'साप्ताहिक प्रगति',week:'सप्ताह',symptoms:'लक्षण',photo:'फोटो',save_week:'सप्ताह सहेजें',
+ amount:'राशि',method:'भुगतान का तरीका',patient:'मरीज़',save_payment:'भुगतान सहेजें',name:'नाम',role:'भूमिका',add_user:'उपयोगकर्ता जोड़ें',save:'सहेजें'},
+te:{tagline:'రోగుల రికార్డులు, రోజువారీ క్యూ మరియు చెల్లింపులు - అన్నీ ఒకే చోట.',signin:'సైన్ ఇన్',signup:'ఖాతా సృష్టించండి',signin_t:'మళ్లీ స్వాగతం',signup_t:'మీ ఖాతాను సృష్టించండి',email:'ఈమెయిల్ చిరునామా',password:'పాస్‌వర్డ్',confirm:'పాస్‌వర్డ్ మళ్లీ నమోదు చేయండి',fullname:'పూర్తి పేరు',
+ dashboard:'డాష్‌బోర్డ్',patients:'రోగులు',queue:'క్యూ',payments:'చెల్లింపులు',reports:'వారపు నివేదిక',users:'వినియోగదారులు',logout:'లాగ్ అవుట్',
+ greet_m:'శుభోదయం',greet_a:'శుభ మధ్యాహ్నం',greet_e:'శుభ సాయంత్రం',total_patients:'నమోదైన రోగులు',waiting:'వేచి ఉన్నారు',in_progress:'సంప్రదింపులో',done:'పూర్తయింది',collected:'ఈరోజు వసూలు',
+ new_patient:'కొత్త రోగి',add_queue:'క్యూలో చేర్చండి',search:'పేరు లేదా మొబైల్‌తో వెతకండి',save_patient:'రోగిని సేవ్ చేయండి',cancel:'రద్దు',back:'అందరు రోగులు',todays_queue:'ఈరోజు క్యూ',
+ generate_token:'టోకెన్ సృష్టించండి',record_payment:'చెల్లింపు నమోదు',start:'ప్రారంభించు',finish:'పూర్తి చేయి',
+ first_name:'మొదటి పేరు',last_name:'ఇంటి పేరు',age:'వయస్సు',gender:'లింగం',mobile:'మొబైల్ నంబర్',address:'చిరునామా',city:'నగరం',state:'రాష్ట్రం',blood_group:'రక్త వర్గం',occupation:'వృత్తి',
+ heard_about_us:'మా గురించి ఎలా తెలిసింది?',referred_by:'సిఫార్సు చేసినవారు',diseases:'వ్యాధి రకం',weekly:'వారపు పురోగతి',week:'వారం',symptoms:'లక్షణాలు',photo:'ఫోటో',save_week:'వారాన్ని సేవ్ చేయండి',
+ amount:'మొత్తం',method:'చెల్లింపు విధానం',patient:'రోగి',save_payment:'చెల్లింపును సేవ్ చేయండి',name:'పేరు',role:'పాత్ర',add_user:'వినియోగదారుని చేర్చండి',save:'సేవ్'}
+};
+const DIS=['Jaundice','Hepatitis B','Fatty liver','Liver cirrhosis','Others'];
+const HEARD=['Friend or family','Doctor referral','Social media','Advertisement','Other'];
+const BLOOD=['A+','A-','B+','B-','O+','O-','AB+','AB-'];
+
+/* ---------- state + helpers ---------- */
+const store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
+const S={tok:store.get('tok'),role:store.get('role'),name:store.get('name'),lang:store.get('lang')||'en',mode:'login',
+ pts:[],queue:[],pays:[],docs:[],appts:[],users:[],wrep:[],detail:null,wk:0,q:''};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const t=(k,v)=>{let s=(T[S.lang]&&T[S.lang][k])||T.en[k]||k;if(v)for(const x in v)s=s.replace('{'+x+'}',v[x]);return s};
+const loc=()=>S.lang==='hi'?'hi-IN':S.lang==='te'?'te-IN':'en-IN';
+const fmtD=i=>i?new Date(i).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'}):'-';
+const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+const ini=p=>((p.first_name||'?')[0]+((p.last_name||'')[0]||'')).toUpperCase();
+const pname=p=>`${p.first_name} ${p.last_name}`.trim();
+const me=()=>{try{return JSON.parse(atob(S.tok.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub||''}catch(e){return ''}};
+const sameDay=i=>new Date(i).toDateString()===new Date().toDateString();
+const STATUS={'waiting':'waiting','in-progress':'in_progress','done':'done'};
+const pill=s=>`<span class="pill ${esc(s)}">${esc(t(STATUS[s]||s))}</span>`;
+
+function toast(msg,type,html){
+ const el=document.createElement('div');el.className='toast'+(type==='err'?' err':'');
+ if(html)el.innerHTML=msg;else el.textContent=msg;
+ $('#toasts').appendChild(el);setTimeout(()=>el.remove(),type==='err'?6000:4500)}
+
+async function api(path,o={}){
+ const h={...(o.headers||{})};if(S.tok)h.Authorization='Bearer '+S.tok;
+ let body=o.body,method=o.method;
+ if(o.json!==undefined){h['Content-Type']='application/json';body=JSON.stringify(o.json);method=method||'POST'}
+ const r=await fetch(path,{method,body,headers:h});
+ const d=await r.json().catch(()=>({}));
+ if(!r.ok){
+  if(r.status===401&&S.tok&&!o.noLogout)signOut();
+  let m=d.detail;if(Array.isArray(m))m=m.map(x=>((x.loc||[]).slice(-1)[0]||'')+': '+x.msg).join(', ');
+  throw new Error(typeof m==='string'&&m?m:(r.statusText||'Something went wrong'))}
+ return d}
+
+function saveSession(r){S.tok=r.token;S.role=r.role;S.name=r.name;store.set('tok',r.token);store.set('role',r.role);store.set('name',r.name)}
+function signOut(){['tok','role','name'].forEach(store.del);S.tok=S.role=S.name='';S.detail=null;closeDrawer();history.replaceState(null,'','#/');render()}
+const route=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');return{page:h[0]||'dashboard',id:h[1]}};
+const go=h=>{location.hash=h};
+
+async function busy(btn,label,fn){
+ const old=btn?btn.innerHTML:'';if(btn){btn.disabled=true;btn.textContent=label}
+ try{return await fn()}finally{if(btn){btn.disabled=false;btn.innerHTML=old}}}
+
+/* ---------- auth screen ---------- */
+const field=(name,type,label,extra='')=>`<label class="fld"><span>${label}</span><input name="${name}" type="${type}" ${extra}></label>`;
+const pwField=(name,label,auto,hint)=>`<label class="fld"><span>${label}${hint?` <small>${hint}</small>`:''}</span><div class="pw"><input name="${name}" type="password" autocomplete="${auto}" required><button type="button" class="icon eye" data-act="eye" aria-label="Show or hide password">${ic('eye')}</button></div></label>`;
+const langSel=cls=>`<select class="lang ${cls||''}" data-change="lang" aria-label="Language"><option value="en"${S.lang==='en'?' selected':''}>English</option><option value="hi"${S.lang==='hi'?' selected':''}>हिन्दी</option><option value="te"${S.lang==='te'?' selected':''}>తెలుగు</option></select>`;
+
+function authHTML(){
+ const su=S.mode==='signup';
+ return `<div class="auth">
+ <aside class="auth-side">
+  <div class="brandrow">${logo()}<span>${t('app')}</span></div>
+  <svg class="ecg" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,110 120,110 150,110 175,40 205,170 235,110 330,110 360,110 385,70 410,130 430,110 600,110"/></svg>
+  <div style="position:relative"><h1>${t('tagline')}</h1><p>${t('side_p')}</p></div>
+ </aside>
+ <main class="auth-main">
+  <div class="auth-top">${langSel()}</div>
+  <div class="auth-card">
+   <div class="brandrow mob">${logo()}<span>${t('app')}</span></div>
+   <div class="tabs"><button type="button" class="${su?'':'on'}" data-act="mode" data-m="login">${t('signin')}</button><button type="button" class="${su?'on':''}" data-act="mode" data-m="signup">${t('signup')}</button></div>
+   <h2>${su?t('signup_t'):t('signin_t')}</h2>
+   <p class="sub">${su?t('signup_sub'):t('signin_sub')}</p>
+   <form data-form="${su?'signup':'login'}" novalidate>
+    ${su?field('name','text',t('fullname'),'autocomplete="name" required'):''}
+    ${field('email','email',t('email'),'autocomplete="email" required')}
+    ${su?pwField('password',t('password'),'new-password',t('pw_hint'))+`<div class="meter" id="meter"><i></i><i></i><i></i></div>`+pwField('confirm',t('confirm'),'new-password'):pwField('password',t('password'),'current-password')}
+    <p class="ferr" id="ferr" role="alert"></p>
+    <button class="btn block" type="submit">${su?t('signup'):t('signin')}</button>
+   </form>
+   <p class="alt">${su?t('have_acc'):t('no_acc')} <button type="button" data-act="mode" data-m="${su?'login':'signup'}">${su?t('signin'):t('signup')}</button></p>
+   ${su?`<p class="note">${t('acc_note')}</p>`:''}
+  </div>
+ </main></div>`}
+
+async function doLogin(email,password){
+ const r=await api('/auth/login',{json:{email:email.trim(),password},noLogout:true});
+ saveSession(r);history.replaceState(null,'','#/dashboard');await render()}
+
+const mailKey=()=>'mail_'+me();
+function mailBanner(){
+ if(store.get(mailKey()))return '';
+ return `<div class="mailbar" id="mailbar" role="status">${ic('mail',18)}<p>${t('mail_banner',{e:esc(me())})}</p><button class="btn sm" data-act="resendMail">${t('resend_mail')}</button><button class="btn ghost sm" data-act="mailDone">${t('mail_done')}</button></div>`}
+const strength=p=>{let s=0;if(p.length>=8)s++;if(/[A-Z]/.test(p)&&/[a-z]/.test(p))s++;if(/\d/.test(p)&&/[^A-Za-z0-9]|.{12,}/.test(p))s++;return p?Math.max(1,s):0};
+
+/* ---------- shell ---------- */
+function shell(page,inner){
+ const admin=S.role==='admin';
+ const items=[['dashboard','grid'],['patients','users'],['queue','clock'],['payments','card'],['appointments','cal']];
+ if(admin)items.push(['reports','file'],['users','shield']);
+ const title=t(page==='patient'?'patients':page);
+ return `<div class="shell">
+ <aside class="side">
+  <div class="brandrow">${logo()}<span>${t('app')}</span></div>
+  <nav class="nav">${items.map(([k,i])=>`<a href="#/${k}" class="${k===page?'on':''}">${ic(i,19)}<span>${t(k)}</span></a>`).join('')}</nav>
+  <a class="side-foot" href="#/account" style="color:inherit;text-decoration:none"><span class="av">${esc((S.name||'?').slice(0,2).toUpperCase())}</span><div><b>${esc(S.name)}</b><small>${esc(admin?'Administrator':'Staff')}</small></div></a>
+ </aside>
+ <div class="main">
+  <header class="top"><h2>${title}</h2><span class="grow"></span>${langSel()}<a class="icon" href="#/account" aria-label="${t('account')}" title="${t('account')}">${ic('mail',19)}</a><button class="btn ghost sm" data-act="logout">${ic('out',16)}<span>${t('logout')}</span></button></header>
+  ${mailBanner()}
+  <div class="content" id="content">${inner}</div>
+ </div></div>`}
+
+/* ---------- rendering ---------- */
+let renderId=0;
+async function render(){
+ document.documentElement.lang=S.lang;
+ const root=$('#root');
+ if(!S.tok){root.innerHTML=authHTML();return}
+ let {page,id}=route();
+ if(['reports','users'].includes(page)&&S.role!=='admin'){go('#/dashboard');return}
+ if(!['dashboard','patients','queue','payments','appointments','reports','users','account'].includes(page))page='dashboard';
+ const navPage=page;
+ const rid=++renderId;
+ root.innerHTML=shell(navPage==='patients'&&id?'patient':navPage,`<div class="loading">…</div>`);
+ try{
+  let html='';
+  if(page==='dashboard'){[S.pts,S.queue,S.pays]=await Promise.all([api('/patients'),api('/queue'),api('/payments')]);html=pDashboard()}
+  else if(page==='patients'&&id){const [d,pts]=await Promise.all([api('/patients/'+encodeURIComponent(id)),api('/patients')]);S.detail=d;S.pts=pts;S.wk=nextWeek(d);html=pDetail()}
+  else if(page==='patients'){S.pts=await api('/patients');html=pPatients()}
+  else if(page==='queue'){[S.pts,S.queue]=await Promise.all([api('/patients'),api('/queue')]);html=pQueue()}
+  else if(page==='payments'){[S.pts,S.pays]=await Promise.all([api('/patients'),api('/payments')]);html=pPayments()}
+  else if(page==='appointments'){[S.docs,S.appts]=await Promise.all([api('/doctors'),api('/appointments')]);html=pAppointments()}
+  else if(page==='reports'){[S.pts,S.wrep]=await Promise.all([api('/patients'),api('/patients/weekly-report')]);html=pReports()}
+  else if(page==='users'){S.users=await api('/auth/users');html=pUsers()}
+  else if(page==='account'){html=pAccount()}
+  if(rid!==renderId)return;
+  $('#content').innerHTML=html;
+ }catch(e){
+  if(rid!==renderId||!S.tok)return;
+  $('#content').innerHTML=`<div class="panel"><div class="empty"><b>Could not load this page</b>${esc(e.message)}<br><button class="btn" data-act="retry">Try again</button></div></div>`}
+}
+
+/* ----- dashboard ----- */
+function ticketRow(x){return `<div class="row"><span class="n">#${x.token_no}</span><span class="grow"><b>${esc(x.first_name+' '+x.last_name)}</b></span>${pill(x.status)}</div>`}
+function pDashboard(){
+ const q=S.queue,w=q.filter(x=>x.status==='waiting').length,p=q.filter(x=>x.status==='in-progress').length,d=q.filter(x=>x.status==='done').length;
+ const col=S.pays.filter(x=>sameDay(x.created_at)).reduce((a,x)=>a+Number(x.amount),0);
+ const h=new Date().getHours(),g=h<12?'greet_m':h<17?'greet_a':'greet_e';
+ return `<div class="page-h"><div><h1>${t(g)}, ${esc((S.name||'').split(' ')[0])}</h1><p>${t('greet_sub')}</p></div><span class="grow"></span>
+  <div class="actions"><button class="btn ghost" data-act="newQueue">${ic('clock',17)}${t('add_queue')}</button><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button></div></div>
+ <div class="panel"><div class="stats">
+  <div class="stat"><b>${S.pts.length}</b><span>${t('total_patients')}</span></div>
+  <div class="stat"><b>${w}</b><span>${t('waiting')}</span></div>
+  <div class="stat"><b>${p} <small style="font-size:15px;color:var(--muted);font-weight:500">/ ${d} ${t('done').toLowerCase()}</small></b><span>${t('in_progress')}</span></div>
+  <div class="stat"><b>${money(col)}</b><span>${t('collected')}</span></div></div></div>
+ <div class="cols">
+  <div class="panel"><div class="panel-h"><h3>${t('todays_queue')}</h3><span class="grow"></span><a class="btn ghost sm" href="#/queue">${t('view_all')}</a></div>
+   <div class="mini" id="dq">${q.length?q.slice(0,7).map(ticketRow).join(''):`<div class="empty"><b>${t('empty_q')}</b>${t('empty_q_s')}</div>`}</div></div>
+  <div class="panel"><div class="panel-h"><h3>${t('recent')}</h3><span class="grow"></span><a class="btn ghost sm" href="#/patients">${t('view_all')}</a></div>
+   <div class="mini">${S.pts.length?S.pts.slice(0,6).map(x=>`<a class="row" href="#/patients/${x.id}" style="color:inherit;text-decoration:none"><span class="av">${esc(ini(x))}</span><span class="grow"><b>${esc(pname(x))}</b><br><small style="color:var(--muted)">${esc(x.city||x.mobile||'')}</small></span><small style="color:var(--muted)">${fmtD(x.created_at)}</small></a>`).join(''):`<div class="empty"><b>${t('empty_pts')}</b>${t('empty_pts_s')}</div>`}</div></div>
+ </div>`}
+
+/* ----- patients ----- */
+function ptRows(list){
+ if(!list.length)return `<tr><td colspan="5"><div class="empty"><b>${S.pts.length?t('no_match'):t('empty_pts')}</b>${S.pts.length?'':t('empty_pts_s')}${S.pts.length?'':`<br><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button>`}</div></td></tr>`;
+ return list.map(x=>`<tr class="click" data-act="open" data-id="${x.id}">
+  <td><div class="who"><span class="av">${esc(ini(x))}</span><div><b>${esc(pname(x))}</b><small>#${x.id}</small></div></div></td>
+  <td>${esc(x.age??'')}${x.gender?', '+esc(x.gender):''}</td><td>${esc(x.mobile||'')}</td>
+  <td>${(x.diseases||[]).map(d=>`<span class="pill dx">${esc(d)}</span>`).join('')||'-'}</td><td>${fmtD(x.created_at)}</td></tr>`).join('')}
+const filtered=()=>{const q=S.q.trim().toLowerCase();return q?S.pts.filter(x=>(pname(x)+' '+(x.mobile||'')+' #'+x.id).toLowerCase().includes(q)):S.pts};
+function pPatients(){S.q='';
+ return `<div class="page-h"><div><h1>${t('patients')}</h1></div><span class="grow"></span><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button></div>
+ <div class="panel"><div class="panel-h"><div class="search">${ic('search',17)}<input id="psearch" type="search" placeholder="${t('search')}" aria-label="${t('search')}"></div></div>
+ <div class="scroll"><table class="tbl"><thead><tr><th>${t('patient')}</th><th>${t('age')} / ${t('gender')}</th><th>${t('mobile')}</th><th>${t('diseases')}</th><th>${t('registered')}</th></tr></thead><tbody id="ptbody">${ptRows(S.pts)}</tbody></table></div></div>`}
+
+function patientForm(){
+ const o=a=>a.map(v=>`<option>${esc(v)}</option>`).join('');
+ return `<form data-form="patient"><div class="fg">
+  ${field('first_name','text',t('first_name'),'required autocomplete="off"')}${field('last_name','text',t('last_name'),'required autocomplete="off"')}
+  ${field('age','number',t('age'),'required min="0" max="120" inputmode="numeric"')}
+  <label class="fld"><span>${t('gender')}</span><select name="gender"><option value="">${t('select')}</option><option>Male</option><option>Female</option><option>Other</option></select></label>
+  ${field('mobile','tel',t('mobile'),'required inputmode="tel" minlength="10" maxlength="15"')}<label class="fld full"><span>${t('email')} <small>(optional)</small></span><input name="email" type="email" autocomplete="off"><span class="hint">${t('email_hint')}</span></label>
+  <label class="fld"><span>${t('blood_group')}</span><select name="blood_group"><option value="">${t('select')}</option>${o(BLOOD)}</select></label>
+  ${field('occupation','text',t('occupation'),'')}
+  <label class="fld full"><span>${t('address')}</span><input name="address" type="text" autocomplete="off"></label>
+  ${field('city','text',t('city'),'')}${field('state','text',t('state'),'')}
+  <label class="fld"><span>${t('heard_about_us')}</span><select name="heard_about_us"><option value="">${t('select')}</option>${o(HEARD)}</select></label>
+  ${field('referred_by','text',t('referred_by'),'')}
+  <div class="fld full"><span>${t('diseases')}</span><div class="chips">${DIS.map(d=>`<label class="chipc"><input type="checkbox" name="diseases" value="${d}"><span>${d}</span></label>`).join('')}</div></div>
+ </div><p class="ferr" id="ferr" role="alert"></p>
+ <div class="drawer-f"><button type="button" class="btn ghost" data-act="closeDrawer">${t('cancel')}</button><button class="btn" type="submit">${t('save_patient')}</button></div></form>`}
+
+/* ----- patient detail ----- */
+const nextWeek=d=>{for(let w=1;w<=5;w++)if(!(d.weeks||[]).some(x=>x.week===w))return w;return 0};
+function pDetail(){
+ const d=S.detail,k=(l,v,f)=>`<div class="${f?'full':''}"><small>${l}</small><span>${v?esc(v):'-'}</span></div>`;
+ return `<div class="page-h"><a class="btn ghost sm" href="#/patients">${ic('back',16)}${t('back')}</a></div>
+ <div class="page-h"><div class="who"><span class="av" style="width:52px;height:52px;font-size:18px">${esc(ini(d))}</span><div><h1>${esc(pname(d))}</h1><p>#${d.id} · ${t('registered')} ${fmtD(d.created_at)}</p></div></div><span class="grow"></span>
+  <div class="actions"><button class="btn ghost" data-act="emailPatient" data-id="${d.id}">${ic('mail',17)}${t('email_details')}</button><button class="btn ghost" data-act="token" data-id="${d.id}">${ic('clock',17)}${t('generate_token')}</button><button class="btn" data-act="payFor" data-id="${d.id}">${ic('card',17)}${t('record_payment')}</button></div></div>
+ <div class="cols">
+  <div class="panel"><div class="panel-h"><h3>${t('weekly')}</h3></div><div class="panel-b" id="wkbox">${weeksHTML()}</div></div>
+  <div class="panel"><div class="panel-h"><h3>${t('patient')}</h3></div><div class="panel-b"><div class="kv">
+   ${k(t('mobile'),d.mobile)}${k(t('email'),d.email)}${k(t('age')+' / '+t('gender'),(d.age??'')+(d.gender?', '+d.gender:''))}${k(t('blood_group'),d.blood_group)}
+   ${k(t('address'),[d.address,d.city,d.state].filter(Boolean).join(', '),1)}${k(t('occupation'),d.occupation)}${k(t('heard_about_us'),d.heard_about_us)}${k(t('referred_by'),d.referred_by)}
+   <div class="full"><small>${t('diseases')}</small><span>${(d.diseases||[]).map(x=>`<span class="pill dx">${esc(x)}</span>`).join('')||'-'}</span></div></div></div></div>
+ </div>`}
+function weeksHTML(){
+ const d=S.detail,by={};(d.weeks||[]).forEach(w=>by[w.week]=w);
+ const tiles=[1,2,3,4,5].map(n=>`<button type="button" class="wk ${by[n]?'done':''} ${S.wk===n?'sel':''}" data-act="pickWeek" data-w="${n}"><b>${t('week')} ${n}</b><small>${by[n]?t('recorded'):t('not_rec')}</small></button>`).join('');
+ let body;
+ if(!S.wk)body=`<p class="hint">${t('pick_week')}</p>`;
+ else if(by[S.wk]){const w=by[S.wk];
+  body=`<h3 style="margin-bottom:8px">${t('week')} ${S.wk}</h3><p style="white-space:pre-wrap">${esc(w.symptoms)||'-'}</p>${w.photo_url?`<p style="margin-top:12px"><a class="photo-link" target="_blank" rel="noopener" href="${esc(w.photo_url)}">${ic('cam',17)}${t('view_photo')}</a></p>`:''}<p class="hint" style="margin-top:12px">${t('locked')}</p>`}
+ else body=`<form data-form="week"><h3>${t('week')} ${S.wk}</h3><input type="hidden" name="week" value="${S.wk}">
+  <label class="fld"><span>${t('symptoms')}</span><textarea name="symptoms" placeholder="…"></textarea></label>
+  <label class="fld"><span>${t('photo')} <small>(optional)</small></span><input type="file" name="photo" accept="image/*" capture="environment"></label>
+  <p class="hint">${t('locked')}</p><p class="ferr" id="ferr" role="alert"></p>
+  <div><button class="btn" type="submit">${t('save_week')}</button></div></form>`;
+ return `<div class="weeks">${tiles}</div><div class="wkview">${body}</div>`}
+
+/* ----- queue ----- */
+function ticket(x){
+ const b=(s,l,c)=>`<button class="btn sm ${c||''}" data-act="status" data-id="${x.id}" data-s="${s}">${l}</button>`;
+ const btns=x.status==='waiting'?b('in-progress',t('start')):x.status==='in-progress'?b('done',t('finish'))+b('waiting',t('waiting'),'ghost'):b('in-progress',t('reopen'),'ghost');
+ return `<div class="ticket"><div class="no">${x.token_no}</div><div class="info"><b>${esc(x.first_name+' '+x.last_name)}</b><div class="btns">${btns}</div></div></div>`}
+function boardHTML(){
+ return ['waiting','in-progress','done'].map(s=>{const l=S.queue.filter(x=>x.status===s);
+  return `<div class="col"><h3>${t(STATUS[s])}<em>${l.length}</em></h3>${l.map(ticket).join('')||`<p class="hint" style="padding:6px">-</p>`}</div>`}).join('')}
+function pQueue(){
+ return `<div class="page-h"><div><h1>${t('todays_queue')}</h1></div><span class="grow"></span><button class="btn" data-act="newQueue">${ic('plus',17)}${t('add_queue')}</button></div>
+ ${S.queue.length?'':`<div class="panel" id="qempty"><div class="empty"><b>${t('empty_q')}</b>${t('empty_q_s')}</div></div>`}
+ <div class="board" id="board">${boardHTML()}</div>`}
+function queueForm(){
+ return `<form data-form="queue"><label class="fld"><span>${t('patient')}</span><select name="pid" required><option value="">${t('pick_patient')}</option>${S.pts.map(p=>`<option value="${p.id}">${esc(pname(p))} (#${p.id})</option>`).join('')}</select></label>
+ <p class="ferr" id="ferr" role="alert"></p><div class="drawer-f"><button type="button" class="btn ghost" data-act="closeDrawer">${t('cancel')}</button><button class="btn" type="submit">${t('generate_token')}</button></div></form>`}
+async function refreshQueue(){
+ try{S.queue=await api('/queue')}catch(e){return}
+ const b=$('#board');if(b)b.innerHTML=boardHTML();
+ const e=$('#qempty');if(e&&S.queue.length)e.remove();
+ const dq=$('#dq');if(dq)dq.innerHTML=S.queue.length?S.queue.slice(0,7).map(ticketRow).join(''):`<div class="empty"><b>${t('empty_q')}</b>${t('empty_q_s')}</div>`}
+
+/* ----- payments ----- */
+function payForm(pid){
+ return `<form data-form="pay"><div class="fg">
+  <label class="fld full"><span>${t('patient')}</span><select name="pid" required><option value="">${t('pick_patient')}</option>${S.pts.map(p=>`<option value="${p.id}" ${String(p.id)===String(pid)?'selected':''}>${esc(pname(p))} (#${p.id})</option>`).join('')}</select></label>
+  ${field('amount','number',t('amount')+' (₹)','required min="1" step="0.01" inputmode="decimal"')}
+  <label class="fld"><span>${t('method')}</span><select name="method"><option value="cash">${t('cash')}</option><option value="card">${t('card_m')}</option><option value="upi">${t('upi')}</option></select></label>
+ </div><p class="ferr" id="ferr" role="alert"></p>
+ <div class="drawer-f"><button class="btn" type="submit">${t('save_payment')}</button></div></form>`}
+function payRows(){
+ if(!S.pays.length)return `<tr><td colspan="7"><div class="empty"><b>${t('empty_pay')}</b></div></td></tr>`;
+ return S.pays.map(x=>`<tr><td>#${x.id}</td><td>${esc(x.patient_name)}</td><td><b>${money(x.amount)}</b></td><td>${esc(x.method||'')}</td><td>${fmtD(x.created_at)}</td><td>${esc(x.created_by||'')}</td><td><button class="btn ghost sm" data-act="receipt" data-id="${x.id}">${t('view_receipt')}</button></td></tr>`).join('')}
+function pPayments(){
+ const tot=S.pays.reduce((a,x)=>a+Number(x.amount),0);
+ return `<div class="page-h"><div><h1>${t('payments')}</h1><p>${t('total')}: <b id="paytot">${money(tot)}</b></p></div></div>
+ <div class="cols"><div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>${t('receipt')}</th><th>${t('patient')}</th><th>${t('amount')}</th><th>${t('method')}</th><th>${t('date')}</th><th>${t('received_by')}</th><th></th></tr></thead><tbody id="paybody">${payRows()}</tbody></table></div></div>
+ <div class="panel"><div class="panel-h"><h3>${t('record_payment')}</h3></div><div class="panel-b">${payForm('')}</div></div></div>`}
+
+/* ----- admin ----- */
+function pReports(){
+ const by={};S.wrep.forEach(r=>by[r.patient_id+'-'+r.week]=r);
+ const cell=(p,n)=>{const r=by[p.id+'-'+n];return r?`<span title="${esc(r.symptoms)}" style="color:var(--green);font-weight:600">✓</span>${r.photo_url?` <a class="photo-link" target="_blank" rel="noopener" href="${esc(r.photo_url)}" aria-label="${t('view_photo')}">${ic('cam',15)}</a>`:''}`:'<span style="color:#9aa9b1">-</span>'};
+ return `<div class="page-h"><div><h1>${t('reports')}</h1></div></div><div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>${t('patient')}</th>${[1,2,3,4,5].map(n=>`<th>${t('week')} ${n}</th>`).join('')}</tr></thead><tbody>
+ ${S.pts.length?S.pts.map(p=>`<tr class="click" data-act="open" data-id="${p.id}"><td><div class="who"><span class="av">${esc(ini(p))}</span><b>${esc(pname(p))}</b></div></td>${[1,2,3,4,5].map(n=>`<td>${cell(p,n)}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="6"><div class="empty"><b>${t('empty_pts')}</b></div></td></tr>`}</tbody></table></div></div>`}
+/* ----- appointments ----- */
+const todayStr=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+const fmtT=x=>{const [h,m]=x.split(':').map(Number);return ((h%12)||12)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM')};
+function apptRows(){
+ if(!S.appts.length)return `<tr><td colspan="6"><div class="empty"><b>${t('no_appts')}</b>${t('no_appts_s')}</div></td></tr>`;
+ return S.appts.map(a=>`<tr><td><b>${esc(a.doctor)}</b><br><small>${esc(a.speciality)}</small></td><td>${fmtD(a.appt_date+'T00:00:00')}</td><td>${fmtT(a.appt_time)}</td><td>${esc(a.patient_name)}</td>
+  <td><span class="pill ${({booked:'in-progress',completed:'done',cancelled:'waiting'})[a.status]||''}">${t(a.status)}</span></td>
+  <td>${a.status==='booked'?`<button class="btn ghost sm" data-act="cancelAppt" data-id="${a.id}">${t('cancel_appt')}</button>`+(S.role==='admin'?` <button class="btn sm" data-act="completeAppt" data-id="${a.id}">${t('complete_appt')}</button>`:''):''}</td></tr>`).join('')}
+function pAppointments(){
+ return `<div class="page-h"><div><h1>${t('book_title')}</h1><p>${t('book_sub')}</p></div></div>
+ <div class="panel" style="padding:18px"><form data-form="book"><div class="fg">
+  <label class="fld full"><span>${t('doctor')}</span><select name="doctor_id" required><option value="">${t('pick_doctor')}</option>${S.docs.map(d=>`<option value="${d.id}">${esc(d.name)} - ${esc(d.speciality)}</option>`).join('')}</select></label>
+  <label class="fld"><span>${t('appt_date')}</span><input name="date" type="date" min="${todayStr()}" required></label>
+  <label class="fld"><span>${t('appt_patient')}</span><input name="patient_name" value="${esc(S.name)}" maxlength="100" required></label>
+  <label class="fld full"><span>${t('appt_time')}</span><input type="hidden" name="time"><div id="slots" class="slots"><p class="hint">${t('pick_time')}</p></div></label>
+  <label class="fld full"><span>${t('reason')}</span><input name="reason" maxlength="300"></label>
+ </div><p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">${t('book_now')}</button></div></form></div>
+ <div class="page-h" style="margin-top:22px"><div><h1 style="font-size:18px">${t(S.role==='admin'?'all_appts':'my_appts')}</h1></div></div>
+ <div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>${t('doctor')}</th><th>${t('appt_date')}</th><th>${t('appt_time')}</th><th>${t('patient')}</th><th></th><th></th></tr></thead><tbody id="abody">${apptRows()}</tbody></table></div></div>`}
+async function loadSlots(){
+ const f=$('form[data-form="book"]');if(!f)return;
+ const did=f.doctor_id.value,date=f.date.value,box=$('#slots');f.time.value='';
+ if(!did||!date){box.innerHTML=`<p class="hint">${t('pick_time')}</p>`;return}
+ try{const l=await api(`/doctors/${did}/slots?date=${date}`);
+  box.innerHTML=l.some(x=>x.available)?l.map(x=>`<button type="button" class="slot" data-act="pickSlot" data-t="${x.time}" ${x.available?'':'disabled'}>${fmtT(x.time)}</button>`).join(''):`<p class="hint">${t('no_slots')}</p>`}
+ catch(e){box.innerHTML=`<p class="hint">${esc(e.message)}</p>`}}
+async function refreshAppts(){try{S.appts=await api('/appointments')}catch(e){return}const b=$('#abody');if(b)b.innerHTML=apptRows()}
+
+function userRows(){return S.users.map(u=>`<tr><td><div class="who"><span class="av">${esc((u.name||'?').slice(0,2).toUpperCase())}</span><b>${esc(u.name)}</b></div></td><td>${esc(u.email)}</td><td><span class="pill role ${u.role==='admin'?'admin':''}">${esc(u.role)}</span></td><td>${fmtD(u.created_at)}</td></tr>`).join('')}
+function pUsers(){
+ return `<div class="page-h"><div><h1>${t('users')}</h1></div></div><div class="cols"><div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>${t('name')}</th><th>${t('email')}</th><th>${t('role')}</th><th>${t('joined')}</th></tr></thead><tbody id="ubody">${userRows()}</tbody></table></div></div>
+ <div class="panel"><div class="panel-h"><h3>${t('add_user')}</h3></div><div class="panel-b"><form data-form="user" style="display:grid;gap:14px">
+  ${field('name','text',t('name'),'required')}${field('email','email',t('email'),'required')}${pwField('password',t('password'),'new-password',t('pw_hint'))}
+  <label class="fld"><span>${t('role')}</span><select name="role"><option value="employee">employee</option><option value="admin">admin</option></select></label>
+  <p class="ferr" id="ferr" role="alert"></p><div><button class="btn" type="submit">${t('add_user')}</button></div></form></div></div></div>`}
+
+function pAccount(){
+ return `<div class="page-h"><div><h1>${t('account')}</h1></div></div>
+ <div class="cols even"><div class="panel"><div class="panel-h"><h3>${esc(S.name)}</h3></div><div class="panel-b"><div class="kv">
+  <div><small>${t('name')}</small><span>${esc(S.name)}</span></div><div><small>${t('email')}</small><span>${esc(me())}</span></div><div><small>${t('role')}</small><span>${esc(S.role)}</span></div></div></div></div>
+ <div class="panel"><div class="panel-h"><h3>${t('mail_h')}</h3></div><div class="panel-b"><p style="color:var(--muted);margin-bottom:14px">${t('mail_p')}</p>
+  <ul class="ticks"><li>${t('mail_login')}</li><li>${t('mail_receipts')}</li><li>${t('mail_appt')}</li><li>${t('mail_details')}</li></ul>
+  <div class="actions"><button class="btn" data-act="resendMail">${t('resend_mail')}</button><button class="btn ghost" data-act="testMail">${t('test_mail')}</button><button class="btn ghost" data-act="mailDone">${t('mail_done')}</button></div></div></div></div>`}
+
+/* ---------- receipt ---------- */
+function receiptHTML(r,emailed){
+ return `<div id="receiptPrint" class="rcpt"><div class="rcpt-h">${logo()}<div><b>${t('app')}</b><small>${t('receipt_title')} #${esc(r.id)}</small></div></div>
+ <div class="kv"><div><small>${t('patient')}</small><span>${esc(r.patient_name)}</span></div><div><small>${t('date')}</small><span>${esc(fmtD(r.created_at))}</span></div>
+ <div><small>${t('method')}</small><span>${esc(r.method||'')}</span></div><div><small>${t('received_by')}</small><span>${esc(r.created_by||'')}</span></div></div>
+ <div class="rcpt-amt"><small>${t('amount')}</small><b>${money(r.amount)}</b></div></div>
+ ${emailed&&emailed.length?`<p class="hint" style="margin-top:14px">${t('emailed_to')}: <b>${emailed.map(x=>esc(x)).join(', ')}</b></p>`:''}
+ <div class="drawer-f" style="justify-content:flex-start;flex-wrap:wrap"><button class="btn" data-act="print">${t('print')}</button>${r.receipt_url?`<a class="btn ghost" target="_blank" rel="noopener" href="${esc(r.receipt_url)}">${t('download')}</a>`:''}<button class="btn ghost" data-act="emailReceipt" data-id="${esc(r.id)}">${ic('mail',16)}${t('email_again')}</button></div>`}
+async function refreshPays(){
+ try{S.pays=await api('/payments')}catch(e){return}
+ const b=$('#paybody');if(b)b.innerHTML=payRows();
+ const tt=$('#paytot');if(tt)tt.textContent=money(S.pays.reduce((a,x)=>a+Number(x.amount),0))}
+
+/* ---------- drawer ---------- */
+function openDrawer(title,body){
+ $('#overlay').innerHTML=`<div class="scrim" data-act="closeDrawer"></div><aside class="drawer" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header><h2>${esc(title)}</h2><button class="icon" data-act="closeDrawer" aria-label="Close">${ic('x')}</button></header><div class="drawer-b">${body}</div></aside>`;
+ const f=$('#overlay input:not([type=hidden]),#overlay select');if(f)f.focus()}
+function closeDrawer(){$('#overlay').innerHTML=''}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+
+/* ---------- photo shrink (phone photos are huge) ---------- */
+function shrink(file){
+ return new Promise(res=>{
+  if(!file||!file.type.startsWith('image/')||file.size<600000)return res(file);
+  const img=new Image(),u=URL.createObjectURL(file);
+  img.onload=()=>{const m=1600,k=Math.min(1,m/Math.max(img.width,img.height)),c=document.createElement('canvas');
+   c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);
+   c.toBlob(b=>res(b||file),'image/jpeg',.85)};
+  img.onerror=()=>{URL.revokeObjectURL(u);res(file)};img.src=u})}
+
+/* ---------- events ---------- */
+const ferr=m=>{const e=$('#ferr');if(e)e.textContent=m||''};
+const ACT={
+ mode:b=>{S.mode=b.dataset.m;render()},
+ eye:b=>{const i=b.parentElement.querySelector('input');i.type=i.type==='password'?'text':'password'},
+ logout:()=>signOut(),
+ retry:()=>render(),
+ closeDrawer:()=>closeDrawer(),
+ open:b=>go('#/patients/'+b.dataset.id),
+ newPatient:()=>openDrawer(t('new_patient'),patientForm()),
+ newQueue:()=>openDrawer(t('add_queue'),queueForm()),
+ payFor:b=>openDrawer(t('record_payment'),payForm(b.dataset.id)),
+ pickWeek:b=>{S.wk=+b.dataset.w;$('#wkbox').innerHTML=weeksHTML()},
+ token:async b=>{try{const r=await api('/patients/'+b.dataset.id+'/token',{method:'POST'});toast(t('token_made',{n:r.token_no,p:pname(S.detail)}))}catch(e){toast(e.message,'err')}},
+ print:()=>window.print(),
+ mailDone:()=>{store.set(mailKey(),'1');const m=$('#mailbar');if(m)m.remove()},
+ resendMail:async()=>{try{await api('/auth/notifications/resend',{method:'POST'});toast(t('mail_resent',{e:me()}))}catch(e){toast(e.message,'err')}},
+ testMail:async()=>{try{await api('/auth/notifications/test',{method:'POST'});toast(t('mail_test_sent',{e:me()}))}catch(e){toast(e.message,'err')}},
+ receipt:async b=>{try{const r=await api('/payments/'+b.dataset.id+'/receipt');openDrawer(t('receipt_title')+' #'+r.id,receiptHTML(r))}catch(e){toast(e.message,'err')}},
+ emailReceipt:async b=>{b.disabled=true;try{const r=await api('/payments/'+b.dataset.id+'/email',{method:'POST'});toast(t('sent_to',{e:r.emailed_to.join(', ')}))}catch(e){toast(e.message,'err')}b.disabled=false},
+ emailPatient:async b=>{b.disabled=true;try{const r=await api('/patients/'+b.dataset.id+'/email',{method:'POST'});toast(r.patient_has_email?t('sent_to',{e:r.emailed_to.join(', ')}):t('no_patient_email'))}catch(e){toast(e.message,'err')}b.disabled=false},
+ pickSlot:b=>{const f=$('form[data-form="book"]');f.time.value=b.dataset.t;document.querySelectorAll('.slot').forEach(x=>x.classList.toggle('on',x===b))},
+ cancelAppt:async b=>{if(!confirm(t('cancel_appt')+'?'))return;b.disabled=true;try{await api('/appointments/'+b.dataset.id+'/cancel',{method:'POST'});toast(t('appt_cancelled'));await refreshAppts()}catch(e){toast(e.message,'err');b.disabled=false}},
+ completeAppt:async b=>{b.disabled=true;try{await api('/appointments/'+b.dataset.id+'/complete',{method:'POST'});await refreshAppts()}catch(e){toast(e.message,'err');b.disabled=false}},
+ status:async b=>{b.disabled=true;try{await api('/queue/'+b.dataset.id,{json:{status:b.dataset.s},method:'PATCH'});await refreshQueue()}catch(e){toast(e.message,'err');b.disabled=false}}
+};
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-act]');if(!b)return;
+ if(b.dataset.act==='closeDrawer'&&e.target.closest('.drawer')&&!e.target.closest('button[data-act="closeDrawer"]'))return;
+ const f=ACT[b.dataset.act];if(f){if(b.tagName==='A')e.preventDefault();f(b,e)}});
+document.addEventListener('change',e=>{
+ if(e.target.closest('form[data-form="book"]')&&['doctor_id','date'].includes(e.target.name))loadSlots();
+ if(e.target.dataset.change==='lang'){S.lang=e.target.value;store.set('lang',S.lang);render()}});
+document.addEventListener('input',e=>{
+ if(e.target.id==='psearch'){S.q=e.target.value;$('#ptbody').innerHTML=ptRows(filtered())}
+ const f=e.target.closest('form');
+ if(f&&f.dataset.form==='signup'&&e.target.name==='password'){const m=$('#meter');if(m)m.className='meter s'+strength(e.target.value)}});
+
+const FORMS={
+ async login(f,btn){
+  const d=Object.fromEntries(new FormData(f));
+  if(!d.email.trim()||!d.password)return ferr('Enter your email and password.');
+  await busy(btn,t('signing'),()=>doLogin(d.email,d.password))},
+ async signup(f,btn){
+  const d=Object.fromEntries(new FormData(f)),email=d.email.trim().toLowerCase();
+  if(!d.name.trim())return ferr('Enter your full name.');
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))return ferr('Enter a valid email address.');
+  if(d.password.length<8)return ferr(t('pw_hint')+'.');
+  if(d.password!==d.confirm)return ferr(t('pw_mismatch'));
+  await busy(btn,t('creating'),async()=>{
+   await api('/auth/signup',{json:{name:d.name.trim(),email,password:d.password},noLogout:true});
+   await doLogin(email,d.password);toast(t('welcome',{n:d.name.trim().split(' ')[0]}))})},
+ async patient(f,btn){
+  const fd=new FormData(f),d=Object.fromEntries(fd);d.age=+d.age;d.diseases=fd.getAll('diseases');d.email=(d.email||'').trim()||null;
+  const r=await busy(btn,'…',()=>api('/patients',{json:d}));
+  closeDrawer();toast(t('patient_saved')+(r.emailed_to?' · '+t('sent_to',{e:r.emailed_to}):''));go('#/patients/'+r.id)},
+ async week(f,btn){
+  const fd=new FormData(f),file=fd.get('photo');
+  if(file&&file.size){fd.set('photo',await shrink(file),'photo.jpg')}else fd.delete('photo');
+  await busy(btn,'…',()=>api('/patients/'+S.detail.id+'/weeks',{method:'POST',body:fd}));
+  toast(t('week_saved',{w:fd.get('week')}));render()},
+ async queue(f,btn){
+  const pid=f.pid.value;if(!pid)return ferr(t('pick_patient'));
+  const r=await busy(btn,'…',()=>api('/patients/'+pid+'/token',{method:'POST'}));
+  const p=S.pts.find(x=>String(x.id)===pid);closeDrawer();toast(t('token_made',{n:r.token_no,p:p?pname(p):''}));
+  if(route().page==='queue'||route().page==='dashboard')render()},
+ async pay(f,btn){
+  const d=Object.fromEntries(new FormData(f)),p=S.pts.find(x=>String(x.id)===d.pid);
+  if(!p)return ferr(t('pick_patient'));
+  const r=await busy(btn,'…',()=>api('/payments',{json:{patient_id:p.id,patient_name:pname(p),patient_email:p.email||null,amount:+d.amount,method:d.method}}));
+  const row={id:r.id,patient_name:pname(p),amount:+d.amount,method:d.method,created_at:r.created_at,created_by:me(),receipt_url:r.receipt_url};
+  openDrawer(t('pay_done'),receiptHTML(row,r.emailed_to));
+  if(route().page==='payments')refreshPays()},
+ async book(f,btn){
+  const d=Object.fromEntries(new FormData(f));
+  if(!d.doctor_id||!d.date||!d.time)return ferr(t('pick_all'));
+  const r=await busy(btn,'…',()=>api('/appointments',{json:{doctor_id:+d.doctor_id,date:d.date,time:d.time,patient_name:d.patient_name.trim(),reason:d.reason.trim()}}));
+  toast(t('booked_ok',{d:r.doctor,dt:r.date,tm:r.time,e:r.emailed_to}));f.reason.value='';await loadSlots();await refreshAppts()},
+ async user(f,btn){
+  const d=Object.fromEntries(new FormData(f));d.email=d.email.trim().toLowerCase();d.name=d.name.trim();
+  if(d.password.length<8)return ferr(t('pw_hint')+'.');
+  await busy(btn,'…',()=>api('/auth/register',{json:d}));toast(t('user_added'));render()}
+};
+document.addEventListener('submit',async e=>{
+ const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();
+ const fn=FORMS[f.dataset.form];if(!fn)return;ferr('');
+ try{await fn(f,f.querySelector('button[type=submit]'))}catch(x){ferr(x.message);if(!$('#ferr'))toast(x.message,'err')}});
+
+window.addEventListener('hashchange',()=>render());
+setInterval(()=>{if(S.tok&&!document.hidden&&['queue','dashboard'].includes(route().page)&&!$('#overlay').innerHTML)refreshQueue()},20000);
+render();
+</script>
+</body>
+</html>

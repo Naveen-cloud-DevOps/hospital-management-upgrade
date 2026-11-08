@@ -1,0 +1,19 @@
+# Replace 407296935001 (and region if changed). Values = terraform outputs.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hms-sa
+  namespace: hms
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::407296935001:role/hms-app
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: hms-config, namespace: hms}
+data:
+  AWS_REGION: us-east-1
+  SNS_TOPIC_ARN: arn:aws:sns:us-east-1:407296935001:hms-notifications
+  USER_BUCKET: hms-407296935001-user-data
+  RECEIPT_BUCKET: hms-407296935001-payment-receipts
+  PHOTO_BUCKET: hms-407296935001-patient-photos
+  APPOINTMENT_BUCKET: hms-407296935001-appointments
