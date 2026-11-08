@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  TRIVY_VERSION: "0.69.3"                             # pinned Trivy scanner version
   AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}   # GitHub secret AWS_REGION (falls back to us-east-1)
 
 jobs:
@@ -70,13 +71,15 @@ jobs:
           cache-to: type=gha,scope=${{ matrix.name }},mode=max
 
       - name: Trivy scan (fails on fixable CRITICAL/HIGH)
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
-          format: table
-          exit-code: "1"
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
+        # Runs the pinned official Trivy image directly (no setup-trivy download step).
+        run: |
+          mkdir -p "$HOME/.cache/trivy"
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$HOME/.cache/trivy:/root/.cache/trivy" \
+            ghcr.io/aquasecurity/trivy:${TRIVY_VERSION} image \
+            --exit-code 1 --ignore-unfixed --severity CRITICAL,HIGH --format table \
+            "${IMAGE}:${GITHUB_SHA}"
 
       - name: Tag + push to ECR (only if scan passed)
         uses: docker/build-push-action@v6
