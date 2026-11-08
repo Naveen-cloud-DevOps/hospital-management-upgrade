@@ -5,6 +5,10 @@ locals { dbs = toset(var.db_services) }
 resource "aws_db_subnet_group" "rds" {
   name       = "${var.project}-rds"
   subnet_ids = module.vpc.private_subnets
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group" "rds" {
@@ -22,6 +26,10 @@ resource "aws_security_group" "rds" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -45,6 +53,10 @@ resource "aws_db_instance" "primary" {
   skip_final_snapshot       = false
   final_snapshot_identifier = "${var.project}-${each.key}db-final"
   apply_immediately         = true
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_db_instance" "replica" {
@@ -57,4 +69,8 @@ resource "aws_db_instance" "replica" {
   vpc_security_group_ids = [aws_security_group.rds.id]
   publicly_accessible    = false
   skip_final_snapshot    = true
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }

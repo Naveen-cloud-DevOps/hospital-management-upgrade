@@ -56,6 +56,10 @@ locals { buckets = toset(var.data_buckets) }
 resource "aws_s3_bucket" "data" {
   for_each = local.buckets
   bucket   = "${var.project}-${data.aws_caller_identity.me.account_id}-${each.key}"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "data" {
@@ -65,12 +69,20 @@ resource "aws_s3_bucket_public_access_block" "data" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_s3_bucket_versioning" "data" {
   for_each = aws_s3_bucket.data
   bucket   = each.value.id
   versioning_configuration { status = "Enabled" }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "data" {
@@ -79,10 +91,20 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "data" {
   rule {
     apply_server_side_encryption_by_default { sse_algorithm = "AES256" }
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # ---------------- SNS ----------------
-resource "aws_sns_topic" "notify" { name = "${var.project}-notifications" }
+resource "aws_sns_topic" "notify" {
+  name = "${var.project}-notifications"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
 
 # ---------------- IAM for pods (IRSA). No s3:DeleteObject on purpose ----------------
 data "aws_iam_policy_document" "app" {
@@ -99,6 +121,10 @@ data "aws_iam_policy_document" "app" {
 resource "aws_iam_policy" "app" {
   name   = "${var.project}-app"
   policy = data.aws_iam_policy_document.app.json
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 module "app_irsa" {
