@@ -20,26 +20,9 @@ env:
 
 jobs:
   # ---------------- 1) Images + deploy ----------------
-  prepare:
+  build:
     # continue only if terraform-infra succeeded (or this was started manually)
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
-    outputs:
-      registry: ${{ steps.id.outputs.registry }}
-    steps:
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-          mask-aws-account-id: false   # FIX: otherwise GitHub drops the 'registry' output (it contains the account id)
-      - id: id
-        run: |
-          ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
-          echo "registry=${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com" >> "$GITHUB_OUTPUT"
-
-  build:
-    needs: prepare
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -50,8 +33,6 @@ jobs:
           - { name: billing,  context: services, args: "SERVICE=billing" }
           - { name: appointment, context: services, args: "SERVICE=appointment" }
           - { name: frontend, context: frontend, args: "" }
-    env:
-      IMAGE: ${{ needs.prepare.outputs.registry }}/hospital-management-${{ matrix.name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -60,6 +41,13 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: false
+
+      - name: Work out the ECR image name (inside this job, no job outputs)
+        run: |
+          ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+          [ -n "$ACCOUNT" ] || { echo "::error::Could not read AWS account id - check AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY secrets"; exit 1; }
+          echo "IMAGE=${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/hospital-management-${{ matrix.name }}" >> "$GITHUB_ENV"
 
       - name: Create ECR repository if missing
         run: |
@@ -103,10 +91,9 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.name }}
 
   update-manifests:
-    needs: [prepare, build]
+    needs: build
     runs-on: ubuntu-latest
     env:
-      REGISTRY: ${{ needs.prepare.outputs.registry }}
       GH_USERNAME: ${{ secrets.GH_USERNAME || github.repository_owner }}
     steps:
       - uses: actions/checkout@v4
@@ -115,6 +102,17 @@ jobs:
           # GITHUB_TOKEN is created automatically by GitHub for every run.
           # Optional: add a repo secret named GH_PAT (a personal access token) to use that instead.
           token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: false
+      - name: Work out the ECR registry (inside this job, no job outputs)
+        run: |
+          ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+          [ -n "$ACCOUNT" ] || { echo "::error::Could not read AWS account id"; exit 1; }
+          echo "REGISTRY=${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com" >> "$GITHUB_ENV"
       - name: Write ECR image URLs, AWS account id and GitHub username into manifests
         run: |
           sed -i -E "s|image: [^ ]+/(hospital-management-[a-z]+):.*|image: ${REGISTRY}/\1:${GITHUB_SHA}|" k8s/*.yaml
