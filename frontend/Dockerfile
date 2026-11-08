@@ -13,14 +13,15 @@
 
 # COPY index.html /usr/share/nginx/html/index.html
 # EXPOSE 8080
-
-
-
 FROM python:3.12-slim
 ARG SERVICE
 WORKDIR /app
 # Install the latest Debian security patches (fixes Trivy HIGH findings such as zlib1g)
-RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+    && apt-get install -y --only-upgrade --no-install-recommends zlib1g \
+    && apt-get upgrade -y --no-install-recommends \
+    && dpkg -s zlib1g | grep '^Version' \
+    && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY common.py .
