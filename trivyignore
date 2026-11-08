@@ -1,0 +1,5 @@
+# TEMPORARY exception. Only use this if the build log line "Version:" (from "dpkg -s zlib1g") still shows ...+b1,
+# which means Debian has not published the zlib1g patch yet. Delete this file once Debian publishes it.
+# "exp:" makes the exception expire by itself, so the scan fails again and reminds you to re-check.
+CVE-2026-76844 exp:2026-12-08
+CVE-2026-85091 exp:2026-12-08

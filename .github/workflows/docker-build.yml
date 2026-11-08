@@ -72,13 +72,24 @@ jobs:
 
       - name: Trivy scan (fails on fixable CRITICAL/HIGH)
         # Runs the pinned official Trivy image directly (no setup-trivy download step).
+        # If a .trivyignore file exists in the repo root, its (expiring) exceptions are applied.
         run: |
           mkdir -p "$HOME/.cache/trivy"
+          EXTRA=()
+          if [ -f .trivyignore ]; then
+            echo "Using .trivyignore exceptions:"; cat .trivyignore
+            EXTRA=(-v "$PWD/.trivyignore:/.trivyignore:ro")
+            IGN=(--ignorefile /.trivyignore)
+          else
+            IGN=()
+          fi
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v "$HOME/.cache/trivy:/root/.cache/trivy" \
+            "${EXTRA[@]}" \
             ghcr.io/aquasecurity/trivy:${TRIVY_VERSION} image \
             --exit-code 1 --ignore-unfixed --severity CRITICAL,HIGH --format table \
+            "${IGN[@]}" \
             "${IMAGE}:${GITHUB_SHA}"
 
       - name: Tag + push to ECR (only if scan passed)
