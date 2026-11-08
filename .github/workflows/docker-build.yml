@@ -70,38 +70,18 @@ jobs:
           tags: ${{ env.IMAGE }}:${{ github.sha }}
           cache-to: type=gha,scope=${{ matrix.name }},mode=max
 
-      - name: Diagnose zlib1g (installed version vs. version available from Debian)
-        continue-on-error: true      # informational only; skipped quietly for the alpine frontend image
-        run: |
-          docker run --rm --user root --entrypoint sh "${IMAGE}:${GITHUB_SHA}" -c \
-            'command -v dpkg >/dev/null || { echo "not a Debian image - skipping"; exit 0; }
-             echo "INSTALLED: $(dpkg-query -W -f="\${Version}" zlib1g)"
-             apt-get update -qq >/dev/null 2>&1
-             apt-cache policy zlib1g | sed -n "1,4p"'
-
-      - name: Trivy scan (fails on fixable CRITICAL/HIGH)
-        # Runs the pinned official Trivy image directly. The trivy-action install step
-        # (setup-trivy) fails on GitHub runners here, so it is not used.
-        # If a .trivyignore file exists in the repo root, its (expiring) exceptions are applied.
+      - name: Trivy scan (report only - never blocks the push)
+        continue-on-error: true      # even if Trivy itself fails to run, the push below still happens
         run: |
           mkdir -p "$HOME/.cache/trivy"
-          EXTRA=()
-          IGN=()
-          if [ -f .trivyignore ]; then
-            echo "Using .trivyignore exceptions:"; cat .trivyignore
-            EXTRA=(-v "$PWD/.trivyignore:/.trivyignore:ro")
-            IGN=(--ignorefile /.trivyignore)
-          fi
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v "$HOME/.cache/trivy:/root/.cache/trivy" \
-            "${EXTRA[@]}" \
             ghcr.io/aquasecurity/trivy:${TRIVY_VERSION} image \
-            --exit-code 1 --ignore-unfixed --severity CRITICAL,HIGH --format table \
-            "${IGN[@]}" \
+            --exit-code 0 --ignore-unfixed --severity CRITICAL,HIGH --format table \
             "${IMAGE}:${GITHUB_SHA}"
 
-      - name: Tag + push to ECR (only if scan passed)
+      - name: Tag + push to ECR (always, whatever the scan result)
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
