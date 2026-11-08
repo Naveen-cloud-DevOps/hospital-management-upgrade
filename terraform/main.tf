@@ -51,7 +51,8 @@ module "eks" {
 }
 
 # ---------------- separate S3 buckets per data type ----------------
-locals { buckets = toset(var.data_buckets) }
+# "appointments" is always included, even if an old TFVARS secret / tfvars file does not list it
+locals { buckets = toset(concat(var.data_buckets, ["appointments"])) }
 
 resource "aws_s3_bucket" "data" {
   for_each = local.buckets
