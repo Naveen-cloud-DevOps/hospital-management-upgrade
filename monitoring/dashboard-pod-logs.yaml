@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-pod-logs
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"      # Grafana sidecar loads every ConfigMap with this label
+data:
+  pod-logs.json: |
+    {
+      "uid": "hms-pod-logs",
+      "title": "Pod Logs (Loki)",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "10s",
+      "time": {"from": "now-1h", "to": "now"},
+      "templating": {
+        "list": [
+          {
+            "name": "namespace", "label": "Namespace", "type": "query",
+            "datasource": {"type": "loki", "uid": "loki"},
+            "query": {"label": "namespace", "refId": "ns", "stream": "", "type": 1},
+            "refresh": 2, "includeAll": false, "multi": false, "sort": 1
+          },
+          {
+            "name": "pod", "label": "Pod", "type": "query",
+            "datasource": {"type": "loki", "uid": "loki"},
+            "query": {"label": "pod", "refId": "pod", "stream": "{namespace=\"$namespace\"}", "type": 1},
+            "refresh": 2, "includeAll": true, "allValue": ".+", "multi": true, "sort": 1
+          },
+          {
+            "name": "search", "label": "Search text", "type": "textbox", "query": ""
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1, "type": "logs", "title": "Logs",
+          "datasource": {"type": "loki", "uid": "loki"},
+          "gridPos": {"h": 24, "w": 24, "x": 0, "y": 0},
+          "options": {"showTime": true, "wrapLogMessage": true, "enableLogDetails": true, "sortOrder": "Descending"},
+          "targets": [
+            {"refId": "A", "expr": "{namespace=\"$namespace\", pod=~\"$pod\"} |~ \"(?i)$search\""}
+          ]
+        }
+      ]
+    }

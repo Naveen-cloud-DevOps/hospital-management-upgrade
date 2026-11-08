@@ -1,0 +1,137 @@
+name: monitoring
+# Runs AFTER the "cicd" workflow (the 2nd pipeline) finishes successfully:
+# install Prometheus + Grafana + Alertmanager + Loki/Promtail on EKS -> print the URLs
+on:
+  workflow_run:
+    workflows: ["cicd"]          # must match the "name:" in docker-build.yml exactly
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:             # you can also run it manually
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monitoring
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+  CLUSTER_NAME: hms-eks
+  KPS_VERSION: ""                # optional: pin kube-prometheus-stack chart version, empty = latest
+
+jobs:
+  monitoring:
+    # continue only if cicd succeeded (or this was started manually)
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Check required secrets
+        env:
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          ALERT_SMTP_PASSWORD: ${{ secrets.ALERT_SMTP_PASSWORD }}
+        run: |
+          [ -n "$GRAFANA_ADMIN_PASSWORD" ] || { echo "::error::Add GitHub secret GRAFANA_ADMIN_PASSWORD"; exit 1; }
+          [ -n "$ALERT_SMTP_PASSWORD" ]    || { echo "::error::Add GitHub secret ALERT_SMTP_PASSWORD (Gmail app password)"; exit 1; }
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Connect to EKS and wait for nodes
+        run: |
+          aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION"
+          kubectl wait --for=condition=Ready nodes --all --timeout=300s
+
+      - uses: azure/setup-helm@v4
+
+      - name: Create namespace and secrets (nothing secret is stored in git)
+        env:
+          GRAFANA_ADMIN_USER: ${{ secrets.GRAFANA_ADMIN_USER || 'ritik' }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          ALERT_SMTP_PASSWORD: ${{ secrets.ALERT_SMTP_PASSWORD }}
+        run: |
+          kubectl create ns monitoring --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n monitoring create secret generic grafana-admin \
+            --from-literal=admin-user="$GRAFANA_ADMIN_USER" \
+            --from-literal=admin-password="$GRAFANA_ADMIN_PASSWORD" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n monitoring create secret generic alertmanager-smtp \
+            --from-literal=password="$ALERT_SMTP_PASSWORD" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Add Helm repositories
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+
+      - name: Install Prometheus + Grafana + Alertmanager + node-exporter + kube-state-metrics
+        env:
+          PROM_ALLOWED_CIDR: ${{ secrets.PROMETHEUS_ALLOWED_CIDR }}   # optional, e.g. 203.0.113.10/32
+        run: |
+          EXTRA=()
+          if [ -n "${PROM_ALLOWED_CIDR:-}" ]; then
+            EXTRA+=(--set "prometheus.service.loadBalancerSourceRanges[0]=${PROM_ALLOWED_CIDR}")
+          fi
+          helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+            --namespace monitoring \
+            ${KPS_VERSION:+--version "$KPS_VERSION"} \
+            -f monitoring/kube-prometheus-stack-values.yaml \
+            "${EXTRA[@]}" \
+            --wait --timeout 15m
+
+      - name: Install Loki + Promtail (pod logs)
+        run: |
+          helm upgrade --install loki grafana/loki-stack \
+            --namespace monitoring \
+            --version 2.10.2 \
+            -f monitoring/loki-stack-values.yaml \
+            --wait --timeout 10m
+
+      - name: Add pod-logs dashboard
+        run: kubectl apply -f monitoring/dashboard-pod-logs.yaml
+
+      - name: Get Grafana and Prometheus URLs
+        run: |
+          get_host() {
+            for i in $(seq 1 40); do
+              H=$(kubectl -n monitoring get svc "$1" -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+              [ -n "$H" ] && { echo "$H"; return 0; }
+              sleep 15
+            done
+            return 1
+          }
+          GRAFANA_HOST=$(get_host kube-prometheus-stack-grafana)    || { echo "Grafana load balancer not ready - run: kubectl -n monitoring get svc"; exit 1; }
+          PROM_HOST=$(get_host kube-prometheus-stack-prometheus)    || { echo "Prometheus load balancer not ready - run: kubectl -n monitoring get svc"; exit 1; }
+          GRAFANA_URL="http://$GRAFANA_HOST"
+          PROM_URL="http://$PROM_HOST:9090"
+          for u in "$GRAFANA_URL/login" "$PROM_URL/-/ready"; do   # wait for the load balancers to answer
+            for i in $(seq 1 30); do
+              C=$(curl -s -o /dev/null -w '%{http_code}' "$u" || true)
+              [ "$C" = "200" ] && break
+              sleep 10
+            done
+          done
+          {
+            echo "## Monitoring deployed"
+            echo ""
+            echo "**Grafana URL:** $GRAFANA_URL"
+            echo ""
+            echo "**Grafana username:** ${{ secrets.GRAFANA_ADMIN_USER || 'ritik' }}  (password = your GRAFANA_ADMIN_PASSWORD secret)"
+            echo ""
+            echo "**Prometheus URL:** $PROM_URL"
+            echo ""
+            echo "CPU alerts are emailed through Alertmanager. Pod logs: Grafana > Dashboards > Pod Logs (Loki)."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "=============================================="
+          echo " GRAFANA URL   : $GRAFANA_URL"
+          echo " PROMETHEUS URL: $PROM_URL"
+          echo "=============================================="
