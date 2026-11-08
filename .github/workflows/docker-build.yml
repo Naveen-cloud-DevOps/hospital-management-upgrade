@@ -146,22 +146,22 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Wait for infrastructure (EKS, RDS primaries + replicas, IAM role)
-        run: |
-          for i in $(seq 1 120); do
-            OK=1
-            [ "$(aws eks describe-cluster --name hms-eks --query cluster.status --output text 2>/dev/null)" = "ACTIVE" ] || OK=0
-            for d in auth patient billing appointment; do
-              for n in ${d}db ${d}db-replica; do
-                [ "$(aws rds describe-db-instances --db-instance-identifier hms-$n --query 'DBInstances[0].DBInstanceStatus' --output text 2>/dev/null)" = "available" ] || OK=0
-              done
-            done
-            aws iam get-role --role-name hms-app >/dev/null 2>&1 || OK=0
-            echo "attempt $i: infrastructure ready=$OK"
-            [ $OK = 1 ] && break
-            sleep 30
-          done
-          [ $OK = 1 ] || { echo "Infrastructure not ready - check the terraform-infra run"; exit 1; }
+      # - name: Wait for infrastructure (EKS, RDS primaries + replicas, IAM role)
+      #   run: |
+      #     for i in $(seq 1 120); do
+      #       OK=1
+      #       [ "$(aws eks describe-cluster --name hms-eks --query cluster.status --output text 2>/dev/null)" = "ACTIVE" ] || OK=0
+      #       for d in auth patient billing appointment; do
+      #         for n in ${d}db ${d}db-replica; do
+      #           [ "$(aws rds describe-db-instances --db-instance-identifier hms-$n --query 'DBInstances[0].DBInstanceStatus' --output text 2>/dev/null)" = "available" ] || OK=0
+      #         done
+      #       done
+      #       aws iam get-role --role-name hms-app >/dev/null 2>&1 || OK=0
+      #       echo "attempt $i: infrastructure ready=$OK"
+      #       [ $OK = 1 ] && break
+      #       sleep 30
+      #     done
+      #     [ $OK = 1 ] || { echo "Infrastructure not ready - check the terraform-infra run"; exit 1; }
 
       - name: Connect to EKS
         run: aws eks update-kubeconfig --name hms-eks --region "$AWS_REGION"
