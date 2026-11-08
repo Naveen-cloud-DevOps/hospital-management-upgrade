@@ -80,26 +80,16 @@ jobs:
              apt-cache policy zlib1g | sed -n "1,4p"'
 
       - name: Trivy scan (fails on fixable CRITICAL/HIGH)
-        # Runs the pinned official Trivy image directly (no setup-trivy download step).
-        # If a .trivyignore file exists in the repo root, its (expiring) exceptions are applied.
-        run: |
-          mkdir -p "$HOME/.cache/trivy"
-          EXTRA=()
-          if [ -f .trivyignore ]; then
-            echo "Using .trivyignore exceptions:"; cat .trivyignore
-            EXTRA=(-v "$PWD/.trivyignore:/.trivyignore:ro")
-            IGN=(--ignorefile /.trivyignore)
-          else
-            IGN=()
-          fi
-          docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v "$HOME/.cache/trivy:/root/.cache/trivy" \
-            "${EXTRA[@]}" \
-            ghcr.io/aquasecurity/trivy:${TRIVY_VERSION} image \
-            --exit-code 1 --ignore-unfixed --severity CRITICAL,HIGH --format table \
-            "${IGN[@]}" \
-            "${IMAGE}:${GITHUB_SHA}"
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          version: v${{ env.TRIVY_VERSION }}
+          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+          # optional temporary exceptions: used only if a .trivyignore file exists in the repo root
+          trivyignores: ${{ hashFiles('.trivyignore') != '' && '.trivyignore' || '' }}
 
       - name: Tag + push to ECR (only if scan passed)
         uses: docker/build-push-action@v6
