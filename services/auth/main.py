@@ -117,5 +117,5 @@ def resend_confirmation(u=Depends(current_user)):
 @app.post("/auth/notifications/test")
 def test_email(u=Depends(current_user)):
     notify(u["sub"], "Test email - Hospital Management",
-           "This is a test. If you can read this, email alerts and payment receipts will reach you.")
+           "This is a test. If you can read this, email alerts and payment receipts will reach you.", strict=True)
     return {"ok": True, "email": u["sub"]}

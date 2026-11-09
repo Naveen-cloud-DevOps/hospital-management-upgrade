@@ -95,9 +95,12 @@ def subscribe(email):
     return None
 
 
-def notify(email, subject, message):
+def notify(email, subject, message, strict=False):
+    """Send mail from the Gmail account. strict=True raises an error that says WHY it failed (used by 'Send test email')."""
     if not SMTP_PASS:
         print("email not sent: SMTP_PASS is not set")
+        if strict:
+            raise HTTPException(502, "Email not configured: SMTP_PASS (Gmail App Password) is empty in the cluster secret")
         return False
     try:
         m = EmailMessage()
@@ -111,7 +114,9 @@ def notify(email, subject, message):
             srv.send_message(m)
         return True
     except Exception as e:
-        print("email failed", e)
+        print("email failed", repr(e))
+        if strict:
+            raise HTTPException(502, f"Email failed: {e}")
         return False
 
 
