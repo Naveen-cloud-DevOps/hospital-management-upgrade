@@ -100,6 +100,9 @@ jobs:
         run: kubectl apply -f monitoring/dashboard-pod-logs.yaml
 
       - name: Get Grafana and Prometheus URLs
+        env:
+          GRAFANA_ADMIN_USER: ${{ secrets.GRAFANA_ADMIN_USER || 'ritik' }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         run: |
           get_host() {
             for i in $(seq 1 40); do
@@ -120,18 +123,25 @@ jobs:
               sleep 10
             done
           done
+          # GitHub hides secret values as *** in logs, so the password is printed with a space
+          # between each character (remove the spaces when you type it in).
+          SHOW_PASS=$(printf '%s' "$GRAFANA_ADMIN_PASSWORD" | sed 's/./& /g; s/ $//')
           {
             echo "## Monitoring deployed"
             echo ""
             echo "**Grafana URL:** $GRAFANA_URL"
             echo ""
-            echo "**Grafana username:** ${{ secrets.GRAFANA_ADMIN_USER || 'ritik' }}  (password = your GRAFANA_ADMIN_PASSWORD secret)"
+            echo "**Grafana username:** $GRAFANA_ADMIN_USER"
+            echo ""
+            echo "**Grafana password:** $SHOW_PASS   (one space between each character - remove the spaces)"
             echo ""
             echo "**Prometheus URL:** $PROM_URL"
             echo ""
             echo "CPU alerts are emailed through Alertmanager. Pod logs: Grafana > Dashboards > Pod Logs (Loki)."
           } >> "$GITHUB_STEP_SUMMARY"
           echo "=============================================="
-          echo " GRAFANA URL   : $GRAFANA_URL"
-          echo " PROMETHEUS URL: $PROM_URL"
+          echo " GRAFANA URL     : $GRAFANA_URL"
+          echo " GRAFANA USERNAME: $GRAFANA_ADMIN_USER"
+          echo " GRAFANA PASSWORD: $SHOW_PASS   (one space between each character - remove the spaces)"
+          echo " PROMETHEUS URL  : $PROM_URL"
           echo "=============================================="
