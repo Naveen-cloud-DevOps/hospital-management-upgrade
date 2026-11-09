@@ -17,4 +17,5 @@ data:
   RECEIPT_BUCKET: hms-383975042508-payment-receipts
   PHOTO_BUCKET: hms-383975042508-patient-photos
   APPOINTMENT_BUCKET: hms-383975042508-appointments
-  SMTP_USER: ritikranjanpatispiderhacker@gmail.com
+  SMTP_USER: ritikranjanspiderhacker@gmail.com
+  SMTP_NAME: Ritik HMS

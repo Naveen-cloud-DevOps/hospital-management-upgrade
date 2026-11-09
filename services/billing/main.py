@@ -28,7 +28,7 @@ class Payment(BaseModel):
 def receipt_text(r):
     when = r["created_at"]
     when = f"{when:%Y-%m-%d %H:%M}" if hasattr(when, "strftime") else str(when)[:16]
-    return (f"HOSPITAL MANAGEMENT - PAYMENT RECEIPT\n\nReceipt #: {r['id']}\nDate: {when}\n"
+    return (f"RITIK HMS - PAYMENT RECEIPT\n\nReceipt #: {r['id']}\nDate: {when}\n"
             f"Patient: {r['patient_name']} (ID {r['patient_id']})\nAmount: {float(r['amount']):.2f}\n"
             f"Method: {r['method']}\nReceived by: {r['created_by']}\n\nThank you.\n")
 
@@ -58,7 +58,7 @@ def pay(p: Payment, u=Depends(current_user)):
     write("UPDATE payments SET receipt_key=%s WHERE id=%s", (key, row["id"]))
     sent = unique(u["sub"], p.patient_email)          # staff member who took the payment + the patient
     for to in sent:
-        notify(to, f"Payment receipt #{row['id']}", text)
+        notify(to, f"Payment receipt #{row['id']} - Ritik HMS", text)
     return {"id": row["id"], "receipt_url": presign(BUCKET, key), "emailed_to": sent,
             "created_at": row["created_at"].isoformat()}
 

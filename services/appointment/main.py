@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS appointments(
  status_updated_at TIMESTAMPTZ DEFAULT now(), record_key TEXT, created_at TIMESTAMPTZ DEFAULT now());
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS patient_mobile TEXT;
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS alt_email TEXT;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS patient_email TEXT;
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ;
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS sms_sent BOOLEAN;
 CREATE UNIQUE INDEX IF NOT EXISTS one_booking_per_slot ON appointments(doctor_id, appt_date, appt_time) WHERE status<>'cancelled';
@@ -69,12 +70,13 @@ def pretty(d, tm):
 
 def appt_text(a, title):
     day, tm = pretty(a["appt_date"], a["appt_time"])
-    return "\n".join([f"HOSPITAL MANAGEMENT - {title}", "",
+    return "\n".join([f"RITIK HMS - {title}", "",
                       f"Appointment ID: {a['id']}", f"Patient: {a['patient_name']}",
                       f"Doctor: {a['doctor']} ({a['speciality']})", f"Consultation fee: Rs. {a['fee']}",
                       f"Mobile: {a.get('patient_mobile') or '-'}", f"Date: {day}", f"Time: {tm}",
                       f"Status: {a['status']}", f"Reason: {a.get('reason') or '-'}", "",
-                      "Please arrive 10 minutes early. You can cancel from the Appointments page.", ""])
+                      "Please arrive 10 minutes early.",
+                      "Thank you for booking with Ritik HMS.", ""])
 
 
 def save_record(a):
@@ -85,7 +87,7 @@ def save_record(a):
                                "date": str(a["appt_date"]), "time": a["appt_time"], "patient_name": a["patient_name"],
                                "reason": a.get("reason") or "", "booked_by": a["booked_by"], "status": a["status"],
                                "fee": a["fee"], "patient_mobile": a.get("patient_mobile") or "",
-                               "alt_email": a.get("alt_email") or "",
+                               "patient_email": a.get("patient_email") or "",
                                "confirmed_at": str(a["confirmed_at"]) if a.get("confirmed_at") else None,
                                "updated_at": now_ist().isoformat()})
         write("UPDATE appointments SET record_key=%s WHERE id=%s", (key, a["id"]))
@@ -107,7 +109,7 @@ class Booking(BaseModel):
     time: str
     patient_name: str = ""
     patient_mobile: str = ""
-    alt_email: str = ""
+    patient_email: str
     reason: str = ""
 
 
@@ -138,29 +140,26 @@ def book(b: Booking, u=Depends(current_user)):
         raise HTTPException(404, "Doctor not found")
     name = (b.patient_name or "").strip()[:100] or u["sub"]
     mobile = clean_mobile(b.patient_mobile)
-    alt = (b.alt_email or "").strip().lower()[:150]
-    if alt and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", alt):
-        raise HTTPException(400, "Enter a valid alternative email")
+    email = (b.patient_email or "").strip().lower()[:150]
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        raise HTTPException(400, "Enter a valid patient email")
     try:
-        row = write("INSERT INTO appointments(doctor_id,appt_date,appt_time,patient_name,patient_mobile,alt_email,reason,booked_by) "
+        row = write("INSERT INTO appointments(doctor_id,appt_date,appt_time,patient_name,patient_mobile,patient_email,reason,booked_by) "
                     "VALUES(%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
-                    (b.doctor_id, b.date, b.time, name, mobile, alt or None, b.reason.strip()[:300], u["sub"]), fetch=True)[0]
+                    (b.doctor_id, b.date, b.time, name, mobile, email, b.reason.strip()[:300], u["sub"]), fetch=True)[0]
     except psycopg2.errors.UniqueViolation:
         raise HTTPException(409, "That time is already booked. Please pick another slot.")
     a = get_full(row["id"])
     save_record(a)
-    notify(u["sub"], f"Appointment booked - {a['doctor']}", appt_text(a, "APPOINTMENT BOOKED"))
-    if alt and alt != u["sub"]:
-        subscribe(alt)
-        notify(alt, f"Appointment booked - {a['doctor']}", appt_text(a, "APPOINTMENT BOOKED"))
+    notify(email, "Booking done from Ritik HMS", appt_text(a, "BOOKING DONE FROM RITIK HMS"))
     day, tm = pretty(b.date, b.time)
     return {"id": a["id"], "doctor": a["doctor"], "date": day, "time": tm, "status": a["status"],
-            "fee": a["fee"], "emailed_to": u["sub"]}
+            "fee": a["fee"], "emailed_to": email}
 
 
 @app.get("/appointments")
 def my_appointments(u=Depends(current_user)):
-    q = ("SELECT a.id,a.appt_date,a.appt_time,a.patient_name,a.patient_mobile,a.alt_email,a.reason,a.status,a.booked_by,"
+    q = ("SELECT a.id,a.appt_date,a.appt_time,a.patient_name,a.patient_mobile,a.patient_email,a.alt_email,a.reason,a.status,a.booked_by,"
          "a.confirmed_at,a.sms_sent,d.name AS doctor,d.speciality,d.fee "
          "FROM appointments a JOIN doctors d ON d.id=a.doctor_id ")
     if u["role"] == "admin":
@@ -172,7 +171,7 @@ def change_status(a, status, title):
     write("UPDATE appointments SET status=%s, status_updated_at=now() WHERE id=%s", (status, a["id"]))
     a["status"] = status
     save_record(a)
-    notify(a["booked_by"], f"{title.title()} - {a['doctor']}", appt_text(a, title))
+    notify(a.get("patient_email") or a["booked_by"], f"{title.title()} - {a['doctor']}", appt_text(a, title))
 
 
 @app.post("/appointments/{aid}/confirm")

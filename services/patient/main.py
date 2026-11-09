@@ -52,7 +52,7 @@ def with_photo(rows):
 
 def details_text(p, weeks=None, title="PATIENT DETAILS"):
     addr = ", ".join(x for x in (p.get("address"), p.get("city"), p.get("state")) if x) or "-"
-    lines = [f"HOSPITAL MANAGEMENT - {title}", "",
+    lines = [f"RITIK HMS - {title}", "",
              f"Patient ID: {p['id']}", f"Name: {p['first_name']} {p['last_name']}",
              f"Age / Gender: {p.get('age') or '-'} / {p.get('gender') or '-'}", f"Mobile: {p.get('mobile') or '-'}",
              f"Blood group: {p.get('blood_group') or '-'}", f"Address: {addr}",
@@ -73,7 +73,7 @@ def add_patient(p: Patient, u=Depends(current_user)):
                 [*d.values(), u["sub"]], fetch=True)[0]
     if p.email:
         subscribe(p.email)
-        notify(p.email, "Registration confirmed - Hospital Management",
+        notify(p.email, "Registration confirmed - Ritik HMS",
                details_text({**d, "id": row["id"]}, title="REGISTRATION CONFIRMED"))
     return {**row, "emailed_to": p.email}
 
@@ -149,4 +149,3 @@ def set_status(tid: int, s: Status, _=Depends(current_user)):
         raise HTTPException(400, "Bad status")
     write("UPDATE tokens SET status=%s WHERE id=%s", (s.status, tid))
     return {"ok": True}
-

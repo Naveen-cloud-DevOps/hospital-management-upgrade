@@ -269,13 +269,13 @@ en:{app:'Hospital Management',tagline:'Patient records, the daily queue and paym
  account:'Account',mail_banner:'Turn on email alerts: AWS sent a confirmation email to {e}. Open it and click "Confirm subscription".',resend_mail:'Resend email',mail_done:"I've confirmed",
  email_details:'Email details',receipt_title:'Payment receipt',print:'Print',download:'Download file',email_again:'Email again',emailed_to:'Emailed to',sent_to:'Sent to {e}',
  no_patient_email:'This patient has no email on file, so the details were sent to you only.',test_mail:'Send test email',mail_h:'Email notifications',
- mail_p:'Emails are sent from ritikranjanpatispiderhacker@gmail.com. No confirmation is needed.',
+ mail_p:'Emails are sent from ritikranjanspiderhacker@gmail.com. No confirmation is needed.',
  mail_login:'A welcome email each time you sign in',mail_receipts:'A receipt whenever you record a payment',mail_appt:'Doctor name, date and time whenever you book an appointment',mail_details:'Patient details when you press Email details',
  email_hint:'Optional. Registration details and receipts are emailed here.',view_receipt:'Receipt',pay_done:'Payment saved',
  mail_resent:'Confirmation email sent to {e}',mail_test_sent:'Test email sent to {e}',
  appointments:'Appointments',book_title:'Book a doctor',book_sub:'Pick a doctor, a date and a time. A confirmation email is sent to you straight away.',
  doctor:'Doctor',pick_doctor:'Choose a doctor',appt_date:'Date',appt_time:'Time slot',pick_time:'Choose a date and a doctor to see free times',no_slots:'No free slots on this date',
- appt_patient:'Patient name',appt_mobile:'Mobile number',appt_alt:'Alternative email (optional)',fee:'Doctor fee',confirm_yes:'Yes, confirm',confirmed:'Confirmed',sms_ok:'Confirmed. SMS sent to {m}',sms_fail:'Confirmed, but the SMS could not be sent to {m}',bad_mobile:'Enter a valid 10-digit mobile number',reason:'Reason for visit',book_now:'Book appointment',booked_ok:'Booked with {d} on {dt} at {tm}. Confirmation sent to {e}',
+ appt_patient:'Patient name',appt_mobile:'Mobile number',appt_alt:'Patient email',fee:'Doctor fee',confirm_yes:'Yes, confirm',confirmed:'Confirmed',sms_ok:'Confirmed. SMS sent to {m}',sms_fail:'Confirmed, but the SMS could not be sent to {m}',bad_mobile:'Enter a valid 10-digit mobile number',reason:'Reason for visit',book_now:'Book appointment',booked_ok:'Booked with {d} on {dt} at {tm}. Confirmation sent to {e}',
  my_appts:'My appointments',all_appts:'All appointments',no_appts:'No appointments yet',no_appts_s:'Book your first doctor appointment above.',
  cancel_appt:'Cancel',complete_appt:'Mark completed',cancelled:'Cancelled',completed:'Completed',booked:'Booked',appt_cancelled:'Appointment cancelled. Email sent.',pick_all:'Choose a doctor, date and time.',
  other:'Other',male:'Male',female:'Female',cash:'Cash',card_m:'Card',upi:'UPI'},
@@ -560,7 +560,7 @@ const todayStr=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezone
 const fmtT=x=>{const [h,m]=x.split(':').map(Number);return ((h%12)||12)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM')};
 function apptRows(){
  if(!S.appts.length)return `<tr><td colspan="8"><div class="empty"><b>${t('no_appts')}</b>${t('no_appts_s')}</div></td></tr>`;
- return S.appts.map(a=>`<tr><td><b>${esc(a.doctor)}</b><br><small>${esc(a.speciality)}</small></td><td>${fmtD(a.appt_date+'T00:00:00')}</td><td>${fmtT(a.appt_time)}</td><td>${esc(a.patient_name)}${a.alt_email?`<br><small>${esc(a.alt_email)}</small>`:''}</td><td>₹${esc(a.fee)}</td><td>${esc(a.patient_mobile||'-')}</td>
+ return S.appts.map(a=>`<tr><td><b>${esc(a.doctor)}</b><br><small>${esc(a.speciality)}</small></td><td>${fmtD(a.appt_date+'T00:00:00')}</td><td>${fmtT(a.appt_time)}</td><td>${esc(a.patient_name)}${(a.patient_email||a.alt_email)?`<br><small>${esc(a.patient_email||a.alt_email)}</small>`:''}</td><td>₹${esc(a.fee)}</td><td>${esc(a.patient_mobile||'-')}</td>
   <td><span class="pill ${a.status==='booked'&&a.confirmed_at?'done':({booked:'in-progress',completed:'done',cancelled:'waiting'})[a.status]||''}">${a.status==='booked'&&a.confirmed_at?t('confirmed'):t(a.status)}</span></td>
   <td>${a.status==='booked'?(S.role==='admin'&&!a.confirmed_at?`<button class="btn sm" data-act="confirmAppt" data-id="${a.id}">${t('confirm_yes')}</button> `:'')+`<button class="btn ghost sm" data-act="cancelAppt" data-id="${a.id}">${t('cancel_appt')}</button>`+(S.role==='admin'?` <button class="btn sm" data-act="completeAppt" data-id="${a.id}">${t('complete_appt')}</button>`:''):''}</td></tr>`).join('')}
 function pAppointments(){
@@ -570,7 +570,7 @@ function pAppointments(){
   <label class="fld"><span>${t('appt_date')}</span><input name="date" type="date" min="${todayStr()}" required></label>
   <label class="fld"><span>${t('appt_patient')}</span><input name="patient_name" value="${esc(S.name)}" maxlength="100" required></label>
   <label class="fld"><span>${t('appt_mobile')}</span><input name="patient_mobile" type="tel" inputmode="tel" maxlength="16" placeholder="9876543210" required></label>
-  <label class="fld"><span>${t('appt_alt')}</span><input name="alt_email" type="email" maxlength="150"></label>
+  <label class="fld"><span>${t('appt_alt')}</span><input name="patient_email" type="email" maxlength="150" required></label>
   <label class="fld full"><span>${t('appt_time')}</span><input type="hidden" name="time"><div id="slots" class="slots"><p class="hint">${t('pick_time')}</p></div></label>
   <label class="fld full"><span>${t('reason')}</span><input name="reason" maxlength="300"></label>
  </div><p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">${t('book_now')}</button></div></form></div>
@@ -710,7 +710,7 @@ const FORMS={
   const d=Object.fromEntries(new FormData(f));
   if(!d.doctor_id||!d.date||!d.time)return ferr(t('pick_all'));
   if(!/^(\+?91|0)?[6-9]\d{9}$/.test(d.patient_mobile.replace(/[\s-]/g,'')))return ferr(t('bad_mobile'));
-  const r=await busy(btn,'…',()=>api('/appointments',{json:{doctor_id:+d.doctor_id,date:d.date,time:d.time,patient_name:d.patient_name.trim(),patient_mobile:d.patient_mobile.trim(),alt_email:d.alt_email.trim(),reason:d.reason.trim()}}));
+  const r=await busy(btn,'…',()=>api('/appointments',{json:{doctor_id:+d.doctor_id,date:d.date,time:d.time,patient_name:d.patient_name.trim(),patient_mobile:d.patient_mobile.trim(),patient_email:d.patient_email.trim(),reason:d.reason.trim()}}));
   toast(t('booked_ok',{d:r.doctor,dt:r.date,tm:r.time,e:r.emailed_to}));f.reason.value='';await loadSlots();await refreshAppts()},
  async user(f,btn){
   const d=Object.fromEntries(new FormData(f));d.email=d.email.trim().toLowerCase();d.name=d.name.trim();
