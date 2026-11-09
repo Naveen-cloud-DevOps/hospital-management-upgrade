@@ -117,6 +117,11 @@ data "aws_iam_policy_document" "app" {
     actions   = ["sns:Publish", "sns:Subscribe"]
     resources = [aws_sns_topic.notify.arn]
   }
+  statement {
+    # direct SMS to a phone number (appointment confirmation)
+    actions   = ["sns:Publish"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_policy" "app" {

@@ -275,7 +275,7 @@ en:{app:'Hospital Management',tagline:'Patient records, the daily queue and paym
  mail_resent:'Confirmation email sent to {e}',mail_test_sent:'Test email sent to {e}',
  appointments:'Appointments',book_title:'Book a doctor',book_sub:'Pick a doctor, a date and a time. A confirmation email is sent to you straight away.',
  doctor:'Doctor',pick_doctor:'Choose a doctor',appt_date:'Date',appt_time:'Time slot',pick_time:'Choose a date and a doctor to see free times',no_slots:'No free slots on this date',
- appt_patient:'Patient name',reason:'Reason for visit',book_now:'Book appointment',booked_ok:'Booked with {d} on {dt} at {tm}. Confirmation sent to {e}',
+ appt_patient:'Patient name',appt_mobile:'Mobile number',appt_alt:'Alternative email (optional)',fee:'Doctor fee',confirm_yes:'Yes, confirm',confirmed:'Confirmed',sms_ok:'Confirmed. SMS sent to {m}',sms_fail:'Confirmed, but the SMS could not be sent to {m}',bad_mobile:'Enter a valid 10-digit mobile number',reason:'Reason for visit',book_now:'Book appointment',booked_ok:'Booked with {d} on {dt} at {tm}. Confirmation sent to {e}',
  my_appts:'My appointments',all_appts:'All appointments',no_appts:'No appointments yet',no_appts_s:'Book your first doctor appointment above.',
  cancel_appt:'Cancel',complete_appt:'Mark completed',cancelled:'Cancelled',completed:'Completed',booked:'Booked',appt_cancelled:'Appointment cancelled. Email sent.',pick_all:'Choose a doctor, date and time.',
  other:'Other',male:'Male',female:'Female',cash:'Cash',card_m:'Card',upi:'UPI'},
@@ -559,21 +559,23 @@ function pReports(){
 const todayStr=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
 const fmtT=x=>{const [h,m]=x.split(':').map(Number);return ((h%12)||12)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM')};
 function apptRows(){
- if(!S.appts.length)return `<tr><td colspan="6"><div class="empty"><b>${t('no_appts')}</b>${t('no_appts_s')}</div></td></tr>`;
- return S.appts.map(a=>`<tr><td><b>${esc(a.doctor)}</b><br><small>${esc(a.speciality)}</small></td><td>${fmtD(a.appt_date+'T00:00:00')}</td><td>${fmtT(a.appt_time)}</td><td>${esc(a.patient_name)}</td>
-  <td><span class="pill ${({booked:'in-progress',completed:'done',cancelled:'waiting'})[a.status]||''}">${t(a.status)}</span></td>
-  <td>${a.status==='booked'?`<button class="btn ghost sm" data-act="cancelAppt" data-id="${a.id}">${t('cancel_appt')}</button>`+(S.role==='admin'?` <button class="btn sm" data-act="completeAppt" data-id="${a.id}">${t('complete_appt')}</button>`:''):''}</td></tr>`).join('')}
+ if(!S.appts.length)return `<tr><td colspan="8"><div class="empty"><b>${t('no_appts')}</b>${t('no_appts_s')}</div></td></tr>`;
+ return S.appts.map(a=>`<tr><td><b>${esc(a.doctor)}</b><br><small>${esc(a.speciality)}</small></td><td>${fmtD(a.appt_date+'T00:00:00')}</td><td>${fmtT(a.appt_time)}</td><td>${esc(a.patient_name)}${a.alt_email?`<br><small>${esc(a.alt_email)}</small>`:''}</td><td>₹${esc(a.fee)}</td><td>${esc(a.patient_mobile||'-')}</td>
+  <td><span class="pill ${a.status==='booked'&&a.confirmed_at?'done':({booked:'in-progress',completed:'done',cancelled:'waiting'})[a.status]||''}">${a.status==='booked'&&a.confirmed_at?t('confirmed'):t(a.status)}</span></td>
+  <td>${a.status==='booked'?(S.role==='admin'&&!a.confirmed_at?`<button class="btn sm" data-act="confirmAppt" data-id="${a.id}">${t('confirm_yes')}</button> `:'')+`<button class="btn ghost sm" data-act="cancelAppt" data-id="${a.id}">${t('cancel_appt')}</button>`+(S.role==='admin'?` <button class="btn sm" data-act="completeAppt" data-id="${a.id}">${t('complete_appt')}</button>`:''):''}</td></tr>`).join('')}
 function pAppointments(){
  return `<div class="page-h"><div><h1>${t('book_title')}</h1><p>${t('book_sub')}</p></div></div>
  <div class="panel" style="padding:18px"><form data-form="book"><div class="fg">
-  <label class="fld full"><span>${t('doctor')}</span><select name="doctor_id" required><option value="">${t('pick_doctor')}</option>${S.docs.map(d=>`<option value="${d.id}">${esc(d.name)} - ${esc(d.speciality)}</option>`).join('')}</select></label>
+  <label class="fld full"><span>${t('doctor')}</span><select name="doctor_id" required><option value="">${t('pick_doctor')}</option>${S.docs.map(d=>`<option value="${d.id}" data-fee="${d.fee}">${esc(d.name)} - ${esc(d.speciality)} - ₹${d.fee}</option>`).join('')}</select><b id="feebox" style="display:none;margin-top:6px;color:var(--brand)"></b></label>
   <label class="fld"><span>${t('appt_date')}</span><input name="date" type="date" min="${todayStr()}" required></label>
   <label class="fld"><span>${t('appt_patient')}</span><input name="patient_name" value="${esc(S.name)}" maxlength="100" required></label>
+  <label class="fld"><span>${t('appt_mobile')}</span><input name="patient_mobile" type="tel" inputmode="tel" maxlength="16" placeholder="9876543210" required></label>
+  <label class="fld"><span>${t('appt_alt')}</span><input name="alt_email" type="email" maxlength="150"></label>
   <label class="fld full"><span>${t('appt_time')}</span><input type="hidden" name="time"><div id="slots" class="slots"><p class="hint">${t('pick_time')}</p></div></label>
   <label class="fld full"><span>${t('reason')}</span><input name="reason" maxlength="300"></label>
  </div><p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">${t('book_now')}</button></div></form></div>
  <div class="page-h" style="margin-top:22px"><div><h1 style="font-size:18px">${t(S.role==='admin'?'all_appts':'my_appts')}</h1></div></div>
- <div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>${t('doctor')}</th><th>${t('appt_date')}</th><th>${t('appt_time')}</th><th>${t('patient')}</th><th></th><th></th></tr></thead><tbody id="abody">${apptRows()}</tbody></table></div></div>`}
+ <div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>${t('doctor')}</th><th>${t('appt_date')}</th><th>${t('appt_time')}</th><th>${t('patient')}</th><th>${t('fee')}</th><th>${t('appt_mobile')}</th><th></th><th></th></tr></thead><tbody id="abody">${apptRows()}</tbody></table></div></div>`}
 async function loadSlots(){
  const f=$('form[data-form="book"]');if(!f)return;
  const did=f.doctor_id.value,date=f.date.value,box=$('#slots');f.time.value='';
@@ -652,6 +654,7 @@ const ACT={
  emailPatient:async b=>{b.disabled=true;try{const r=await api('/patients/'+b.dataset.id+'/email',{method:'POST'});toast(r.patient_has_email?t('sent_to',{e:r.emailed_to.join(', ')}):t('no_patient_email'))}catch(e){toast(e.message,'err')}b.disabled=false},
  pickSlot:b=>{const f=$('form[data-form="book"]');f.time.value=b.dataset.t;document.querySelectorAll('.slot').forEach(x=>x.classList.toggle('on',x===b))},
  cancelAppt:async b=>{if(!confirm(t('cancel_appt')+'?'))return;b.disabled=true;try{await api('/appointments/'+b.dataset.id+'/cancel',{method:'POST'});toast(t('appt_cancelled'));await refreshAppts()}catch(e){toast(e.message,'err');b.disabled=false}},
+ confirmAppt:async b=>{b.disabled=true;try{const r=await api('/appointments/'+b.dataset.id+'/confirm',{method:'POST'});toast(t(r.sms_sent?'sms_ok':'sms_fail',{m:r.to||''}),r.sms_sent?'':'err');await refreshAppts()}catch(e){toast(e.message,'err');b.disabled=false}},
  completeAppt:async b=>{b.disabled=true;try{await api('/appointments/'+b.dataset.id+'/complete',{method:'POST'});await refreshAppts()}catch(e){toast(e.message,'err');b.disabled=false}},
  status:async b=>{b.disabled=true;try{await api('/queue/'+b.dataset.id,{json:{status:b.dataset.s},method:'PATCH'});await refreshQueue()}catch(e){toast(e.message,'err');b.disabled=false}}
 };
@@ -661,6 +664,7 @@ document.addEventListener('click',e=>{
  const f=ACT[b.dataset.act];if(f){if(b.tagName==='A')e.preventDefault();f(b,e)}});
 document.addEventListener('change',e=>{
  if(e.target.closest('form[data-form="book"]')&&['doctor_id','date'].includes(e.target.name))loadSlots();
+ if(e.target.name==='doctor_id'&&e.target.closest('form[data-form="book"]')){const o=e.target.selectedOptions[0],fb=$('#feebox');if(fb){fb.style.display=o&&o.dataset.fee?'block':'none';fb.textContent=o&&o.dataset.fee?t('fee')+': ₹'+o.dataset.fee:''}}
  if(e.target.dataset.change==='lang'){S.lang=e.target.value;store.set('lang',S.lang);render()}});
 document.addEventListener('input',e=>{
  if(e.target.id==='psearch'){S.q=e.target.value;$('#ptbody').innerHTML=ptRows(filtered())}
@@ -705,7 +709,8 @@ const FORMS={
  async book(f,btn){
   const d=Object.fromEntries(new FormData(f));
   if(!d.doctor_id||!d.date||!d.time)return ferr(t('pick_all'));
-  const r=await busy(btn,'…',()=>api('/appointments',{json:{doctor_id:+d.doctor_id,date:d.date,time:d.time,patient_name:d.patient_name.trim(),reason:d.reason.trim()}}));
+  if(!/^(\+?91|0)?[6-9]\d{9}$/.test(d.patient_mobile.replace(/[\s-]/g,'')))return ferr(t('bad_mobile'));
+  const r=await busy(btn,'…',()=>api('/appointments',{json:{doctor_id:+d.doctor_id,date:d.date,time:d.time,patient_name:d.patient_name.trim(),patient_mobile:d.patient_mobile.trim(),alt_email:d.alt_email.trim(),reason:d.reason.trim()}}));
   toast(t('booked_ok',{d:r.doctor,dt:r.date,tm:r.time,e:r.emailed_to}));f.reason.value='';await loadSlots();await refreshAppts()},
  async user(f,btn){
   const d=Object.fromEntries(new FormData(f));d.email=d.email.trim().toLowerCase();d.name=d.name.trim();

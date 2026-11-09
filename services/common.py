@@ -93,6 +93,17 @@ def subscribe(email):
         print("sns subscribe failed", e)
 
 
+def send_sms(phone, message):
+    """Direct SMS to a phone number (E.164, e.g. +919876543210). Returns True/False."""
+    try:
+        sns.publish(PhoneNumber=phone, Message=message[:600],
+                    MessageAttributes={"AWS.SNS.SMS.SMSType": {"DataType": "String", "StringValue": "Transactional"}})
+        return True
+    except Exception as e:
+        print("sns sms failed", e)
+        return False
+
+
 def notify(email, subject, message):
     try:
         sns.publish(TopicArn=TOPIC, Subject=subject[:99], Message=message,
