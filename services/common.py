@@ -1,5 +1,7 @@
 """Shared helpers: DB (primary=write, replica=read), JWT auth, S3, SNS."""
-import json, os, time
+import json, os, smtplib, ssl, time
+from email.message import EmailMessage
+from email.utils import formataddr
 import boto3, jwt, psycopg2
 from botocore.config import Config
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -8,6 +10,9 @@ from psycopg2.extras import RealDictCursor
 REGION = os.environ.get("AWS_REGION", "us-east-1")
 SECRET = os.environ.get("JWT_SECRET", "dev-secret")
 TOPIC = os.environ.get("SNS_TOPIC_ARN", "")
+SMTP_USER = os.environ.get("SMTP_USER", "ritikranjanpatispiderhacker@gmail.com")   # sender (Gmail)
+SMTP_PASS = os.environ.get("SMTP_PASS", "").replace(" ", "")                        # Gmail App Password
+SMTP_NAME = os.environ.get("SMTP_NAME", "Hospital Management")
 s3 = boto3.client("s3", region_name=REGION, config=Config(signature_version="s3v4"))
 sns = boto3.client("sns", region_name=REGION)
 
@@ -84,15 +89,33 @@ def presign(bucket, key, secs=900):
     return s3.generate_presigned_url("get_object", Params={"Bucket": bucket, "Key": key}, ExpiresIn=secs)
 
 
-# ---------- SNS (per-user mail using subscription filter on attribute "to") ----------
+# ---------- Email: sent from the Gmail account above (SMTP), not AWS SNS ----------
 def subscribe(email):
+    """Kept so old calls still work. Gmail SMTP needs no per-address confirmation."""
+    return None
+
+
+def notify(email, subject, message):
+    if not SMTP_PASS:
+        print("email not sent: SMTP_PASS is not set")
+        return False
     try:
-        sns.subscribe(TopicArn=TOPIC, Protocol="email", Endpoint=email,
-                      Attributes={"FilterPolicy": json.dumps({"to": [email]})})
+        m = EmailMessage()
+        m["From"] = formataddr((SMTP_NAME, SMTP_USER))
+        m["To"] = email
+        m["Subject"] = subject[:150]
+        m.set_content(message)
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as srv:
+            srv.starttls(context=ssl.create_default_context())
+            srv.login(SMTP_USER, SMTP_PASS)
+            srv.send_message(m)
+        return True
     except Exception as e:
-        print("sns subscribe failed", e)
+        print("email failed", e)
+        return False
 
 
+# ---------- SMS (AWS SNS direct to phone number) ----------
 def send_sms(phone, message):
     """Direct SMS to a phone number (E.164, e.g. +919876543210). Returns True/False."""
     try:
@@ -102,11 +125,3 @@ def send_sms(phone, message):
     except Exception as e:
         print("sns sms failed", e)
         return False
-
-
-def notify(email, subject, message):
-    try:
-        sns.publish(TopicArn=TOPIC, Subject=subject[:99], Message=message,
-                    MessageAttributes={"to": {"DataType": "String", "StringValue": email}})
-    except Exception as e:
-        print("sns publish failed", e)

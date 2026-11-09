@@ -179,12 +179,14 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
         run: |
           kubectl create ns hms --dry-run=client -o yaml | kubectl apply -f -
           kubectl -n hms create secret generic hms-secrets \
             --from-literal=JWT_SECRET="$JWT_SECRET" \
             --from-literal=ADMIN_EMAIL="$ADMIN_EMAIL" \
             --from-literal=ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+            --from-literal=SMTP_PASS="$SMTP_PASS" \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Create DB connection secrets (RDS endpoints discovered automatically)
