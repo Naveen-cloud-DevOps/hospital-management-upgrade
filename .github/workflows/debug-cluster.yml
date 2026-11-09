@@ -1,0 +1,49 @@
+name: debug-cluster
+# Manual helper: prints the state of the cluster (pods, events, logs) in the run log.
+# Run it from Actions > debug-cluster > Run workflow. It changes nothing.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: false
+
+      - name: Connect to EKS
+        run: |
+          aws sts get-caller-identity --query Account --output text | sed 's/^/AWS account: /'
+          aws eks update-kubeconfig --name hms-eks --region "$AWS_REGION"
+          kubectl get nodes -o wide
+
+      - name: Pods, services, ingress
+        run: |
+          kubectl -n hms get pods -o wide || true
+          echo; kubectl -n hms get svc,ingress || true
+          echo; kubectl -n hms get secrets || true
+          echo; kubectl -n argocd get app hospital-management || true
+
+      - name: Describe and show logs of every pod that is not Ready
+        run: |
+          for p in $(kubectl -n hms get pods --no-headers | awk '{split($2,a,"/"); if ($3!="Running" || a[1]!=a[2]) print $1}'); do
+            echo "=================== $p ==================="
+            kubectl -n hms describe pod "$p" | tail -40
+            echo "----- logs -----"
+            kubectl -n hms logs "$p" --tail=60 --all-containers 2>&1 || true
+            kubectl -n hms logs "$p" --previous --tail=60 2>&1 || true
+          done
+
+      - name: Recent events
+        run: kubectl -n hms get events --sort-by=.lastTimestamp | tail -40
