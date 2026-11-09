@@ -95,7 +95,7 @@ def subscribe(email):
     return None
 
 
-def notify(email, subject, message, strict=False):
+def notify(email, subject, message, strict=False, attachments=None):
     """Send mail from the Gmail account. strict=True raises an error that says WHY it failed (used by 'Send test email')."""
     if not SMTP_PASS:
         print("email not sent: SMTP_PASS is not set")
@@ -108,6 +108,8 @@ def notify(email, subject, message, strict=False):
         m["To"] = email
         m["Subject"] = subject[:150]
         m.set_content(message)
+        for fname, text in (attachments or []):          # [(filename, text), ...]
+            m.add_attachment(text.encode(), maintype="text", subtype="plain", filename=fname)
         with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as srv:
             srv.starttls(context=ssl.create_default_context())
             srv.login(SMTP_USER, SMTP_PASS)

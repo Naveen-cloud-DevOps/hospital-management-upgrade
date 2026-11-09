@@ -560,7 +560,7 @@ const todayStr=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezone
 const fmtT=x=>{const [h,m]=x.split(':').map(Number);return ((h%12)||12)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM')};
 function apptRows(){
  if(!S.appts.length)return `<tr><td colspan="8"><div class="empty"><b>${t('no_appts')}</b>${t('no_appts_s')}</div></td></tr>`;
- return S.appts.map(a=>`<tr><td><b>${esc(a.doctor)}</b><br><small>${esc(a.speciality)}</small></td><td>${fmtD(a.appt_date+'T00:00:00')}</td><td>${fmtT(a.appt_time)}</td><td>${esc(a.patient_name)}${(a.patient_email||a.alt_email)?`<br><small>${esc(a.patient_email||a.alt_email)}</small>`:''}</td><td>₹${esc(a.fee)}</td><td>${esc(a.patient_mobile||'-')}</td>
+ return S.appts.map(a=>`<tr><td><b>${esc(a.doctor)}</b><br><small>${esc(a.speciality)}</small></td><td>${fmtD(a.appt_date+'T00:00:00')}</td><td>${fmtT(a.appt_time)}</td><td>${esc(a.patient_name)}${(a.patient_email||a.alt_email)?`<br><small>${esc(a.patient_email||a.alt_email)}</small>`:''}</td><td>₹${esc(a.fee)}<br><small>${esc(a.payment_status||'')}</small></td><td>${esc(a.patient_mobile||'-')}</td>
   <td><span class="pill ${a.status==='booked'&&a.confirmed_at?'done':({booked:'in-progress',completed:'done',cancelled:'waiting'})[a.status]||''}">${a.status==='booked'&&a.confirmed_at?t('confirmed'):t(a.status)}</span></td>
   <td>${a.status==='booked'?(S.role==='admin'&&!a.confirmed_at?`<button class="btn sm" data-act="confirmAppt" data-id="${a.id}">${t('confirm_yes')}</button> `:'')+`<button class="btn ghost sm" data-act="cancelAppt" data-id="${a.id}">${t('cancel_appt')}</button>`+(S.role==='admin'?` <button class="btn sm" data-act="completeAppt" data-id="${a.id}">${t('complete_appt')}</button>`:''):''}</td></tr>`).join('')}
 function pAppointments(){
@@ -572,6 +572,7 @@ function pAppointments(){
   <label class="fld"><span>${t('appt_mobile')}</span><input name="patient_mobile" type="tel" inputmode="tel" maxlength="16" placeholder="9876543210" required></label>
   <label class="fld"><span>${t('appt_alt')}</span><input name="patient_email" type="email" maxlength="150" required></label>
   <label class="fld full"><span>${t('appt_time')}</span><input type="hidden" name="time"><div id="slots" class="slots"><p class="hint">${t('pick_time')}</p></div></label>
+  <label class="fld full"><span>Payment</span><select name="payment_method"><option value="later">Pay at hospital (later)</option><option value="cash">Cash - received now</option><option value="upi">UPI - received now</option><option value="card">Card - received now</option></select></label>
   <label class="fld full"><span>${t('reason')}</span><input name="reason" maxlength="300"></label>
  </div><p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">${t('book_now')}</button></div></form></div>
  <div class="page-h" style="margin-top:22px"><div><h1 style="font-size:18px">${t(S.role==='admin'?'all_appts':'my_appts')}</h1></div></div>
@@ -710,7 +711,7 @@ const FORMS={
   const d=Object.fromEntries(new FormData(f));
   if(!d.doctor_id||!d.date||!d.time)return ferr(t('pick_all'));
   if(!/^(\+?91|0)?[6-9]\d{9}$/.test(d.patient_mobile.replace(/[\s-]/g,'')))return ferr(t('bad_mobile'));
-  const r=await busy(btn,'…',()=>api('/appointments',{json:{doctor_id:+d.doctor_id,date:d.date,time:d.time,patient_name:d.patient_name.trim(),patient_mobile:d.patient_mobile.trim(),patient_email:d.patient_email.trim(),reason:d.reason.trim()}}));
+  const r=await busy(btn,'…',()=>api('/appointments',{json:{doctor_id:+d.doctor_id,date:d.date,time:d.time,patient_name:d.patient_name.trim(),patient_mobile:d.patient_mobile.trim(),patient_email:d.patient_email.trim(),payment_method:d.payment_method,reason:d.reason.trim()}}));
   toast(t('booked_ok',{d:r.doctor,dt:r.date,tm:r.time,e:r.emailed_to}));f.reason.value='';await loadSlots();await refreshAppts()},
  async user(f,btn){
   const d=Object.fromEntries(new FormData(f));d.email=d.email.trim().toLowerCase();d.name=d.name.trim();

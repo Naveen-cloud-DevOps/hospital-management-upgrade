@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS appointments(
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS patient_mobile TEXT;
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS alt_email TEXT;
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS patient_email TEXT;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_method TEXT;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_status TEXT;
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ;
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS sms_sent BOOLEAN;
 CREATE UNIQUE INDEX IF NOT EXISTS one_booking_per_slot ON appointments(doctor_id, appt_date, appt_time) WHERE status<>'cancelled';
@@ -38,6 +40,20 @@ DOCTORS = [("Dr. Anil Kumar", "General Physician", "MBBS, MD", 500),
 SLOTS = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30",
          "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"]      # 1 pm - 2 pm is the lunch break
 IST = timezone(timedelta(hours=5, minutes=30))
+PAY_METHODS = {"later": "Pay at hospital", "cash": "Cash", "upi": "UPI", "card": "Card"}   # later => Pending, others => Paid
+
+
+def pay_line(a):
+    m = PAY_METHODS.get(a.get("payment_method") or "later", "Pay at hospital")
+    return f"{a.get('payment_status') or 'Pending'} - {m} - Rs. {a['fee']}"
+
+
+def receipt_text(a):
+    day, tm = pretty(a["appt_date"], a["appt_time"])
+    return "\n".join(["RITIK HMS - PAYMENT RECEIPT", "", f"Booking ID: {a['id']}", f"Patient: {a['patient_name']}",
+                      f"Doctor: {a['doctor']} ({a['speciality']})", f"Appointment: {day}, {tm}",
+                      f"Amount paid: Rs. {a['fee']}", f"Method: {PAY_METHODS.get(a.get('payment_method'), '-')}",
+                      "Status: Paid", "", "Thank you - Ritik HMS", ""])
 
 
 @app.on_event("startup")
@@ -74,9 +90,9 @@ def appt_text(a, title):
                       f"Appointment ID: {a['id']}", f"Patient: {a['patient_name']}",
                       f"Doctor: {a['doctor']} ({a['speciality']})", f"Consultation fee: Rs. {a['fee']}",
                       f"Mobile: {a.get('patient_mobile') or '-'}", f"Date: {day}", f"Time: {tm}",
-                      f"Status: {a['status']}", f"Reason: {a.get('reason') or '-'}", "",
-                      "Please arrive 10 minutes early.",
-                      "Thank you for booking with Ritik HMS.", ""])
+                      f"Status: {a['status']}", f"Payment: {pay_line(a)}", f"Reason: {a.get('reason') or '-'}", "",
+                      "Please arrive 10 minutes early." if a["status"] == "booked" else "",
+                      "Thank you for choosing Ritik HMS.", ""])
 
 
 def save_record(a):
@@ -88,6 +104,7 @@ def save_record(a):
                                "reason": a.get("reason") or "", "booked_by": a["booked_by"], "status": a["status"],
                                "fee": a["fee"], "patient_mobile": a.get("patient_mobile") or "",
                                "patient_email": a.get("patient_email") or "",
+                               "payment_method": a.get("payment_method") or "", "payment_status": a.get("payment_status") or "",
                                "confirmed_at": str(a["confirmed_at"]) if a.get("confirmed_at") else None,
                                "updated_at": now_ist().isoformat()})
         write("UPDATE appointments SET record_key=%s WHERE id=%s", (key, a["id"]))
@@ -110,6 +127,7 @@ class Booking(BaseModel):
     patient_name: str = ""
     patient_mobile: str = ""
     patient_email: str
+    payment_method: str = "later"
     reason: str = ""
 
 
@@ -143,23 +161,26 @@ def book(b: Booking, u=Depends(current_user)):
     email = (b.patient_email or "").strip().lower()[:150]
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
         raise HTTPException(400, "Enter a valid patient email")
+    method = b.payment_method if b.payment_method in PAY_METHODS else "later"
+    pstatus = "Pending" if method == "later" else "Paid"
     try:
-        row = write("INSERT INTO appointments(doctor_id,appt_date,appt_time,patient_name,patient_mobile,patient_email,reason,booked_by) "
-                    "VALUES(%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
-                    (b.doctor_id, b.date, b.time, name, mobile, email, b.reason.strip()[:300], u["sub"]), fetch=True)[0]
+        row = write("INSERT INTO appointments(doctor_id,appt_date,appt_time,patient_name,patient_mobile,patient_email,reason,booked_by,"
+                    "payment_method,payment_status) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
+                    (b.doctor_id, b.date, b.time, name, mobile, email, b.reason.strip()[:300], u["sub"], method, pstatus), fetch=True)[0]
     except psycopg2.errors.UniqueViolation:
         raise HTTPException(409, "That time is already booked. Please pick another slot.")
     a = get_full(row["id"])
     save_record(a)
-    notify(email, "Booking done from Ritik HMS", appt_text(a, "BOOKING DONE FROM RITIK HMS"))
+    files = [(f"receipt-booking-{a['id']}.txt", receipt_text(a))] if pstatus == "Paid" else None   # receipt attached only when paid
+    notify(email, "Booking done from Ritik HMS", appt_text(a, "BOOKING DONE FROM RITIK HMS"), attachments=files)
     day, tm = pretty(b.date, b.time)
     return {"id": a["id"], "doctor": a["doctor"], "date": day, "time": tm, "status": a["status"],
-            "fee": a["fee"], "emailed_to": email}
+            "fee": a["fee"], "payment_status": pstatus, "emailed_to": email}
 
 
 @app.get("/appointments")
 def my_appointments(u=Depends(current_user)):
-    q = ("SELECT a.id,a.appt_date,a.appt_time,a.patient_name,a.patient_mobile,a.patient_email,a.alt_email,a.reason,a.status,a.booked_by,"
+    q = ("SELECT a.id,a.appt_date,a.appt_time,a.patient_name,a.patient_mobile,a.patient_email,a.alt_email,a.payment_method,a.payment_status,a.reason,a.status,a.booked_by,"
          "a.confirmed_at,a.sms_sent,d.name AS doctor,d.speciality,d.fee "
          "FROM appointments a JOIN doctors d ON d.id=a.doctor_id ")
     if u["role"] == "admin":
@@ -167,11 +188,33 @@ def my_appointments(u=Depends(current_user)):
     return write(q + "WHERE a.booked_by=%s ORDER BY a.appt_date DESC, a.appt_time DESC", (u["sub"],), fetch=True)
 
 
+def refund_text(a):
+    day, tm = pretty(a["appt_date"], a["appt_time"])
+    return "\n".join(["RITIK HMS - REFUND RECEIPT", "", f"Booking ID: {a['id']}", f"Patient: {a['patient_name']}",
+                      f"Doctor: {a['doctor']} ({a['speciality']})", f"Cancelled appointment: {day}, {tm}",
+                      f"Refund amount: Rs. {a['fee']}", f"Original payment method: {PAY_METHODS.get(a.get('payment_method'), '-')}",
+                      "Refund status: Refunded", "",
+                      "The amount will be returned to your original payment method.",
+                      "For cash payments, please collect it from the Ritik HMS billing desk.", "", "Ritik HMS", ""])
+
+
 def change_status(a, status, title):
-    write("UPDATE appointments SET status=%s, status_updated_at=now() WHERE id=%s", (status, a["id"]))
-    a["status"] = status
+    """Update booking status. On cancel: a paid booking is marked Refunded and a refund mail is sent."""
+    refund = status == "cancelled" and a.get("payment_status") == "Paid"
+    pstatus = "Refunded" if refund else ("Cancelled" if status == "cancelled" else a.get("payment_status"))
+    write("UPDATE appointments SET status=%s, payment_status=%s, status_updated_at=now() WHERE id=%s",
+          (status, pstatus, a["id"]))
+    a["status"], a["payment_status"] = status, pstatus
     save_record(a)
-    notify(a.get("patient_email") or a["booked_by"], f"{title.title()} - {a['doctor']}", appt_text(a, title))
+    to = a.get("patient_email") or a["booked_by"]
+    if refund:
+        notify(to, f"Appointment cancelled - Refund of Rs. {a['fee']} - Ritik HMS",
+               appt_text(a, title) + "\n" + refund_text(a),
+               attachments=[(f"refund-booking-{a['id']}.txt", refund_text(a))])
+    else:
+        paid = status == "completed" and pstatus == "Paid"
+        notify(to, f"{title.title()} - {a['doctor']}", appt_text(a, title),
+               attachments=[(f"receipt-booking-{a['id']}.txt", receipt_text(a))] if paid else None)
 
 
 @app.post("/appointments/{aid}/confirm")
