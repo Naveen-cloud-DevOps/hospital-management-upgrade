@@ -188,27 +188,35 @@ def my_appointments(u=Depends(current_user)):
     return write(q + "WHERE a.booked_by=%s ORDER BY a.appt_date DESC, a.appt_time DESC", (u["sub"],), fetch=True)
 
 
+def refund_amount(a):
+    """Cancelling a paid booking refunds only 50% of the fee; the other half is kept as cancellation charge."""
+    return int(a["fee"]) // 2
+
+
 def refund_text(a):
     day, tm = pretty(a["appt_date"], a["appt_time"])
+    r = refund_amount(a)
     return "\n".join(["RITIK HMS - REFUND RECEIPT", "", f"Booking ID: {a['id']}", f"Patient: {a['patient_name']}",
                       f"Doctor: {a['doctor']} ({a['speciality']})", f"Cancelled appointment: {day}, {tm}",
-                      f"Refund amount: Rs. {a['fee']}", f"Original payment method: {PAY_METHODS.get(a.get('payment_method'), '-')}",
-                      "Refund status: Refunded", "",
-                      "The amount will be returned to your original payment method.",
+                      f"Amount paid: Rs. {a['fee']}", f"Refund (50%): Rs. {r}",
+                      f"Cancellation charge (50%): Rs. {int(a['fee']) - r}",
+                      f"Original payment method: {PAY_METHODS.get(a.get('payment_method'), '-')}",
+                      "Refund status: Partially refunded (50%)", "",
+                      "The refund will be returned to your original payment method.",
                       "For cash payments, please collect it from the Ritik HMS billing desk.", "", "Ritik HMS", ""])
 
 
 def change_status(a, status, title):
-    """Update booking status. On cancel: a paid booking is marked Refunded and a refund mail is sent."""
+    """Update booking status. On cancel: a paid booking gets a 50% refund, marked Partially Refunded, and a refund mail is sent."""
     refund = status == "cancelled" and a.get("payment_status") == "Paid"
-    pstatus = "Refunded" if refund else ("Cancelled" if status == "cancelled" else a.get("payment_status"))
+    pstatus = "Partially Refunded" if refund else ("Cancelled" if status == "cancelled" else a.get("payment_status"))
     write("UPDATE appointments SET status=%s, payment_status=%s, status_updated_at=now() WHERE id=%s",
           (status, pstatus, a["id"]))
     a["status"], a["payment_status"] = status, pstatus
     save_record(a)
     to = a.get("patient_email") or a["booked_by"]
     if refund:
-        notify(to, f"Appointment cancelled - Refund of Rs. {a['fee']} - Ritik HMS",
+        notify(to, f"Appointment cancelled - Refund of Rs. {refund_amount(a)} (50%) - Ritik HMS",
                appt_text(a, title) + "\n" + refund_text(a),
                attachments=[(f"refund-booking-{a['id']}.txt", refund_text(a))])
     else:
@@ -243,9 +251,34 @@ def cancel(aid: int, u=Depends(current_user)):
         raise HTTPException(403, "This appointment belongs to another user")
     if a["status"] == "completed":
         raise HTTPException(409, "A completed appointment cannot be cancelled")
+    refund = refund_amount(a) if a.get("payment_status") == "Paid" and a["status"] != "cancelled" else 0
     if a["status"] != "cancelled":
         change_status(a, "cancelled", "APPOINTMENT CANCELLED")
-    return {"ok": True, "status": "cancelled"}
+    return {"ok": True, "status": "cancelled", "refund": refund}
+
+
+class PayIn(BaseModel):
+    method: str
+
+
+@app.post("/appointments/{aid}/pay")
+def pay_appointment(aid: int, p: PayIn, u=Depends(current_user)):
+    """Pay the consultation fee after booking (for bookings made with 'Pay at hospital')."""
+    a = get_full(aid)
+    if u["role"] != "admin" and a["booked_by"] != u["sub"]:
+        raise HTTPException(403, "This appointment belongs to another user")
+    if a["status"] != "booked":
+        raise HTTPException(409, "Only a booked appointment can be paid")
+    if a.get("payment_status") == "Paid":
+        raise HTTPException(409, "This appointment is already paid")
+    if p.method not in ("cash", "upi", "card"):
+        raise HTTPException(400, "Choose cash, UPI or card")
+    write("UPDATE appointments SET payment_method=%s, payment_status='Paid' WHERE id=%s", (p.method, aid))
+    a["payment_method"], a["payment_status"] = p.method, "Paid"
+    save_record(a)
+    notify(a.get("patient_email") or a["booked_by"], "Payment received - Ritik HMS",
+           appt_text(a, "PAYMENT RECEIVED"), attachments=[(f"receipt-booking-{aid}.txt", receipt_text(a))])
+    return {"ok": True, "payment_status": "Paid", "fee": a["fee"]}
 
 
 @app.post("/appointments/{aid}/complete")
