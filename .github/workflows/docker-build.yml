@@ -231,7 +231,7 @@ jobs:
           done
           echo "app_url=$URL" >> "$GITHUB_OUTPUT"
           {
-            echo "## Hospital Management deployed"
+            echo "## CarePulse deployed"
             echo ""
             echo "**Application URL:** $URL"
             echo ""

@@ -61,12 +61,12 @@ def login(b: Login):
         raise HTTPException(401, "Invalid credentials")
     u = rows[0]
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    notify(u["email"], "Welcome to our Hospital Management",
-           f"Hi {u['name']},\n\nWelcome to our Hospital Management system!\n"
+    notify(u["email"], "Welcome to our CarePulse",
+           f"Hi {u['name']},\n\nWelcome to our CarePulse system!\n"
            f"You signed in on {now}.\n\n"
            "You can now book a doctor appointment from the Appointments page. "
            "We will email you the doctor name, date and time as soon as it is booked.\n\n"
-           "Thank you,\nHospital Management Team")
+           "Thank you,\nCarePulse Team")
     return {"token": make_token(u["email"], u["role"]), "role": u["role"], "name": u["name"]}
 
 
@@ -84,6 +84,6 @@ def resend_confirmation(u=Depends(current_user)):
 
 @app.post("/auth/notifications/test")
 def test_email(u=Depends(current_user)):
-    notify(u["sub"], "Test email - Hospital Management",
+    notify(u["sub"], "Test email - CarePulse",
            "This is a test. If you can read this, email alerts and payment receipts will reach you.", strict=True)
     return {"ok": True, "email": u["sub"]}

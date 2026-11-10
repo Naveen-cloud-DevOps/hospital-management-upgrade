@@ -236,7 +236,7 @@ def confirm(aid: int, _=Depends(admin_only)):
     day, tm = pretty(a["appt_date"], a["appt_time"])
     sms = (f"Hello {a['patient_name']}, your appointment is CONFIRMED. "
            f"Dr: {a['doctor']} ({a['speciality']}), Date: {day}, Time: {tm}, "
-           f"Fee: Rs.{a['fee']}, ID: {a['id']}. Please arrive 10 min early. - Hospital Management")
+           f"Fee: Rs.{a['fee']}, ID: {a['id']}. Please arrive 10 min early. - CarePulse")
     sent = send_sms(a["patient_mobile"], sms) if a.get("patient_mobile") else False
     write("UPDATE appointments SET confirmed_at=now(), sms_sent=%s WHERE id=%s", (sent, aid))
     a["confirmed_at"] = now_ist()

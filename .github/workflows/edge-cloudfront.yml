@@ -96,7 +96,7 @@ jobs:
             sleep 15
           done
           {
-            echo "## Hospital Management - Route53 URL"
+            echo "## CarePulse - Route53 URL"
             echo ""
             echo "**Application URL:** $APP_URL"
             echo ""

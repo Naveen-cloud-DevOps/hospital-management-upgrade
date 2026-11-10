@@ -18,4 +18,4 @@ data:
   PHOTO_BUCKET: hms-855455101846-patient-photos
   APPOINTMENT_BUCKET: hms-855455101846-appointments
   SMTP_USER: ritikranjanspiderhacker@gmail.com
-  SMTP_NAME: Ritik HMS
+  SMTP_NAME: Ritik CarePulse

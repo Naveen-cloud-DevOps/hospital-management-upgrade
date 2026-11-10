@@ -1,4 +1,4 @@
-# Hospital Management
+# CarePulse
 
 A cloud-hosted hospital management system. Staff can register patients, hand out queue tokens, record 5 weeks of
 patient progress (with photos), take payments and email receipts. Everything is created and deployed
@@ -9,7 +9,7 @@ automatically from GitHub, and it gets a clean web address (Route53 + CloudFront
 
 - **Login** (there is no public sign-up: the first admin comes from a GitHub secret, and only an admin can create other accounts from the **Users** page)
 - **Patients**: registration, search, details, 5-week symptom records with photo upload (saved weeks cannot be changed)
-- **Welcome email**: every sign-in sends "Welcome to our Hospital Management" to the user's email
+- **Welcome email**: every sign-in sends "Welcome to our CarePulse" to the user's email
 - **Doctor appointments**: pick a doctor, date and free time slot; the doctor name, date and time are emailed to the user (cancel/complete also email). Handled by a separate `appointment` service with its **own database** (`hms-appointmentdb` + read replica) and **own S3 bucket** (`hms-<account>-appointments`). Booking status (`booked` / `cancelled` / `completed`) is stored in the `appointments.status` column and as a versioned JSON record `appointments/<id>.json` in that bucket.
 - **Queue**: daily tokens with waiting / in consultation / done
 - **Payments**: receipts stored in S3, printable, and emailed
@@ -155,7 +155,7 @@ node_desired_size   = 3
 
 # web address (used by terraform/dns.tf)
 hosted_zone_name = "*****.realhandsonlabs.net"   # your Route53 public hosted zone
-app_subdomain    = "ritikhms"                                # gives https://ritikhms.******.realhandsonlabs.net
+app_subdomain    = "ritikcarepulse"                                # gives https://ritikhms.******.realhandsonlabs.net
 ```
 
 Keep `hosted_zone_name` in the file or secret permanently. If it is removed later, the next run would remove CloudFront and the Route53 record.

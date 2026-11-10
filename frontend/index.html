@@ -1,10 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
+<meta name="color-scheme" content="light dark">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Hospital Management</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b5d6b'/%3E%3Cpath d='M4 17h6l3-8 5 15 3-7h7' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<title>CarePulse</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234f46e5'/%3E%3Cstop offset='1' stop-color='%23312e81'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cg transform='translate(5 5) scale(.91)' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z'/%3E%3Cpath d='M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Oriya:wght@400;600&display=swap" rel="stylesheet">
@@ -214,6 +215,57 @@ h1,h2,h3,p{margin:0}
 }
 .slots{display:flex;flex-wrap:wrap;gap:8px}.slot{border:1px solid var(--line,#d8e2e5);background:#fff;border-radius:10px;padding:8px 12px;font:inherit;cursor:pointer}.slot:hover:not(:disabled){border-color:var(--brand)}.slot.on{background:var(--brand);color:#fff;border-color:var(--brand)}.slot:disabled{opacity:.4;cursor:not-allowed;text-decoration:line-through}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== premium theme: navy / indigo, light + dark ===== */
+:root{--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--bg:#f4f6fb;--soft:#eef1f8;--surface:#fff;--brand:#4338ca;--brand-d:#312e81;--brand-l:#e0e7ff;--sh:0 1px 2px #0f172a0f,0 4px 16px #0f172a0d}
+[data-theme=dark]{color-scheme:dark;--ink:#e6eaf7;--muted:#9aa6c4;--line:#27314f;--bg:#0b1020;--soft:#1b2440;--surface:#131a2e;--brand:#818cf8;--brand-d:#c7d2fe;--brand-l:#232b57;--sh:0 1px 2px #0006}
+.btn{background:#4338ca;border-color:#4338ca;box-shadow:0 1px 2px #4338ca44}.btn:hover{background:#312e81}
+[data-theme=dark] .btn{background:#4f46e5;border-color:#4f46e5;color:#fff}[data-theme=dark] .btn.ghost{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.logo,.auth-side .logo{background:linear-gradient(135deg,#4f46e5,#312e81)}
+.auth-side{background:linear-gradient(160deg,#0b1437,#1e2a78 62%,#312e81)}.auth-side p{color:#c7d2fe}.ecg polyline{stroke:#818cf8}
+.fld input:focus,.fld select:focus,.fld textarea:focus,.lang:focus{outline-color:#c7d2fe}[data-theme=dark] .fld input:focus{outline-color:#3730a3}
+.panel,.side,.top{box-shadow:var(--sh)}.panel{border-radius:14px}.side{border-right-color:var(--line)}
+.top{position:sticky;top:0;z-index:5;background:var(--surface)}
+.nav a{transition:background .15s,color .15s}.nav a.on{background:var(--brand-l);color:var(--brand-d);box-shadow:inset 3px 0 0 var(--brand)}
+.stat{transition:background .15s}.stat b{color:var(--brand-d)}
+.auth-top{display:flex;gap:8px;align-items:center}.feats{list-style:none;margin:26px 0 0;padding:0;display:grid;gap:12px;position:relative}
+.feats li{display:flex;gap:12px;align-items:center;color:#e0e7ff;font-weight:500}.feats li span{width:34px;height:34px;border-radius:10px;background:#ffffff1f;display:grid;place-items:center;flex:none}
+.rowline{display:flex;justify-content:space-between;align-items:center;font-size:14px}.rowline a{color:var(--brand);font-weight:600;text-decoration:none}
+.chk{display:flex;gap:8px;align-items:center;color:var(--muted);cursor:pointer}.chk input{accent-color:var(--brand);width:16px;height:16px}
+button:focus-visible,a:focus-visible,.nav a:focus-visible{outline:3px solid #818cf8;outline-offset:2px}
+[data-theme=dark] .btn.ghost{background:var(--surface)}
+[data-theme=dark] .btn.ghost:hover{background:var(--soft)}
+[data-theme=dark] .icon:hover{background:var(--soft)}
+[data-theme=dark] .fld input{background:var(--surface)}
+[data-theme=dark] .fld select{background:var(--surface)}
+[data-theme=dark] .fld textarea{background:var(--surface)}
+[data-theme=dark] .lang{background:var(--surface)}
+[data-theme=dark] .meter i{background:var(--soft)}
+[data-theme=dark] .meter.s2 i:nth-child(-n+2){background:var(--soft)}
+[data-theme=dark] .tabs{background:var(--soft)}
+[data-theme=dark] .tabs button.on{background:var(--surface)}
+[data-theme=dark] .note{background:var(--surface)}
+[data-theme=dark] .side{background:var(--surface)}
+[data-theme=dark] .nav a:hover{background:var(--soft)}
+[data-theme=dark] .side-foot{background:var(--soft)}
+[data-theme=dark] .tbl th{background:var(--soft)}
+[data-theme=dark] .tbl tr.click:hover{background:var(--soft)}
+[data-theme=dark] .pill.dx{background:var(--soft)}
+[data-theme=dark] .pill.role{background:var(--soft)}
+[data-theme=dark] .pill.admin{background:var(--soft)}
+[data-theme=dark] .search input{background:var(--surface)}
+[data-theme=dark] .col{background:var(--soft)}
+[data-theme=dark] .col h3 em{background:var(--surface)}
+[data-theme=dark] .ticket{background:var(--surface)}
+[data-theme=dark] .ticket .no::before{background:var(--soft)}
+[data-theme=dark] .ticket .no::after{background:var(--soft)}
+[data-theme=dark] .wk{background:var(--surface)}
+[data-theme=dark] .wkview{background:var(--soft)}
+[data-theme=dark] .chipc span{background:var(--surface)}
+[data-theme=dark] .drawer{background:var(--surface)}
+[data-theme=dark] .mailbar{background:var(--surface)}
+[data-theme=dark] .rcpt{background:var(--surface)}
+[data-theme=dark] .slot{background:var(--surface)}
 </style>
 </head>
 <body>
@@ -222,7 +274,7 @@ h1,h2,h3,p{margin:0}
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <script>
 /* ---------- icons ---------- */
-const ICON={
+const ICON={heartpulse:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
  grid:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
@@ -241,11 +293,11 @@ const ICON={
  mail:'<path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><polyline points="22,6 12,13 2,6"/>'
 };
 const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
-const logo=()=>`<span class="logo">${ic('pulse',20)}</span>`;
+const logo=()=>`<span class="logo" role="img" aria-label="${t('app')}">${ic('heartpulse',21)}</span>`;
 
 /* ---------- translations (anything missing falls back to English) ---------- */
 const T={
-en:{app:'Hospital Management',tagline:'Patient records, the daily queue and payments in one place.',side_p:'Register patients, give out tokens, track five weeks of recovery and issue receipts - from any phone or computer.',
+en:{remember:'Remember me',forgot:'Forgot password?',forgot_msg:'Ask your administrator to reset your password (Users page).',theme:'Light / dark mode',f1:'Patient records and history',f2:'Daily queue and appointments',f3:'Secure, role-based access',app:'CarePulse',tagline:'Patient records, the daily queue and payments in one place.',side_p:'Register patients, give out tokens, track five weeks of recovery and issue receipts - from any phone or computer.',
  signin:'Sign in',signup:'Create account',signin_t:'Welcome back',signup_t:'Create your account',signin_sub:'Sign in to continue to your dashboard.',signup_sub:'Create a staff account to start recording patients.',
  email:'Email address',password:'Password',confirm:'Confirm password',fullname:'Full name',pw_hint:'At least 8 characters',pw_mismatch:'The two passwords do not match.',
  no_acc:'New here?',have_acc:'Already have an account?',signing:'Signing in…',creating:'Creating account…',welcome:'Account created. Welcome, {n}!',
@@ -279,7 +331,7 @@ en:{app:'Hospital Management',tagline:'Patient records, the daily queue and paym
  my_appts:'My appointments',all_appts:'All appointments',no_appts:'No appointments yet',no_appts_s:'Book your first doctor appointment above.',
  cancel_appt:'Cancel',complete_appt:'Mark completed',cancelled:'Cancelled',completed:'Completed',booked:'Booked',appt_cancelled:'Appointment cancelled. Email sent.',pick_all:'Choose a doctor, date and time.',
  other:'Other',male:'Male',female:'Female',cash:'Cash',card_m:'Card',upi:'UPI'},
-hi:{tagline:'मरीज़ों का रिकॉर्ड, रोज़ की कतार और भुगतान - एक ही जगह।',signin:'साइन इन',signup:'खाता बनाएँ',signin_t:'वापसी पर स्वागत है',signup_t:'अपना खाता बनाएँ',email:'ईमेल पता',password:'पासवर्ड',confirm:'पासवर्ड दोबारा लिखें',fullname:'पूरा नाम',
+hi:{remember:'मुझे याद रखें',forgot:'पासवर्ड भूल गए?',forgot_msg:'पासवर्ड रीसेट के लिए अपने एडमिन से कहें।',theme:'लाइट / डार्क मोड',f1:'रोगी रिकॉर्ड और इतिहास',f2:'दैनिक कतार और अपॉइंटमेंट',f3:'सुरक्षित, भूमिका-आधारित पहुँच',tagline:'मरीज़ों का रिकॉर्ड, रोज़ की कतार और भुगतान - एक ही जगह।',signin:'साइन इन',signup:'खाता बनाएँ',signin_t:'वापसी पर स्वागत है',signup_t:'अपना खाता बनाएँ',email:'ईमेल पता',password:'पासवर्ड',confirm:'पासवर्ड दोबारा लिखें',fullname:'पूरा नाम',
  dashboard:'डैशबोर्ड',patients:'मरीज़',queue:'कतार',payments:'भुगतान',reports:'साप्ताहिक रिपोर्ट',users:'उपयोगकर्ता',logout:'लॉग आउट',
  greet_m:'सुप्रभात',greet_a:'नमस्कार',greet_e:'शुभ संध्या',total_patients:'दर्ज मरीज़',waiting:'प्रतीक्षा में',in_progress:'परामर्श में',done:'पूरा',collected:'आज की वसूली',
  new_patient:'नया मरीज़',add_queue:'कतार में जोड़ें',search:'नाम या मोबाइल से खोजें',save_patient:'मरीज़ सहेजें',cancel:'रद्द करें',back:'सभी मरीज़',todays_queue:'आज की कतार',
@@ -287,7 +339,7 @@ hi:{tagline:'मरीज़ों का रिकॉर्ड, रोज़ �
  first_name:'पहला नाम',last_name:'अंतिम नाम',age:'उम्र',gender:'लिंग',mobile:'मोबाइल नंबर',address:'पता',city:'शहर',state:'राज्य',blood_group:'रक्त समूह',occupation:'व्यवसाय',
  heard_about_us:'हमारे बारे में कैसे सुना?',referred_by:'किसने भेजा',diseases:'बीमारी का प्रकार',weekly:'साप्ताहिक प्रगति',week:'सप्ताह',symptoms:'लक्षण',photo:'फोटो',save_week:'सप्ताह सहेजें',
  amount:'राशि',method:'भुगतान का तरीका',patient:'मरीज़',save_payment:'भुगतान सहेजें',name:'नाम',role:'भूमिका',add_user:'उपयोगकर्ता जोड़ें',save:'सहेजें'},
-or:{tagline:'ରୋଗୀ ରେକର୍ଡ, ଦୈନିକ ଧାଡ଼ି ଏବଂ ପେମେଣ୍ଟ - ସବୁ ଗୋଟିଏ ସ୍ଥାନରେ।',signin:'ସାଇନ୍ ଇନ୍',signin_t:'ପୁଣି ସ୍ୱାଗତ',email:'ଇମେଲ୍ ଠିକଣା',password:'ପାସୱାର୍ଡ',
+or:{remember:'ମୋତେ ମନେ ରଖ',forgot:'ପାସୱାର୍ଡ ଭୁଲିଗଲେ?',forgot_msg:'ପାସୱାର୍ଡ ରିସେଟ୍ ପାଇଁ ଆପଣଙ୍କ ଆଡମିନଙ୍କୁ କୁହନ୍ତୁ।',theme:'ଲାଇଟ୍ / ଡାର୍କ୍ ମୋଡ୍',f1:'ରୋଗୀ ରେକର୍ଡ ଓ ଇତିହାସ',f2:'ଦୈନିକ ଧାଡ଼ି ଓ ଆପଏଣ୍ଟମେଣ୍ଟ',f3:'ସୁରକ୍ଷିତ, ଭୂମିକା ଆଧାରିତ ପ୍ରବେଶ',tagline:'ରୋଗୀ ରେକର୍ଡ, ଦୈନିକ ଧାଡ଼ି ଏବଂ ପେମେଣ୍ଟ - ସବୁ ଗୋଟିଏ ସ୍ଥାନରେ।',signin:'ସାଇନ୍ ଇନ୍',signin_t:'ପୁଣି ସ୍ୱାଗତ',email:'ଇମେଲ୍ ଠିକଣା',password:'ପାସୱାର୍ଡ',
  confirm:'ପାସୱାର୍ଡ ପୁଣି ଲେଖନ୍ତୁ',fullname:'ପୂରା ନାମ',dashboard:'ଡ୍ୟାସବୋର୍ଡ',patients:'ରୋଗୀ',queue:'ଧାଡ଼ି',
  payments:'ପେମେଣ୍ଟ',reports:'ସାପ୍ତାହିକ ରିପୋର୍ଟ',users:'ଉପଯୋଗକର୍ତ୍ତା',logout:'ଲଗ୍ ଆଉଟ୍',greet_m:'ସୁପ୍ରଭାତ',
  greet_a:'ଶୁଭ ଅପରାହ୍ନ',greet_e:'ଶୁଭ ସନ୍ଧ୍ୟା',total_patients:'ରେକର୍ଡରେ ଥିବା ରୋଗୀ',waiting:'ଅପେକ୍ଷାରତ',in_progress:'ପରାମର୍ଶ ଚାଲିଛି',
@@ -349,6 +401,8 @@ async function busy(btn,label,fn){
 
 /* ---------- auth screen ---------- */
 const field=(name,type,label,extra='')=>`<label class="fld"><span>${label}</span><input name="${name}" type="${type}" ${extra}></label>`;
+const themeBtn=()=>`<button type="button" class="icon" data-act="theme" aria-label="${t('theme')}" title="${t('theme')}">${ic(document.documentElement.dataset.theme==='dark'?'sun':'moon',19)}</button>`;
+const applyTheme=()=>{let m=store.get('theme');if(!m)m=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.dataset.theme=m};
 const pwField=(name,label,auto,hint)=>`<label class="fld"><span>${label}${hint?` <small>${hint}</small>`:''}</span><div class="pw"><input name="${name}" type="password" autocomplete="${auto}" required><button type="button" class="icon eye" data-act="eye" aria-label="Show or hide password">${ic('eye')}</button></div></label>`;
 const langSel=cls=>`<select class="lang ${cls||''}" data-change="lang" aria-label="Language"><option value="en"${S.lang==='en'?' selected':''}>English</option><option value="hi"${S.lang==='hi'?' selected':''}>हिन्दी</option><option value="or"${S.lang==='or'?' selected':''}>ଓଡ଼ିଆ</option></select>`;
 
@@ -358,10 +412,10 @@ function authHTML(){
  <aside class="auth-side">
   <div class="brandrow">${logo()}<span>${t('app')}</span></div>
   <svg class="ecg" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,110 120,110 150,110 175,40 205,170 235,110 330,110 360,110 385,70 410,130 430,110 600,110"/></svg>
-  <div style="position:relative"><h1>${t('tagline')}</h1><p>${t('side_p')}</p></div>
+  <div style="position:relative"><h1>${t('tagline')}</h1><p>${t('side_p')}</p><ul class="feats">${[['users','f1'],['cal','f2'],['shield','f3']].map(([i,k])=>`<li><span>${ic(i,18)}</span>${t(k)}</li>`).join('')}</ul></div>
  </aside>
  <main class="auth-main">
-  <div class="auth-top">${langSel()}</div>
+  <div class="auth-top">${themeBtn()}${langSel()}</div>
   <div class="auth-card">
    <div class="brandrow mob">${logo()}<span>${t('app')}</span></div>
    <h2>${su?t('signup_t'):t('signin_t')}</h2>
@@ -370,6 +424,7 @@ function authHTML(){
     ${su?field('name','text',t('fullname'),'autocomplete="name" required'):''}
     ${field('email','email',t('email'),'autocomplete="email" required')}
     ${su?pwField('password',t('password'),'new-password',t('pw_hint'))+`<div class="meter" id="meter"><i></i><i></i><i></i></div>`+pwField('confirm',t('confirm'),'new-password'):pwField('password',t('password'),'current-password')}
+    ${su?'':`<div class="rowline"><label class="chk"><input type="checkbox" name="remember" checked>${t('remember')}</label><a href="#" data-act="forgot">${t('forgot')}</a></div>`}
     <p class="ferr" id="ferr" role="alert"></p>
     <button class="btn block" type="submit">${su?t('signup'):t('signin')}</button>
    </form>
@@ -399,7 +454,7 @@ function shell(page,inner){
   <a class="side-foot" href="#/account" style="color:inherit;text-decoration:none"><span class="av">${esc((S.name||'?').slice(0,2).toUpperCase())}</span><div><b>${esc(S.name)}</b><small>${esc(admin?'Administrator':'Staff')}</small></div></a>
  </aside>
  <div class="main">
-  <header class="top"><h2>${title}</h2><span class="grow"></span>${langSel()}<a class="icon" href="#/account" aria-label="${t('account')}" title="${t('account')}">${ic('mail',19)}</a><button class="btn ghost sm" data-act="logout">${ic('out',16)}<span>${t('logout')}</span></button></header>
+  <header class="top"><h2>${title}</h2><span class="grow"></span>${themeBtn()}${langSel()}<a class="icon" href="#/account" aria-label="${t('account')}" title="${t('account')}">${ic('mail',19)}</a><button class="btn ghost sm" data-act="logout">${ic('out',16)}<span>${t('logout')}</span></button></header>
   ${mailBanner()}
   <div class="content" id="content">${inner}</div>
  </div></div>`}
@@ -636,6 +691,8 @@ function shrink(file){
 /* ---------- events ---------- */
 const ferr=m=>{const e=$('#ferr');if(e)e.textContent=m||''};
 const ACT={
+ theme:()=>{store.set('theme',document.documentElement.dataset.theme==='dark'?'light':'dark');applyTheme();render()},
+ forgot:()=>toast(t('forgot_msg')),
  mode:b=>{S.mode=b.dataset.m;render()},
  eye:b=>{const i=b.parentElement.querySelector('input');i.type=i.type==='password'?'text':'password'},
  logout:()=>signOut(),
@@ -678,6 +735,7 @@ const FORMS={
  async login(f,btn){
   const d=Object.fromEntries(new FormData(f));
   if(!d.email.trim()||!d.password)return ferr('Enter your email and password.');
+  store.set('remember',d.remember?'1':'0');try{sessionStorage.setItem('alive','1')}catch(e){}
   await busy(btn,t('signing'),()=>doLogin(d.email,d.password))},
  async patient(f,btn){
   const fd=new FormData(f),d=Object.fromEntries(fd);d.age=+d.age;d.diseases=fd.getAll('diseases');d.email=(d.email||'').trim()||null;
@@ -718,6 +776,7 @@ document.addEventListener('submit',async e=>{
 
 window.addEventListener('hashchange',()=>render());
 setInterval(()=>{if(S.tok&&!document.hidden&&['queue','dashboard'].includes(route().page)&&!$('#overlay').innerHTML)refreshQueue()},20000);
+applyTheme();try{if(store.get('remember')==='0'&&!sessionStorage.getItem('alive')){['tok','role','name'].forEach(store.del);S.tok=S.role=S.name=''}}catch(e){}
 render();
 </script>
 </body>
