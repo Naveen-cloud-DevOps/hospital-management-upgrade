@@ -1,0 +1,119 @@
+name: monitoring-tools
+# Manual tools for the monitoring stack. Run it from: Actions > monitoring-tools > Run workflow
+#   reset-grafana-password : sets the Grafana admin password to the value you type
+#   test-cpu-alert         : starts a CPU-burning pod, waits for the alert, then deletes the pod
+#   delete-cpu-test        : only deletes the cpu-test pod (cleanup)
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "What to run"
+        type: choice
+        required: true
+        default: test-cpu-alert
+        options:
+          - reset-grafana-password
+          - test-cpu-alert
+          - delete-cpu-test
+      grafana_password:
+        description: "New Grafana password (only for reset-grafana-password)"
+        type: string
+        required: false
+        default: "Ritik@12345"
+      wait_minutes:
+        description: "How long to wait for the alert (only for test-cpu-alert)"
+        type: string
+        required: false
+        default: "9"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monitoring-tools
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+  CLUSTER_NAME: hms-eks
+
+jobs:
+  tools:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      ACTION: ${{ inputs.action }}
+      NEW_PASS: ${{ inputs.grafana_password }}
+      WAIT_MIN: ${{ inputs.wait_minutes }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Connect to EKS
+        run: aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION"
+
+      # ------------------------------------------------------------------ Grafana password
+      - name: Reset Grafana admin password
+        if: ${{ inputs.action == 'reset-grafana-password' }}
+        run: |
+          [ -n "$NEW_PASS" ] || { echo "::error::Type the new password in the grafana_password box"; exit 1; }
+          kubectl -n monitoring rollout status deploy/kube-prometheus-stack-grafana --timeout=300s
+          kubectl -n monitoring exec deploy/kube-prometheus-stack-grafana -c grafana -- \
+            grafana cli admin reset-admin-password "$NEW_PASS"
+          GRAFANA_HOST=$(kubectl -n monitoring get svc kube-prometheus-stack-grafana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          {
+            echo "## Grafana password reset"
+            echo ""
+            echo "**Grafana URL:** http://$GRAFANA_HOST"
+            echo ""
+            echo "**Username:** admin user of your Grafana (the one in monitoring.yml, GRAFANA_USER)"
+            echo ""
+            echo "**New password:** $NEW_PASS"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "=============================================="
+          echo " GRAFANA URL : http://$GRAFANA_HOST"
+          echo " NEW PASSWORD: $NEW_PASS"
+          echo "=============================================="
+
+      # ------------------------------------------------------------------ CPU alert test
+      - name: Start CPU test pod
+        if: ${{ inputs.action == 'test-cpu-alert' }}
+        run: |
+          kubectl delete pod cpu-test --ignore-not-found --wait=true
+          kubectl run cpu-test --image=busybox --restart=Never -- sh -c 'while true; do :; done'
+          kubectl wait --for=condition=Ready pod/cpu-test --timeout=180s
+          echo "cpu-test pod is burning CPU"
+
+      - name: Wait for the alert in Alertmanager
+        if: ${{ inputs.action == 'test-cpu-alert' }}
+        run: |
+          kubectl -n monitoring port-forward svc/kube-prometheus-stack-alertmanager 9093:9093 >/tmp/pf.log 2>&1 &
+          sleep 5
+          END=$(( $(date +%s) + WAIT_MIN * 60 ))
+          FOUND=""
+          while [ "$(date +%s)" -lt "$END" ]; do
+            OUT=$(curl -s localhost:9093/api/v2/alerts | jq -r '.[] | select(.labels.alertname=="PodHighCPU" or .labels.alertname=="NodeHighCPU") | "\(.labels.alertname)  \(.labels.pod // .labels.instance // "")  \(.status.state)"' 2>/dev/null || true)
+            if [ -n "$OUT" ]; then FOUND="$OUT"; break; fi
+            echo "$(date +%H:%M:%S) no alert yet, waiting..."
+            sleep 30
+          done
+          if [ -n "$FOUND" ]; then
+            echo "=============================================="
+            echo " ALERT FIRING (email is sent by Alertmanager):"
+            echo "$FOUND"
+            echo "=============================================="
+            { echo "## CPU alert test"; echo ""; echo "Alert fired. Check the Gmail inbox (and spam)."; echo ""; echo '```'; echo "$FOUND"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::No PodHighCPU/NodeHighCPU alert after ${WAIT_MIN} minutes. Check Prometheus > Alerts and the rule thresholds in kube-prometheus-stack-values.yaml"
+            echo "## CPU alert test: no alert seen in ${WAIT_MIN} minutes" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # ------------------------------------------------------------------ cleanup (always for the two CPU actions)
+      - name: Delete CPU test pod
+        if: ${{ always() && (inputs.action == 'test-cpu-alert' || inputs.action == 'delete-cpu-test') }}
+        run: |
+          kubectl delete pod cpu-test --ignore-not-found
+          echo "cpu-test pod deleted"
