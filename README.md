@@ -16,7 +16,7 @@ automatically from GitHub, and it gets a clean web address (Route53 + CloudFront
 - **Admin pages**: weekly report for all patients, user management
 - **Languages**: English, Hindi, Telugu
 - **Safety**: a database trigger blocks every `DELETE`, so saved data cannot be removed
-- **Own web address**: `https://hms.<your-domain>` through Route53 and CloudFront (HTTPS)
+- **Own web address**: `https://ritikhms.<your-domain>` through Route53 and CloudFront (HTTPS)
 - **Monitoring**: CPU/memory dashboards, pod logs (Loki) and CPU alert emails
 
 ## Tech stack
@@ -150,7 +150,7 @@ node_desired_size   = 3
 
 # web address (used by terraform/dns.tf)
 hosted_zone_name = "***********"   # your Route53 public hosted zone
-app_subdomain    = "ritikhms"                                # gives https://hms.855455101846.realhandsonlabs.net
+app_subdomain    = "ritikhms"                                # gives https://ritikhms.********.realhandsonlabs.net
 ```
 
 Keep `hosted_zone_name` in the file or secret permanently. If it is removed later, the next run would remove CloudFront and the Route53 record.
