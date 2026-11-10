@@ -1,21 +1,21 @@
-# Replace 381491944081 (and region if changed). Values = terraform outputs.
+# Replace 855455101846 (and region if changed). Values = terraform outputs.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: hms-sa
   namespace: hms
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::381491944081:role/hms-app
+    eks.amazonaws.com/role-arn: arn:aws:iam::855455101846:role/hms-app
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata: {name: hms-config, namespace: hms}
 data:
   AWS_REGION: us-east-1
-  SNS_TOPIC_ARN: arn:aws:sns:us-east-1:381491944081:hms-notifications
-  USER_BUCKET: hms-381491944081-user-data
-  RECEIPT_BUCKET: hms-381491944081-payment-receipts
-  PHOTO_BUCKET: hms-381491944081-patient-photos
-  APPOINTMENT_BUCKET: hms-381491944081-appointments
+  SNS_TOPIC_ARN: arn:aws:sns:us-east-1:855455101846:hms-notifications
+  USER_BUCKET: hms-855455101846-user-data
+  RECEIPT_BUCKET: hms-855455101846-payment-receipts
+  PHOTO_BUCKET: hms-855455101846-patient-photos
+  APPOINTMENT_BUCKET: hms-855455101846-appointments
   SMTP_USER: ritikranjanspiderhacker@gmail.com
   SMTP_NAME: Ritik HMS
