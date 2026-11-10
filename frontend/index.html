@@ -266,6 +266,16 @@ button:focus-visible,a:focus-visible,.nav a:focus-visible{outline:3px solid #818
 [data-theme=dark] .mailbar{background:var(--surface)}
 [data-theme=dark] .rcpt{background:var(--surface)}
 [data-theme=dark] .slot{background:var(--surface)}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--sh);display:flex;gap:12px;align-items:center}
+.kpi i{width:42px;height:42px;border-radius:12px;background:var(--brand-l);color:var(--brand-d);display:grid;place-items:center;flex:none}
+.kpi b{display:block;font-size:24px;line-height:1.1}.kpi span{color:var(--muted);font-size:13px}
+.bars{display:flex;align-items:flex-end;gap:10px;height:170px;padding:12px 18px 14px}.bars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:5px;font-size:12px;color:var(--muted)}
+.bars i{display:block;width:100%;max-width:36px;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#6366f1,#4338ca);min-height:3px}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.dcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--sh)}.dcard .av{width:52px;height:52px;font-size:17px;margin-bottom:12px}.dcard h3{font-size:17px}
+.fee{display:inline-block;margin-top:10px;padding:4px 10px;border-radius:99px;background:var(--brand-l);color:var(--brand-d);font-weight:600;font-size:13px}
 </style>
 </head>
 <body>
@@ -274,7 +284,7 @@ button:focus-visible,a:focus-visible,.nav a:focus-visible{outline:3px solid #818
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <script>
 /* ---------- icons ---------- */
-const ICON={heartpulse:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+const ICON={steth:'<path d="M11 2v2M5 2v2M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/>',heartpulse:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
  grid:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
@@ -297,7 +307,7 @@ const logo=()=>`<span class="logo" role="img" aria-label="${t('app')}">${ic('hea
 
 /* ---------- translations (anything missing falls back to English) ---------- */
 const T={
-en:{remember:'Remember me',forgot:'Forgot password?',forgot_msg:'Ask your administrator to reset your password (Users page).',theme:'Light / dark mode',f1:'Patient records and history',f2:'Daily queue and appointments',f3:'Secure, role-based access',app:'CarePulse',tagline:'Patient records, the daily queue and payments in one place.',side_p:'Register patients, give out tokens, track five weeks of recovery and issue receipts - from any phone or computer.',
+en:{doctors:'Doctors',doctors_sub:'Specialists and consultation fees.',d_fee:'Fee',total_doctors:'Total doctors',todays_appts:"Today's appointments",pend_appr:'Awaiting approval',rev_total:'Total revenue',appt_chart:'Appointments - last 7 days',rev_chart:'Revenue - last 7 days',upcoming:'Upcoming appointments',no_doctors:'No doctors found',no_upcoming:'No upcoming appointments',remember:'Remember me',forgot:'Forgot password?',forgot_msg:'Ask your administrator to reset your password (Users page).',theme:'Light / dark mode',f1:'Patient records and history',f2:'Daily queue and appointments',f3:'Secure, role-based access',app:'CarePulse',tagline:'Patient records, the daily queue and payments in one place.',side_p:'Register patients, give out tokens, track five weeks of recovery and issue receipts - from any phone or computer.',
  signin:'Sign in',signup:'Create account',signin_t:'Welcome back',signup_t:'Create your account',signin_sub:'Sign in to continue to your dashboard.',signup_sub:'Create a staff account to start recording patients.',
  email:'Email address',password:'Password',confirm:'Confirm password',fullname:'Full name',pw_hint:'At least 8 characters',pw_mismatch:'The two passwords do not match.',
  no_acc:'New here?',have_acc:'Already have an account?',signing:'Signing in…',creating:'Creating account…',welcome:'Account created. Welcome, {n}!',
@@ -331,7 +341,7 @@ en:{remember:'Remember me',forgot:'Forgot password?',forgot_msg:'Ask your admini
  my_appts:'My appointments',all_appts:'All appointments',no_appts:'No appointments yet',no_appts_s:'Book your first doctor appointment above.',
  cancel_appt:'Cancel',complete_appt:'Mark completed',cancelled:'Cancelled',completed:'Completed',booked:'Booked',appt_cancelled:'Appointment cancelled. Email sent.',pick_all:'Choose a doctor, date and time.',
  other:'Other',male:'Male',female:'Female',cash:'Cash',card_m:'Card',upi:'UPI'},
-hi:{remember:'मुझे याद रखें',forgot:'पासवर्ड भूल गए?',forgot_msg:'पासवर्ड रीसेट के लिए अपने एडमिन से कहें।',theme:'लाइट / डार्क मोड',f1:'रोगी रिकॉर्ड और इतिहास',f2:'दैनिक कतार और अपॉइंटमेंट',f3:'सुरक्षित, भूमिका-आधारित पहुँच',tagline:'मरीज़ों का रिकॉर्ड, रोज़ की कतार और भुगतान - एक ही जगह।',signin:'साइन इन',signup:'खाता बनाएँ',signin_t:'वापसी पर स्वागत है',signup_t:'अपना खाता बनाएँ',email:'ईमेल पता',password:'पासवर्ड',confirm:'पासवर्ड दोबारा लिखें',fullname:'पूरा नाम',
+hi:{doctors:'डॉक्टर',doctors_sub:'विशेषज्ञ और परामर्श शुल्क।',d_fee:'शुल्क',total_doctors:'कुल डॉक्टर',todays_appts:'आज की अपॉइंटमेंट',pend_appr:'अनुमोदन की प्रतीक्षा',rev_total:'कुल आय',appt_chart:'अपॉइंटमेंट - पिछले 7 दिन',rev_chart:'आय - पिछले 7 दिन',upcoming:'आगामी अपॉइंटमेंट',no_doctors:'कोई डॉक्टर नहीं मिला',no_upcoming:'कोई आगामी अपॉइंटमेंट नहीं',remember:'मुझे याद रखें',forgot:'पासवर्ड भूल गए?',forgot_msg:'पासवर्ड रीसेट के लिए अपने एडमिन से कहें।',theme:'लाइट / डार्क मोड',f1:'रोगी रिकॉर्ड और इतिहास',f2:'दैनिक कतार और अपॉइंटमेंट',f3:'सुरक्षित, भूमिका-आधारित पहुँच',tagline:'मरीज़ों का रिकॉर्ड, रोज़ की कतार और भुगतान - एक ही जगह।',signin:'साइन इन',signup:'खाता बनाएँ',signin_t:'वापसी पर स्वागत है',signup_t:'अपना खाता बनाएँ',email:'ईमेल पता',password:'पासवर्ड',confirm:'पासवर्ड दोबारा लिखें',fullname:'पूरा नाम',
  dashboard:'डैशबोर्ड',patients:'मरीज़',queue:'कतार',payments:'भुगतान',reports:'साप्ताहिक रिपोर्ट',users:'उपयोगकर्ता',logout:'लॉग आउट',
  greet_m:'सुप्रभात',greet_a:'नमस्कार',greet_e:'शुभ संध्या',total_patients:'दर्ज मरीज़',waiting:'प्रतीक्षा में',in_progress:'परामर्श में',done:'पूरा',collected:'आज की वसूली',
  new_patient:'नया मरीज़',add_queue:'कतार में जोड़ें',search:'नाम या मोबाइल से खोजें',save_patient:'मरीज़ सहेजें',cancel:'रद्द करें',back:'सभी मरीज़',todays_queue:'आज की कतार',
@@ -339,7 +349,7 @@ hi:{remember:'मुझे याद रखें',forgot:'पासवर्ड
  first_name:'पहला नाम',last_name:'अंतिम नाम',age:'उम्र',gender:'लिंग',mobile:'मोबाइल नंबर',address:'पता',city:'शहर',state:'राज्य',blood_group:'रक्त समूह',occupation:'व्यवसाय',
  heard_about_us:'हमारे बारे में कैसे सुना?',referred_by:'किसने भेजा',diseases:'बीमारी का प्रकार',weekly:'साप्ताहिक प्रगति',week:'सप्ताह',symptoms:'लक्षण',photo:'फोटो',save_week:'सप्ताह सहेजें',
  amount:'राशि',method:'भुगतान का तरीका',patient:'मरीज़',save_payment:'भुगतान सहेजें',name:'नाम',role:'भूमिका',add_user:'उपयोगकर्ता जोड़ें',save:'सहेजें'},
-or:{remember:'ମୋତେ ମନେ ରଖ',forgot:'ପାସୱାର୍ଡ ଭୁଲିଗଲେ?',forgot_msg:'ପାସୱାର୍ଡ ରିସେଟ୍ ପାଇଁ ଆପଣଙ୍କ ଆଡମିନଙ୍କୁ କୁହନ୍ତୁ।',theme:'ଲାଇଟ୍ / ଡାର୍କ୍ ମୋଡ୍',f1:'ରୋଗୀ ରେକର୍ଡ ଓ ଇତିହାସ',f2:'ଦୈନିକ ଧାଡ଼ି ଓ ଆପଏଣ୍ଟମେଣ୍ଟ',f3:'ସୁରକ୍ଷିତ, ଭୂମିକା ଆଧାରିତ ପ୍ରବେଶ',tagline:'ରୋଗୀ ରେକର୍ଡ, ଦୈନିକ ଧାଡ଼ି ଏବଂ ପେମେଣ୍ଟ - ସବୁ ଗୋଟିଏ ସ୍ଥାନରେ।',signin:'ସାଇନ୍ ଇନ୍',signin_t:'ପୁଣି ସ୍ୱାଗତ',email:'ଇମେଲ୍ ଠିକଣା',password:'ପାସୱାର୍ଡ',
+or:{doctors:'ଡାକ୍ତର',doctors_sub:'ବିଶେଷଜ୍ଞ ଓ ପରାମର୍ଶ ଫି।',d_fee:'ଫି',total_doctors:'ମୋଟ ଡାକ୍ତର',todays_appts:'ଆଜିର ଆପଏଣ୍ଟମେଣ୍ଟ',pend_appr:'ଅନୁମୋଦନ ଅପେକ୍ଷାରେ',rev_total:'ମୋଟ ଆୟ',appt_chart:'ଆପଏଣ୍ଟମେଣ୍ଟ - ଗତ ୭ ଦିନ',rev_chart:'ଆୟ - ଗତ ୭ ଦିନ',upcoming:'ଆଗାମୀ ଆପଏଣ୍ଟମେଣ୍ଟ',no_doctors:'କୌଣସି ଡାକ୍ତର ମିଳିଲେ ନାହିଁ',no_upcoming:'କୌଣସି ଆଗାମୀ ଆପଏଣ୍ଟମେଣ୍ଟ ନାହିଁ',remember:'ମୋତେ ମନେ ରଖ',forgot:'ପାସୱାର୍ଡ ଭୁଲିଗଲେ?',forgot_msg:'ପାସୱାର୍ଡ ରିସେଟ୍ ପାଇଁ ଆପଣଙ୍କ ଆଡମିନଙ୍କୁ କୁହନ୍ତୁ।',theme:'ଲାଇଟ୍ / ଡାର୍କ୍ ମୋଡ୍',f1:'ରୋଗୀ ରେକର୍ଡ ଓ ଇତିହାସ',f2:'ଦୈନିକ ଧାଡ଼ି ଓ ଆପଏଣ୍ଟମେଣ୍ଟ',f3:'ସୁରକ୍ଷିତ, ଭୂମିକା ଆଧାରିତ ପ୍ରବେଶ',tagline:'ରୋଗୀ ରେକର୍ଡ, ଦୈନିକ ଧାଡ଼ି ଏବଂ ପେମେଣ୍ଟ - ସବୁ ଗୋଟିଏ ସ୍ଥାନରେ।',signin:'ସାଇନ୍ ଇନ୍',signin_t:'ପୁଣି ସ୍ୱାଗତ',email:'ଇମେଲ୍ ଠିକଣା',password:'ପାସୱାର୍ଡ',
  confirm:'ପାସୱାର୍ଡ ପୁଣି ଲେଖନ୍ତୁ',fullname:'ପୂରା ନାମ',dashboard:'ଡ୍ୟାସବୋର୍ଡ',patients:'ରୋଗୀ',queue:'ଧାଡ଼ି',
  payments:'ପେମେଣ୍ଟ',reports:'ସାପ୍ତାହିକ ରିପୋର୍ଟ',users:'ଉପଯୋଗକର୍ତ୍ତା',logout:'ଲଗ୍ ଆଉଟ୍',greet_m:'ସୁପ୍ରଭାତ',
  greet_a:'ଶୁଭ ଅପରାହ୍ନ',greet_e:'ଶୁଭ ସନ୍ଧ୍ୟା',total_patients:'ରେକର୍ଡରେ ଥିବା ରୋଗୀ',waiting:'ଅପେକ୍ଷାରତ',in_progress:'ପରାମର୍ଶ ଚାଲିଛି',
@@ -444,7 +454,7 @@ const strength=p=>{let s=0;if(p.length>=8)s++;if(/[A-Z]/.test(p)&&/[a-z]/.test(p
 /* ---------- shell ---------- */
 function shell(page,inner){
  const admin=S.role==='admin';
- const items=[['dashboard','grid'],['patients','users'],['queue','clock'],['payments','card'],['appointments','cal']];
+ const items=[['dashboard','grid'],['patients','users'],['doctors','steth'],['queue','clock'],['payments','card'],['appointments','cal']];
  if(admin)items.push(['reports','file'],['users','shield']);
  const title=t(page==='patient'?'patients':page);
  return `<div class="shell">
@@ -467,13 +477,14 @@ async function render(){
  if(!S.tok){root.innerHTML=authHTML();return}
  let {page,id}=route();
  if(['reports','users'].includes(page)&&S.role!=='admin'){go('#/dashboard');return}
- if(!['dashboard','patients','queue','payments','appointments','reports','users','account'].includes(page))page='dashboard';
+ if(!['dashboard','patients','doctors','queue','payments','appointments','reports','users','account'].includes(page))page='dashboard';
  const navPage=page;
  const rid=++renderId;
  root.innerHTML=shell(navPage==='patients'&&id?'patient':navPage,`<div class="loading">…</div>`);
  try{
   let html='';
-  if(page==='dashboard'){[S.pts,S.queue,S.pays]=await Promise.all([api('/patients'),api('/queue'),api('/payments')]);html=pDashboard()}
+  if(page==='dashboard'){[S.pts,S.queue,S.pays,S.docs,S.appts]=await Promise.all([api('/patients'),api('/queue'),api('/payments'),api('/doctors').catch(()=>[]),api('/appointments').catch(()=>[])]);html=pDashboard()}
+  else if(page==='doctors'){S.docs=await api('/doctors');html=pDoctors()}
   else if(page==='patients'&&id){const [d,pts]=await Promise.all([api('/patients/'+encodeURIComponent(id)),api('/patients')]);S.detail=d;S.pts=pts;S.wk=nextWeek(d);html=pDetail()}
   else if(page==='patients'){S.pts=await api('/patients');html=pPatients()}
   else if(page==='queue'){[S.pts,S.queue]=await Promise.all([api('/patients'),api('/queue')]);html=pQueue()}
@@ -491,23 +502,35 @@ async function render(){
 
 /* ----- dashboard ----- */
 function ticketRow(x){return `<div class="row"><span class="n">#${x.token_no}</span><span class="grow"><b>${esc(x.first_name+' '+x.last_name)}</b></span>${pill(x.status)}</div>`}
+const dkey=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const compact=n=>new Intl.NumberFormat('en-IN',{notation:'compact',maximumFractionDigits:1}).format(n);
+const barChart=(vals,labels,fmt)=>{const m=Math.max(...vals,1);return `<div class="bars" role="img" aria-label="chart">${vals.map((v,i)=>`<div title="${fmt(v)}"><small>${v?fmt(v):''}</small><i style="height:${Math.round(v/m*100)}%"></i><span>${labels[i]}</span></div>`).join('')}</div>`};
+const kpi=(i,v,l)=>`<div class="kpi"><i>${ic(i,21)}</i><div><b>${v}</b><span>${l}</span></div></div>`;
+function pDoctors(){
+ const card=d=>`<article class="dcard"><span class="av">${esc(d.name.replace(/^Dr\.?\s*/,'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase())}</span><h3>${esc(d.name)}</h3><div style="color:var(--muted)">${esc(d.speciality)}</div><small style="color:var(--muted)">${esc(d.qualification||'')}</small><br><span class="fee">${t('d_fee')}: ${money(d.fee)}</span><div style="margin-top:12px"><a class="btn ghost sm" href="#/appointments">${t('book_title')}</a></div></article>`;
+ return `<div class="page-h"><div><h1>${t('doctors')}</h1><p>${t('doctors_sub')}</p></div></div>${S.docs.length?`<div class="dgrid">${S.docs.map(card).join('')}</div>`:`<div class="panel"><div class="empty"><b>${t('no_doctors')}</b></div></div>`}`}
 function pDashboard(){
  const q=S.queue,w=q.filter(x=>x.status==='waiting').length,p=q.filter(x=>x.status==='in-progress').length,d=q.filter(x=>x.status==='done').length;
  const col=S.pays.filter(x=>sameDay(x.created_at)).reduce((a,x)=>a+Number(x.amount),0);
+ const A=S.appts||[],D=S.docs||[],today=dkey(new Date()),ad=x=>String(x.appt_date).slice(0,10);
+ const todayN=A.filter(x=>ad(x)===today&&x.status!=='cancelled').length,pend=A.filter(x=>x.status==='booked').length,rev=S.pays.reduce((n,x)=>n+Number(x.amount),0);
+ const days=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d}),lab=days.map(d=>d.toLocaleDateString(loc(),{weekday:'short'}));
+ const ac=days.map(d=>A.filter(x=>ad(x)===dkey(d)&&x.status!=='cancelled').length),rc=days.map(d=>S.pays.filter(x=>dkey(new Date(x.created_at))===dkey(d)).reduce((n,x)=>n+Number(x.amount),0));
+ const up=A.filter(x=>['booked','confirmed'].includes(x.status)&&ad(x)>=today).sort((x,y)=>(ad(x)+x.appt_time).localeCompare(ad(y)+y.appt_time)).slice(0,5);
  const h=new Date().getHours(),g=h<12?'greet_m':h<17?'greet_a':'greet_e';
  return `<div class="page-h"><div><h1>${t(g)}, ${esc((S.name||'').split(' ')[0])}</h1><p>${t('greet_sub')}</p></div><span class="grow"></span>
   <div class="actions"><button class="btn ghost" data-act="newQueue">${ic('clock',17)}${t('add_queue')}</button><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button></div></div>
- <div class="panel"><div class="stats">
-  <div class="stat"><b>${S.pts.length}</b><span>${t('total_patients')}</span></div>
-  <div class="stat"><b>${w}</b><span>${t('waiting')}</span></div>
-  <div class="stat"><b>${p} <small style="font-size:15px;color:var(--muted);font-weight:500">/ ${d} ${t('done').toLowerCase()}</small></b><span>${t('in_progress')}</span></div>
-  <div class="stat"><b>${money(col)}</b><span>${t('collected')}</span></div></div></div>
+ <div class="kpis">${kpi('users',S.pts.length,t('total_patients'))}${kpi('steth',D.length,t('total_doctors'))}${kpi('cal',todayN,t('todays_appts'))}${kpi('clock',pend,t('pend_appr'))}${kpi('clock',w,t('waiting'))}${kpi('card',money(rev),t('rev_total'))}</div>
+ <div class="cols"><div class="panel"><div class="panel-h"><h3>${t('appt_chart')}</h3></div>${barChart(ac,lab,String)}</div>
+  <div class="panel"><div class="panel-h"><h3>${t('rev_chart')}</h3><span class="grow"></span><small style="color:var(--muted)">${t('collected')}: ${money(col)}</small></div>${barChart(rc,lab,compact)}</div></div>
  <div class="cols">
   <div class="panel"><div class="panel-h"><h3>${t('todays_queue')}</h3><span class="grow"></span><a class="btn ghost sm" href="#/queue">${t('view_all')}</a></div>
    <div class="mini" id="dq">${q.length?q.slice(0,7).map(ticketRow).join(''):`<div class="empty"><b>${t('empty_q')}</b>${t('empty_q_s')}</div>`}</div></div>
   <div class="panel"><div class="panel-h"><h3>${t('recent')}</h3><span class="grow"></span><a class="btn ghost sm" href="#/patients">${t('view_all')}</a></div>
    <div class="mini">${S.pts.length?S.pts.slice(0,6).map(x=>`<a class="row" href="#/patients/${x.id}" style="color:inherit;text-decoration:none"><span class="av">${esc(ini(x))}</span><span class="grow"><b>${esc(pname(x))}</b><br><small style="color:var(--muted)">${esc(x.city||x.mobile||'')}</small></span><small style="color:var(--muted)">${fmtD(x.created_at)}</small></a>`).join(''):`<div class="empty"><b>${t('empty_pts')}</b>${t('empty_pts_s')}</div>`}</div></div>
- </div>`}
+ </div>
+ <div class="panel"><div class="panel-h"><h3>${t('upcoming')}</h3><span class="grow"></span><a class="btn ghost sm" href="#/appointments">${t('view_all')}</a></div>
+  <div class="mini">${up.length?up.map(x=>`<div class="row"><span class="av">${ic('cal',16)}</span><span class="grow"><b>${esc(x.patient_name)}</b><br><small style="color:var(--muted)">${esc(x.doctor)} - ${esc(x.speciality)}</small></span><small>${fmtD(ad(x)+'T00:00:00')}, ${fmtT(x.appt_time)}</small></div>`).join(''):`<div class="empty"><b>${t('no_upcoming')}</b></div>`}</div></div>`}
 
 /* ----- patients ----- */
 function ptRows(list){

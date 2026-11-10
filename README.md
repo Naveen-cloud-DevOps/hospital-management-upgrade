@@ -155,7 +155,7 @@ node_desired_size   = 3
 
 # web address (used by terraform/dns.tf)
 hosted_zone_name = "*****.realhandsonlabs.net"   # your Route53 public hosted zone
-app_subdomain    = "ritikcarepulse"                                # gives https://ritikhms.******.realhandsonlabs.net
+app_subdomain    = "ritikhms"                                # gives https://ritikhms.******.realhandsonlabs.net
 ```
 
 Keep `hosted_zone_name` in the file or secret permanently. If it is removed later, the next run would remove CloudFront and the Route53 record.
