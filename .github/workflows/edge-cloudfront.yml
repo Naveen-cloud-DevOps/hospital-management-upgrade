@@ -1,0 +1,111 @@
+name: edge-cloudfront
+# Runs AFTER the "cicd" workflow finishes successfully (ingress-nginx load balancer exists by then).
+# Re-applies the terraform/ folder: dns.tf now finds the load balancer and creates
+# CloudFront + ACM + Route53, then prints the Route53 application URL.
+on:
+  workflow_run:
+    workflows: ["cicd"]          # must match "name:" in docker-build.yml exactly
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: edge-cloudfront
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+jobs:
+  edge:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+      TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
+      TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Wait for the ingress-nginx load balancer
+        working-directory: .
+        run: |
+          aws eks update-kubeconfig --name hms-eks --region "$AWS_REGION"
+          HOST=""
+          for i in $(seq 1 40); do
+            HOST=$(kubectl -n ingress-nginx get svc ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+            [ -n "$HOST" ] && break
+            sleep 15
+          done
+          [ -n "$HOST" ] || { echo "::error::ingress-nginx load balancer not ready"; exit 1; }
+          echo "LB: $HOST"
+          echo "TF_BUCKET=hms-tfstate-$(aws sts get-caller-identity --query Account --output text)" >> "$GITHUB_ENV"
+
+      - name: Write terraform.tfvars from secret (must contain hosted_zone_name = "yourdomain.com")
+        env:
+          TFVARS: ${{ secrets.TFVARS }}
+        run: |
+          if [ -n "$TFVARS" ]; then printf '%s\n' "$TFVARS" > terraform.tfvars; fi
+          if ! grep -q '^[[:space:]]*hosted_zone_name' terraform.tfvars 2>/dev/null && [ -z "${{ secrets.HOSTED_ZONE_NAME }}" ]; then
+            echo "::error::Set hosted_zone_name in the TFVARS secret (or add the HOSTED_ZONE_NAME secret)"; exit 1
+          fi
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+
+      - name: Terraform init
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=$TF_BUCKET" \
+            -backend-config="key=hospital-management/terraform.tfstate" \
+            -backend-config="region=$AWS_REGION" \
+            -backend-config="use_lockfile=true"
+
+      - name: Terraform apply (adds CloudFront + Route53 from dns.tf)
+        env:
+          TF_VAR_hosted_zone_name: ${{ secrets.HOSTED_ZONE_NAME }}
+        run: |
+          [ -n "$TF_VAR_hosted_zone_name" ] || unset TF_VAR_hosted_zone_name
+          terraform validate
+          terraform plan -input=false -out=tfplan
+          terraform apply -input=false -auto-approve tfplan
+          echo "APP_URL=$(terraform output -raw app_url)" >> "$GITHUB_ENV"
+          echo "CF_DOMAIN=$(terraform output -raw cloudfront_domain)" >> "$GITHUB_ENV"
+          echo "LB_DNS=$(terraform output -raw ingress_lb_dns)" >> "$GITHUB_ENV"
+
+      - name: Wait for CloudFront and print the Route53 application URL
+        run: |
+          [ -n "$APP_URL" ] || { echo "::error::app_url is empty - hosted_zone_name missing or load balancer not found"; exit 1; }
+          for i in $(seq 1 60); do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' "$APP_URL/" || true)
+            echo "attempt $i: $APP_URL -> HTTP $CODE"
+            [ "$CODE" = "200" ] && break
+            sleep 15
+          done
+          {
+            echo "## Hospital Management - Route53 URL"
+            echo ""
+            echo "**Application URL:** $APP_URL"
+            echo ""
+            echo "Route53 -> CloudFront ($CF_DOMAIN) -> ingress load balancer ($LB_DNS) -> pods"
+            echo ""
+            echo "Log in with the ADMIN_EMAIL / ADMIN_PASSWORD secrets."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "=============================================="
+          echo " APPLICATION URL (Route53): $APP_URL"
+          echo " CloudFront domain        : $CF_DOMAIN"
+          echo " Load balancer origin     : $LB_DNS"
+          echo "=============================================="
