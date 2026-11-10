@@ -36,12 +36,6 @@ class NewUser(BaseModel):
     role: str = "employee"
 
 
-class SignUp(BaseModel):
-    email: str
-    name: str
-    password: str
-
-
 class Login(BaseModel):
     email: str
     password: str
@@ -59,35 +53,9 @@ def register(u: NewUser, _=Depends(admin_only)):
     return {"ok": True}
 
 
-@app.post("/auth/signup")
-def signup(u: SignUp):
-    """Public self-registration. Always creates an 'employee' - never an admin."""
-    email, name = u.email.strip().lower(), u.name.strip()
-    if "@" not in email or "." not in email.split("@")[-1] or len(email) > 254:
-        raise HTTPException(400, "Enter a valid email address")
-    if not name or len(name) > 100:
-        raise HTTPException(400, "Enter your full name")
-    if not 8 <= len(u.password) <= 128:
-        raise HTTPException(400, "Password must be 8 to 128 characters")
-    try:
-        rows = write("INSERT INTO users(email,name,password_hash,role) "
-                     "SELECT %s,%s,%s,'employee' WHERE NOT EXISTS (SELECT 1 FROM users WHERE lower(email)=%s) "
-                     "RETURNING id", (email, name, hash_pw(u.password), email), fetch=True)
-    except psycopg2.errors.UniqueViolation:
-        rows = []
-    if not rows:
-        raise HTTPException(409, "An account with this email already exists")
-    try:
-        put_json(os.environ["USER_BUCKET"], f"users/{email}.json", {"email": email, "name": name, "role": "employee"})
-    except Exception as e:
-        print("user json upload failed", e)
-    subscribe(email)
-    return {"ok": True}
-
-
 @app.post("/auth/login")
 def login(b: Login):
-    # read from the primary so a user who just signed up can log in immediately (replica may lag)
+    # read from the primary so a user an admin just created can log in immediately (replica may lag)
     rows = write("SELECT * FROM users WHERE lower(email)=lower(%s)", (b.email.strip(),), fetch=True)
     if not rows or not check_pw(b.password, rows[0]["password_hash"]):
         raise HTTPException(401, "Invalid credentials")

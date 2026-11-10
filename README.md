@@ -7,14 +7,14 @@ automatically from GitHub, and it gets a clean web address (Route53 + CloudFront
 
 ## What it does
 
-- **Sign-up and login** (staff create their own account; the first admin comes from a GitHub secret)
+- **Login** (there is no public sign-up: the first admin comes from a GitHub secret, and only an admin can create other accounts from the **Users** page)
 - **Patients**: registration, search, details, 5-week symptom records with photo upload (saved weeks cannot be changed)
 - **Welcome email**: every sign-in sends "Welcome to our Hospital Management" to the user's email
 - **Doctor appointments**: pick a doctor, date and free time slot; the doctor name, date and time are emailed to the user (cancel/complete also email). Handled by a separate `appointment` service with its **own database** (`hms-appointmentdb` + read replica) and **own S3 bucket** (`hms-<account>-appointments`). Booking status (`booked` / `cancelled` / `completed`) is stored in the `appointments.status` column and as a versioned JSON record `appointments/<id>.json` in that bucket.
 - **Queue**: daily tokens with waiting / in consultation / done
 - **Payments**: receipts stored in S3, printable, and emailed
 - **Admin pages**: weekly report for all patients, user management
-- **Languages**: English, Hindi, Telugu
+- **Languages**: English, Hindi, Odia
 - **Safety**: a database trigger blocks every `DELETE`, so saved data cannot be removed
 - **Own web address**: `https://ritikhms.<your-domain>` through Route53 and CloudFront (HTTPS)
 - **Monitoring**: CPU/memory dashboards, pod logs (Loki) and CPU alert emails
@@ -88,7 +88,7 @@ automatically from GitHub, and it gets a clean web address (Route53 + CloudFront
 │   ├── Dockerfile             # one Dockerfile for all 4 services (build arg SERVICE)
 │   ├── requirements.txt       # Python dependencies (keep these patched, Trivy fails the build otherwise)
 │   ├── common.py              # shared DB, JWT, S3 and SNS helpers
-│   ├── auth/main.py           # login, sign-up, users, email test
+│   ├── auth/main.py           # login, users (admin creates accounts), email test
 │   ├── patient/main.py        # patients, weekly records, queue, email details
 │   ├── billing/main.py        # payments, receipts, receipt email
 │   └── appointment/main.py    # doctors, bookings, booking status (own DB + S3 bucket)
@@ -114,43 +114,48 @@ You need:
 
 Repo → **Settings → Secrets and variables → Actions → New repository secret**.
 
-| Secret | Required | Value |
+These are the secrets this project uses (all 15 are already added in this repo):
+
+| Secret | Used by | Value |
 |---|---|---|
-| `AWS_ACCESS_KEY_ID` | Yes | Access key of your IAM user |
-| `AWS_SECRET_ACCESS_KEY` | Yes | Secret key of your IAM user |
-| `AWS_REGION` | No | AWS region to deploy to, for example `us-east-1` (default) |
-| `DB_USERNAME` | Yes | Database master username, for example `hmsadmin` (no `admin`, it is reserved) |
-| `DB_PASSWORD` | Yes | Database master password (8+ characters, no `/`, `@`, `"` or spaces) |
-| `JWT_SECRET` | Yes | A long random string used to sign login tokens |
-| `ADMIN_EMAIL` | Yes | Email of the first admin account |
-| `ADMIN_PASSWORD` | Yes | Password of the first admin account |
-| `TFVARS` | Yes for the web address | Full contents of `terraform.tfvars`, including `hosted_zone_name` (see step 2). It replaces the file in the repo on every run |
-| `ALERT_SMTP_PASSWORD` | Yes for monitoring | Gmail **app password** used by Alertmanager to send CPU alert emails |
-| `PROMETHEUS_ALLOWED_CIDR` | No | e.g. `203.0.113.10/32`, limits who can open Prometheus (it has no login) |
-| `GH_USERNAME` | No | Your GitHub username (defaults to the repository owner) |
-| `GH_PAT` | yes | A personal access token, used instead of the built-in `GITHUB_TOKEN` to push manifests |
-| `HOSTED_ZONE_NAME` | No | Only if you do not put `hosted_zone_name` in `TFVARS` |
+| `ADMIN_EMAIL` | cicd | Email of the first admin account |
+| `ADMIN_PASSWORD` | cicd | Password of the first admin account |
+| `ALERT_SMTP_PASSWORD` | monitoring | Gmail **app password** used by Alertmanager to send CPU alert emails |
+| `AWS_ACCESS_KEY_ID` | all workflows | Access key of your IAM user |
+| `AWS_REGION` | all workflows | AWS region to deploy to, for example `us-east-1` |
+| `AWS_SECRET_ACCESS_KEY` | all workflows | Secret key of your IAM user |
+| `DB_PASSWORD` | terraform-infra, cicd | Database master password (8+ characters, no `/`, `@`, `"` or spaces) |
+| `DB_USERNAME` | terraform-infra, cicd | Database master username, for example `hmsadmin` (not `admin`, it is reserved) |
+| `GH_PAT` | cicd | GitHub personal access token, used instead of the built-in `GITHUB_TOKEN` to push manifests |
+| `GH_USERNAME` | cicd | Your GitHub username |
+| `GRAFANA_ADMIN_PASSWORD` | not used by the current `monitoring.yml` | Old Grafana password. The login is now written in `monitoring.yml` (`GRAFANA_USER`, `GRAFANA_PASSWORD`). Safe to delete |
+| `GRAFANA_ADMIN_USER` | not used by the current `monitoring.yml` | Old Grafana username. Safe to delete |
+| `JWT_SECRET` | cicd | A long random string used to sign login tokens |
+| `SMTP_PASS` | cicd | Mail password the app uses to send emails |
+| `TFVARS` | terraform-infra, edge-cloudfront | Full contents of `terraform.tfvars`, including `hosted_zone_name` (see step 2). It replaces the file in the repo on every run |
+
+Optional secrets you have not set: `PROMETHEUS_ALLOWED_CIDR` (for example `203.0.113.10/32`, limits who can open Prometheus, which has no login) and `HOSTED_ZONE_NAME` (only needed if `hosted_zone_name` is not in `TFVARS`).
 
 `GITHUB_TOKEN` is created by GitHub automatically; you cannot add it as a secret.
 Also set **Settings → Actions → General → Workflow permissions** to **Read and write**.
 
-The Grafana username and password are **not** secrets: they are written at the top of `.github/workflows/monitoring.yml` (`GRAFANA_USER`, `GRAFANA_PASSWORD`).
+The Grafana username and password are written at the top of `.github/workflows/monitoring.yml` (`GRAFANA_USER`, `GRAFANA_PASSWORD`), so the two `GRAFANA_ADMIN_*` secrets are no longer needed.
 
 ### 2. Check `terraform/terraform.tfvars` (or the `TFVARS` secret)
 
 ```hcl
-region              = "******"
+region              = "****"
 project             = "*****"
-cluster_name        = "******"
+cluster_name        = "hms-eks"
 eks_version         = "1.31"          # see "EKS version" below
-node_instance_types = ["******"]    # use a smaller type if your account blocks this one
+node_instance_types = ["t3.medium"]    # use a smaller type if your account blocks this one
 node_min_size       = 2
 node_max_size       = 4
 node_desired_size   = 3
 
 # web address (used by terraform/dns.tf)
-hosted_zone_name = "***********"   # your Route53 public hosted zone
-app_subdomain    = "ritikhms"                                # gives https://ritikhms.********.realhandsonlabs.net
+hosted_zone_name = "*****.realhandsonlabs.net"   # your Route53 public hosted zone
+app_subdomain    = "ritikhms"                                # gives https://ritikhms.******.realhandsonlabs.net
 ```
 
 Keep `hosted_zone_name` in the file or secret permanently. If it is removed later, the next run would remove CloudFront and the Route53 record.
@@ -175,7 +180,7 @@ To release a change later, just push to `main`. Only changes to `terraform/`, `s
 ## Using the app
 
 - **Admin:** sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`. Admins see the Weekly report and Users pages and can create other admins.
-- **Staff:** anyone can use **Create account** on the login page. New accounts get staff access only.
+- **Create accounts:** the login page has no sign-up. Sign in as admin, open **Users**, and use **Add user** (name, email, password, role `employee` or `admin`). Staff then sign in with the email and password the admin gave them.
 - **Email:** emails go out through Amazon SNS. Each address must confirm once by clicking **Confirm subscription** in the message AWS sends. Until then no emails arrive. The **Account** page has **Resend email** and **Send test email** buttons.
 
 ## Monitoring
@@ -191,7 +196,6 @@ Installed by `monitoring.yml` after every successful deploy. Full guide: [monito
 
 | Method and path | Who | Purpose |
 |---|---|---|
-| `POST /auth/signup` | public | Create a staff account |
 | `POST /auth/login` | public | Get a login token |
 | `POST /auth/register` | admin | Create a user with any role |
 | `GET /auth/users` | admin | List users |
@@ -286,5 +290,5 @@ This setup is not free: the EKS control plane, worker nodes, a NAT gateway, six 
 - The pipeline prints the ArgoCD admin password in the run summary, and `monitoring.yml` prints the Grafana password. In a public repository anyone can read them, so make the repository private, or change the passwords after the first login.
 - The Grafana password is written in `monitoring.yml` in plain text. Change `GRAFANA_PASSWORD` to your own value and keep the repository private.
 - Prometheus has no login. Set the `PROMETHEUS_ALLOWED_CIDR` secret to limit who can open it.
-- Self sign-up gives anyone with the URL staff access to patient records. For real use, add an admin approval step.
+- There is no public sign-up: only an admin can create accounts, so nobody with just the URL can get staff access. Use strong passwords for the admin account.
 - The Kubernetes API is public (`cluster_endpoint_public_access = true`) so GitHub runners can deploy. Restrict it for production.
