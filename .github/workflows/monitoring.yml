@@ -102,7 +102,6 @@ jobs:
       - name: Get Grafana and Prometheus URLs
         env:
           GRAFANA_ADMIN_USER: ${{ secrets.GRAFANA_ADMIN_USER || 'ritik' }}
-          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         run: |
           get_host() {
             for i in $(seq 1 40); do
@@ -123,9 +122,8 @@ jobs:
               sleep 10
             done
           done
-          # GitHub hides secret values as *** in logs, so the password is printed with a space
-          # between each character (remove the spaces when you type it in).
-          SHOW_PASS=$(printf '%s' "$GRAFANA_ADMIN_PASSWORD" | sed 's/./& /g; s/ $//')
+          # The password is NOT printed (GitHub would mask it as *** anyway and logs are not a safe place for it).
+          # Use the value of the GitHub secret GRAFANA_ADMIN_PASSWORD to log in.
           {
             echo "## Monitoring deployed"
             echo ""
@@ -133,7 +131,7 @@ jobs:
             echo ""
             echo "**Grafana username:** $GRAFANA_ADMIN_USER"
             echo ""
-            echo "**Grafana password:** $SHOW_PASS   (one space between each character - remove the spaces)"
+            echo "**Grafana password:** the value of GitHub secret GRAFANA_ADMIN_PASSWORD"
             echo ""
             echo "**Prometheus URL:** $PROM_URL"
             echo ""
@@ -142,6 +140,6 @@ jobs:
           echo "=============================================="
           echo " GRAFANA URL     : $GRAFANA_URL"
           echo " GRAFANA USERNAME: $GRAFANA_ADMIN_USER"
-          echo " GRAFANA PASSWORD: $SHOW_PASS   (one space between each character - remove the spaces)"
+          echo " GRAFANA PASSWORD: value of GitHub secret GRAFANA_ADMIN_PASSWORD"
           echo " PROMETHEUS URL  : $PROM_URL"
           echo "=============================================="
