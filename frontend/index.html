@@ -276,6 +276,16 @@ button:focus-visible,a:focus-visible,.nav a:focus-visible{outline:3px solid #818
 .dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
 .dcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--sh)}.dcard .av{width:52px;height:52px;font-size:17px;margin-bottom:12px}.dcard h3{font-size:17px}
 .fee{display:inline-block;margin-top:10px;padding:4px 10px;border-radius:99px;background:var(--brand-l);color:var(--brand-d);font-weight:600;font-size:13px}
+
+/* white text: login brand panel + dark mode */
+.auth-side,.auth-side h1,.auth-side p,.auth-side .brandrow,.feats li{color:#fff}
+[data-theme=dark]{--ink:#fff;--muted:#d5dbf0;--brand-d:#fff}
+
+/* dark mode: white text inside dropdowns and form boxes */
+[data-theme=dark] select,[data-theme=dark] option,[data-theme=dark] optgroup{background-color:#131a2e;color:#fff}
+[data-theme=dark] option:checked{background-color:#4f46e5;color:#fff}
+[data-theme=dark] input,[data-theme=dark] textarea,[data-theme=dark] .fld select{color:#fff}
+[data-theme=dark] ::placeholder{color:#9aa6c4;opacity:1}
 </style>
 </head>
 <body>
