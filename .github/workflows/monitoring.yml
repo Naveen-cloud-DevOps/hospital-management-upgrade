@@ -1,6 +1,6 @@
 name: monitoring
-# Runs AFTER the "cicd" workflow (the 2nd pipeline) finishes successfully:
-# install Prometheus + Grafana + Alertmanager + Loki/Promtail on EKS -> print the URLs
+# Runs AFTER the "cicd" workflow finishes successfully:
+# install Prometheus + Grafana + Alertmanager + Loki/Promtail on EKS -> print URL, username and password
 on:
   workflow_run:
     workflows: ["cicd"]          # must match the "name:" in docker-build.yml exactly
@@ -19,6 +19,7 @@ env:
   AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
   CLUSTER_NAME: hms-eks
   KPS_VERSION: ""                # optional: pin kube-prometheus-stack chart version, empty = latest
+  GRAFANA_USER: admin            # Grafana username (change here if you want another one)
 
 jobs:
   monitoring:
@@ -33,11 +34,9 @@ jobs:
 
       - name: Check required secrets
         env:
-          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           ALERT_SMTP_PASSWORD: ${{ secrets.ALERT_SMTP_PASSWORD }}
         run: |
-          [ -n "$GRAFANA_ADMIN_PASSWORD" ] || { echo "::error::Add GitHub secret GRAFANA_ADMIN_PASSWORD"; exit 1; }
-          [ -n "$ALERT_SMTP_PASSWORD" ]    || { echo "::error::Add GitHub secret ALERT_SMTP_PASSWORD (Gmail app password)"; exit 1; }
+          [ -n "$ALERT_SMTP_PASSWORD" ] || { echo "::error::Add GitHub secret ALERT_SMTP_PASSWORD (Gmail app password)"; exit 1; }
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -52,20 +51,29 @@ jobs:
 
       - uses: azure/setup-helm@v4
 
-      - name: Create namespace and secrets (nothing secret is stored in git)
+      - name: Create namespace and Grafana login (generated here, not taken from a secret)
         env:
-          GRAFANA_ADMIN_USER: ${{ secrets.GRAFANA_ADMIN_USER || 'ritik' }}
-          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           ALERT_SMTP_PASSWORD: ${{ secrets.ALERT_SMTP_PASSWORD }}
         run: |
           kubectl create ns monitoring --dry-run=client -o yaml | kubectl apply -f -
+
+          # Re-use the login from a previous run so it never changes between runs;
+          # on the first run generate a random password.
+          G_USER=$(kubectl -n monitoring get secret grafana-admin -o jsonpath='{.data.admin-user}' 2>/dev/null | base64 -d || true)
+          G_PASS=$(kubectl -n monitoring get secret grafana-admin -o jsonpath='{.data.admin-password}' 2>/dev/null | base64 -d || true)
+          [ -n "$G_USER" ] || G_USER="$GRAFANA_USER"
+          [ -n "$G_PASS" ] || G_PASS=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 16)
+
           kubectl -n monitoring create secret generic grafana-admin \
-            --from-literal=admin-user="$GRAFANA_ADMIN_USER" \
-            --from-literal=admin-password="$GRAFANA_ADMIN_PASSWORD" \
+            --from-literal=admin-user="$G_USER" \
+            --from-literal=admin-password="$G_PASS" \
             --dry-run=client -o yaml | kubectl apply -f -
           kubectl -n monitoring create secret generic alertmanager-smtp \
             --from-literal=password="$ALERT_SMTP_PASSWORD" \
             --dry-run=client -o yaml | kubectl apply -f -
+
+          echo "G_USER=$G_USER" >> "$GITHUB_ENV"
+          echo "G_PASS=$G_PASS" >> "$GITHUB_ENV"
 
       - name: Add Helm repositories
         run: |
@@ -99,9 +107,14 @@ jobs:
       - name: Add pod-logs dashboard
         run: kubectl apply -f monitoring/dashboard-pod-logs.yaml
 
+      - name: Make sure Grafana accepts the generated password
+        run: |
+          # Grafana only reads the password from the secret on its very first start.
+          # This keeps the database password equal to the one printed below.
+          kubectl -n monitoring exec deploy/kube-prometheus-stack-grafana -c grafana -- \
+            grafana cli admin reset-admin-password "$G_PASS" || echo "password reset skipped"
+
       - name: Get Grafana and Prometheus URLs
-        env:
-          GRAFANA_ADMIN_USER: ${{ secrets.GRAFANA_ADMIN_USER || 'ritik' }}
         run: |
           get_host() {
             for i in $(seq 1 40); do
@@ -122,16 +135,14 @@ jobs:
               sleep 10
             done
           done
-          # The password is NOT printed (GitHub would mask it as *** anyway and logs are not a safe place for it).
-          # Use the value of the GitHub secret GRAFANA_ADMIN_PASSWORD to log in.
           {
             echo "## Monitoring deployed"
             echo ""
             echo "**Grafana URL:** $GRAFANA_URL"
             echo ""
-            echo "**Grafana username:** $GRAFANA_ADMIN_USER"
+            echo "**Grafana username:** $G_USER"
             echo ""
-            echo "**Grafana password:** the value of GitHub secret GRAFANA_ADMIN_PASSWORD"
+            echo "**Grafana password:** $G_PASS"
             echo ""
             echo "**Prometheus URL:** $PROM_URL"
             echo ""
@@ -139,7 +150,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           echo "=============================================="
           echo " GRAFANA URL     : $GRAFANA_URL"
-          echo " GRAFANA USERNAME: $GRAFANA_ADMIN_USER"
-          echo " GRAFANA PASSWORD: value of GitHub secret GRAFANA_ADMIN_PASSWORD"
+          echo " GRAFANA USERNAME: $G_USER"
+          echo " GRAFANA PASSWORD: $G_PASS"
           echo " PROMETHEUS URL  : $PROM_URL"
           echo "=============================================="
