@@ -286,6 +286,31 @@ button:focus-visible,a:focus-visible,.nav a:focus-visible{outline:3px solid #818
 [data-theme=dark] option:checked{background-color:#4f46e5;color:#fff}
 [data-theme=dark] input,[data-theme=dark] textarea,[data-theme=dark] .fld select{color:#fff}
 [data-theme=dark] ::placeholder{color:#9aa6c4;opacity:1}
+
+/* ===== MediCore-style layout: hidden sidebar that slides in from the left, hero, colourful cards ===== */
+:root{--brand:#2563eb;--brand-d:#1e40af;--brand-l:#dbeafe}[data-theme=dark]{--brand:#60a5fa;--brand-d:#fff;--brand-l:#1e2f5c}
+.btn,[data-theme=dark] .btn{background:#2563eb;border-color:#2563eb;color:#fff;box-shadow:0 6px 16px #2563eb44}.btn:hover{background:#1d4ed8}
+.btn.ghost,[data-theme=dark] .btn.ghost{background:var(--surface);color:var(--ink);border-color:var(--line);box-shadow:none}
+.side,[data-theme=dark] .side{background:linear-gradient(180deg,#0b1437,#0f1f4d 55%,#0b2a52);color:#e2e8f0;border:0}
+.side .brandrow{color:#fff;font-weight:700;font-size:18px}
+.nav-sec{margin:14px 10px 4px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7c8db5}
+.nav a,.nav a:hover{color:#cbd5e1}.nav a:hover,[data-theme=dark] .nav a:hover{background:#ffffff14}
+.nav a.on,.nav a.on:hover{background:linear-gradient(90deg,#0d9488,#2563eb);color:#fff;box-shadow:0 8px 20px #2563eb55}
+.side-foot,[data-theme=dark] .side-foot{background:#ffffff12;color:#fff}.side-foot small{color:#9fb0d3}
+.side-out{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;color:#f87171;font:inherit;font-weight:600;background:none;border:0;cursor:pointer}.side-out:hover{background:#ffffff14}
+.hero{border-radius:20px;padding:34px 38px;margin-bottom:22px;color:#fff;background:radial-gradient(900px 300px at 100% 0,#0e7490aa,transparent 60%),linear-gradient(135deg,#0b1437,#14306b 60%,#0f4c5c);box-shadow:var(--sh)}
+.hero small{letter-spacing:.14em;font-weight:700;color:#5eead4;text-transform:uppercase}.hero h2{font-size:clamp(24px,3.2vw,36px);margin:8px 0;color:#fff}.hero p{color:#dbe7ff;max-width:640px}.hero .btn.ghost{background:#ffffff1f;color:#fff;border-color:#ffffff40}
+.kpi{position:relative;overflow:hidden}.kpi::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--c),transparent)}
+.kpi i{background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c);box-shadow:0 6px 14px color-mix(in srgb,var(--c) 22%,transparent)}.kpi b{font-size:28px;color:var(--ink)}
+.dt{color:var(--muted);font-size:14px;margin-right:6px}
+.hot{display:none}
+@media(min-width:861px){
+ .shell{grid-template-columns:1fr}.hot{display:block;position:fixed;left:0;top:0;bottom:0;width:18px;z-index:39}
+ .side{position:fixed;left:0;top:0;bottom:0;width:268px;height:100vh;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);z-index:40;overflow-y:auto}
+ .hot:hover+.side,.side:hover,.side:focus-within{transform:none;box-shadow:12px 0 40px #0b143780}
+ .shell::before{content:'';position:fixed;left:0;top:0;bottom:0;width:4px;background:linear-gradient(#2563eb,#14b8a6);z-index:35;pointer-events:none}
+}
+@media(max-width:860px){.nav-sec,.side-out{display:none}}
 </style>
 </head>
 <body>
@@ -317,7 +342,7 @@ const logo=()=>`<span class="logo" role="img" aria-label="${t('app')}">${ic('hea
 
 /* ---------- translations (anything missing falls back to English) ---------- */
 const T={
-en:{laboratory:'Laboratory',pharmacy:'Pharmacy',doctors:'Doctors',doctors_sub:'Specialists and consultation fees.',d_fee:'Fee',total_doctors:'Total doctors',todays_appts:"Today's appointments",pend_appr:'Awaiting approval',rev_total:'Total revenue',appt_chart:'Appointments - last 7 days',rev_chart:'Revenue - last 7 days',upcoming:'Upcoming appointments',no_doctors:'No doctors found',no_upcoming:'No upcoming appointments',remember:'Remember me',forgot:'Forgot password?',forgot_msg:'Ask your administrator to reset your password (Users page).',theme:'Light / dark mode',f1:'Patient records and history',f2:'Daily queue and appointments',f3:'Secure, role-based access',app:'CarePulse',tagline:'Patient records, the daily queue and payments in one place.',side_p:'Register patients, give out tokens, track five weeks of recovery and issue receipts - from any phone or computer.',
+en:{sec_overview:'Overview',sec_care:'Patient care',sec_services:'Services',sec_admin:'Admin',hero_h:'Compassionate care, powered by live data',hero_p:'Every patient, doctor and bill across your hospital, in one place.',laboratory:'Laboratory',pharmacy:'Pharmacy',doctors:'Doctors',doctors_sub:'Specialists and consultation fees.',d_fee:'Fee',total_doctors:'Total doctors',todays_appts:"Today's appointments",pend_appr:'Awaiting approval',rev_total:'Total revenue',appt_chart:'Appointments - last 7 days',rev_chart:'Revenue - last 7 days',upcoming:'Upcoming appointments',no_doctors:'No doctors found',no_upcoming:'No upcoming appointments',remember:'Remember me',forgot:'Forgot password?',forgot_msg:'Ask your administrator to reset your password (Users page).',theme:'Light / dark mode',f1:'Patient records and history',f2:'Daily queue and appointments',f3:'Secure, role-based access',app:'CarePulse',tagline:'Patient records, the daily queue and payments in one place.',side_p:'Register patients, give out tokens, track five weeks of recovery and issue receipts - from any phone or computer.',
  signin:'Sign in',signup:'Create account',signin_t:'Welcome back',signup_t:'Create your account',signin_sub:'Sign in to continue to your dashboard.',signup_sub:'Create a staff account to start recording patients.',
  email:'Email address',password:'Password',confirm:'Confirm password',fullname:'Full name',pw_hint:'At least 8 characters',pw_mismatch:'The two passwords do not match.',
  no_acc:'New here?',have_acc:'Already have an account?',signing:'Signing in…',creating:'Creating account…',welcome:'Account created. Welcome, {n}!',
@@ -351,7 +376,7 @@ en:{laboratory:'Laboratory',pharmacy:'Pharmacy',doctors:'Doctors',doctors_sub:'S
  my_appts:'My appointments',all_appts:'All appointments',no_appts:'No appointments yet',no_appts_s:'Book your first doctor appointment above.',
  cancel_appt:'Cancel',complete_appt:'Mark completed',cancelled:'Cancelled',completed:'Completed',booked:'Booked',appt_cancelled:'Appointment cancelled. Email sent.',pick_all:'Choose a doctor, date and time.',
  other:'Other',male:'Male',female:'Female',cash:'Cash',card_m:'Card',upi:'UPI'},
-hi:{doctors:'डॉक्टर',doctors_sub:'विशेषज्ञ और परामर्श शुल्क।',d_fee:'शुल्क',total_doctors:'कुल डॉक्टर',todays_appts:'आज की अपॉइंटमेंट',pend_appr:'अनुमोदन की प्रतीक्षा',rev_total:'कुल आय',appt_chart:'अपॉइंटमेंट - पिछले 7 दिन',rev_chart:'आय - पिछले 7 दिन',upcoming:'आगामी अपॉइंटमेंट',no_doctors:'कोई डॉक्टर नहीं मिला',no_upcoming:'कोई आगामी अपॉइंटमेंट नहीं',remember:'मुझे याद रखें',forgot:'पासवर्ड भूल गए?',forgot_msg:'पासवर्ड रीसेट के लिए अपने एडमिन से कहें।',theme:'लाइट / डार्क मोड',f1:'रोगी रिकॉर्ड और इतिहास',f2:'दैनिक कतार और अपॉइंटमेंट',f3:'सुरक्षित, भूमिका-आधारित पहुँच',tagline:'मरीज़ों का रिकॉर्ड, रोज़ की कतार और भुगतान - एक ही जगह।',signin:'साइन इन',signup:'खाता बनाएँ',signin_t:'वापसी पर स्वागत है',signup_t:'अपना खाता बनाएँ',email:'ईमेल पता',password:'पासवर्ड',confirm:'पासवर्ड दोबारा लिखें',fullname:'पूरा नाम',
+hi:{sec_overview:'अवलोकन',sec_care:'रोगी सेवा',sec_services:'सेवाएँ',sec_admin:'प्रशासन',hero_h:'सहानुभूतिपूर्ण देखभाल, लाइव डेटा के साथ',hero_p:'आपके अस्पताल का हर रोगी, डॉक्टर और बिल, एक ही जगह।',doctors:'डॉक्टर',doctors_sub:'विशेषज्ञ और परामर्श शुल्क।',d_fee:'शुल्क',total_doctors:'कुल डॉक्टर',todays_appts:'आज की अपॉइंटमेंट',pend_appr:'अनुमोदन की प्रतीक्षा',rev_total:'कुल आय',appt_chart:'अपॉइंटमेंट - पिछले 7 दिन',rev_chart:'आय - पिछले 7 दिन',upcoming:'आगामी अपॉइंटमेंट',no_doctors:'कोई डॉक्टर नहीं मिला',no_upcoming:'कोई आगामी अपॉइंटमेंट नहीं',remember:'मुझे याद रखें',forgot:'पासवर्ड भूल गए?',forgot_msg:'पासवर्ड रीसेट के लिए अपने एडमिन से कहें।',theme:'लाइट / डार्क मोड',f1:'रोगी रिकॉर्ड और इतिहास',f2:'दैनिक कतार और अपॉइंटमेंट',f3:'सुरक्षित, भूमिका-आधारित पहुँच',tagline:'मरीज़ों का रिकॉर्ड, रोज़ की कतार और भुगतान - एक ही जगह।',signin:'साइन इन',signup:'खाता बनाएँ',signin_t:'वापसी पर स्वागत है',signup_t:'अपना खाता बनाएँ',email:'ईमेल पता',password:'पासवर्ड',confirm:'पासवर्ड दोबारा लिखें',fullname:'पूरा नाम',
  dashboard:'डैशबोर्ड',patients:'मरीज़',queue:'कतार',payments:'भुगतान',reports:'साप्ताहिक रिपोर्ट',users:'उपयोगकर्ता',logout:'लॉग आउट',
  greet_m:'सुप्रभात',greet_a:'नमस्कार',greet_e:'शुभ संध्या',total_patients:'दर्ज मरीज़',waiting:'प्रतीक्षा में',in_progress:'परामर्श में',done:'पूरा',collected:'आज की वसूली',
  new_patient:'नया मरीज़',add_queue:'कतार में जोड़ें',search:'नाम या मोबाइल से खोजें',save_patient:'मरीज़ सहेजें',cancel:'रद्द करें',back:'सभी मरीज़',todays_queue:'आज की कतार',
@@ -359,7 +384,7 @@ hi:{doctors:'डॉक्टर',doctors_sub:'विशेषज्ञ और �
  first_name:'पहला नाम',last_name:'अंतिम नाम',age:'उम्र',gender:'लिंग',mobile:'मोबाइल नंबर',address:'पता',city:'शहर',state:'राज्य',blood_group:'रक्त समूह',occupation:'व्यवसाय',
  heard_about_us:'हमारे बारे में कैसे सुना?',referred_by:'किसने भेजा',diseases:'बीमारी का प्रकार',weekly:'साप्ताहिक प्रगति',week:'सप्ताह',symptoms:'लक्षण',photo:'फोटो',save_week:'सप्ताह सहेजें',
  amount:'राशि',method:'भुगतान का तरीका',patient:'मरीज़',save_payment:'भुगतान सहेजें',name:'नाम',role:'भूमिका',add_user:'उपयोगकर्ता जोड़ें',save:'सहेजें'},
-or:{doctors:'ଡାକ୍ତର',doctors_sub:'ବିଶେଷଜ୍ଞ ଓ ପରାମର୍ଶ ଫି।',d_fee:'ଫି',total_doctors:'ମୋଟ ଡାକ୍ତର',todays_appts:'ଆଜିର ଆପଏଣ୍ଟମେଣ୍ଟ',pend_appr:'ଅନୁମୋଦନ ଅପେକ୍ଷାରେ',rev_total:'ମୋଟ ଆୟ',appt_chart:'ଆପଏଣ୍ଟମେଣ୍ଟ - ଗତ ୭ ଦିନ',rev_chart:'ଆୟ - ଗତ ୭ ଦିନ',upcoming:'ଆଗାମୀ ଆପଏଣ୍ଟମେଣ୍ଟ',no_doctors:'କୌଣସି ଡାକ୍ତର ମିଳିଲେ ନାହିଁ',no_upcoming:'କୌଣସି ଆଗାମୀ ଆପଏଣ୍ଟମେଣ୍ଟ ନାହିଁ',remember:'ମୋତେ ମନେ ରଖ',forgot:'ପାସୱାର୍ଡ ଭୁଲିଗଲେ?',forgot_msg:'ପାସୱାର୍ଡ ରିସେଟ୍ ପାଇଁ ଆପଣଙ୍କ ଆଡମିନଙ୍କୁ କୁହନ୍ତୁ।',theme:'ଲାଇଟ୍ / ଡାର୍କ୍ ମୋଡ୍',f1:'ରୋଗୀ ରେକର୍ଡ ଓ ଇତିହାସ',f2:'ଦୈନିକ ଧାଡ଼ି ଓ ଆପଏଣ୍ଟମେଣ୍ଟ',f3:'ସୁରକ୍ଷିତ, ଭୂମିକା ଆଧାରିତ ପ୍ରବେଶ',tagline:'ରୋଗୀ ରେକର୍ଡ, ଦୈନିକ ଧାଡ଼ି ଏବଂ ପେମେଣ୍ଟ - ସବୁ ଗୋଟିଏ ସ୍ଥାନରେ।',signin:'ସାଇନ୍ ଇନ୍',signin_t:'ପୁଣି ସ୍ୱାଗତ',email:'ଇମେଲ୍ ଠିକଣା',password:'ପାସୱାର୍ଡ',
+or:{sec_overview:'ସମୀକ୍ଷା',sec_care:'ରୋଗୀ ସେବା',sec_services:'ସେବା',sec_admin:'ପରିଚାଳନା',hero_h:'ସହାନୁଭୂତିପୂର୍ଣ୍ଣ ସେବା, ଲାଇଭ୍ ଡାଟା ସହିତ',hero_p:'ଆପଣଙ୍କ ହସ୍ପିଟାଲର ପ୍ରତ୍ୟେକ ରୋଗୀ, ଡାକ୍ତର ଓ ବିଲ୍, ଗୋଟିଏ ସ୍ଥାନରେ।',doctors:'ଡାକ୍ତର',doctors_sub:'ବିଶେଷଜ୍ଞ ଓ ପରାମର୍ଶ ଫି।',d_fee:'ଫି',total_doctors:'ମୋଟ ଡାକ୍ତର',todays_appts:'ଆଜିର ଆପଏଣ୍ଟମେଣ୍ଟ',pend_appr:'ଅନୁମୋଦନ ଅପେକ୍ଷାରେ',rev_total:'ମୋଟ ଆୟ',appt_chart:'ଆପଏଣ୍ଟମେଣ୍ଟ - ଗତ ୭ ଦିନ',rev_chart:'ଆୟ - ଗତ ୭ ଦିନ',upcoming:'ଆଗାମୀ ଆପଏଣ୍ଟମେଣ୍ଟ',no_doctors:'କୌଣସି ଡାକ୍ତର ମିଳିଲେ ନାହିଁ',no_upcoming:'କୌଣସି ଆଗାମୀ ଆପଏଣ୍ଟମେଣ୍ଟ ନାହିଁ',remember:'ମୋତେ ମନେ ରଖ',forgot:'ପାସୱାର୍ଡ ଭୁଲିଗଲେ?',forgot_msg:'ପାସୱାର୍ଡ ରିସେଟ୍ ପାଇଁ ଆପଣଙ୍କ ଆଡମିନଙ୍କୁ କୁହନ୍ତୁ।',theme:'ଲାଇଟ୍ / ଡାର୍କ୍ ମୋଡ୍',f1:'ରୋଗୀ ରେକର୍ଡ ଓ ଇତିହାସ',f2:'ଦୈନିକ ଧାଡ଼ି ଓ ଆପଏଣ୍ଟମେଣ୍ଟ',f3:'ସୁରକ୍ଷିତ, ଭୂମିକା ଆଧାରିତ ପ୍ରବେଶ',tagline:'ରୋଗୀ ରେକର୍ଡ, ଦୈନିକ ଧାଡ଼ି ଏବଂ ପେମେଣ୍ଟ - ସବୁ ଗୋଟିଏ ସ୍ଥାନରେ।',signin:'ସାଇନ୍ ଇନ୍',signin_t:'ପୁଣି ସ୍ୱାଗତ',email:'ଇମେଲ୍ ଠିକଣା',password:'ପାସୱାର୍ଡ',
  confirm:'ପାସୱାର୍ଡ ପୁଣି ଲେଖନ୍ତୁ',fullname:'ପୂରା ନାମ',dashboard:'ଡ୍ୟାସବୋର୍ଡ',patients:'ରୋଗୀ',queue:'ଧାଡ଼ି',
  payments:'ପେମେଣ୍ଟ',reports:'ସାପ୍ତାହିକ ରିପୋର୍ଟ',users:'ଉପଯୋଗକର୍ତ୍ତା',logout:'ଲଗ୍ ଆଉଟ୍',greet_m:'ସୁପ୍ରଭାତ',
  greet_a:'ଶୁଭ ଅପରାହ୍ନ',greet_e:'ଶୁଭ ସନ୍ଧ୍ୟା',total_patients:'ରେକର୍ଡରେ ଥିବା ରୋଗୀ',waiting:'ଅପେକ୍ଷାରତ',in_progress:'ପରାମର୍ଶ ଚାଲିଛି',
@@ -464,17 +489,19 @@ const strength=p=>{let s=0;if(p.length>=8)s++;if(/[A-Z]/.test(p)&&/[a-z]/.test(p
 /* ---------- shell ---------- */
 function shell(page,inner){
  const admin=S.role==='admin';
- const items=[['dashboard','grid'],['patients','users'],['doctors','steth'],['queue','clock'],['payments','card'],['appointments','cal'],['laboratory','flask'],['pharmacy','pill']];
- if(admin)items.push(['reports','file'],['users','shield']);
+ const groups=[['sec_overview',[['dashboard','grid']]],['sec_care',[['patients','users'],['queue','clock'],['appointments','cal'],['doctors','steth']]],['sec_services',[['laboratory','flask'],['pharmacy','pill'],['payments','card']]]];
+ if(admin)groups.push(['sec_admin',[['reports','file'],['users','shield']]]);
  const title=t(page==='patient'?'patients':page);
  return `<div class="shell">
+ <div class="hot" aria-hidden="true"></div>
  <aside class="side">
   <div class="brandrow">${logo()}<span>${t('app')}</span></div>
-  <nav class="nav">${items.map(([k,i])=>`<a href="#/${k}" class="${k===page?'on':''}">${ic(i,19)}<span>${t(k)}</span></a>`).join('')}</nav>
+  <nav class="nav">${groups.map(([g,l])=>`<div class="nav-sec">${t(g)}</div>`+l.map(([k,i])=>`<a href="#/${k}" class="${k===page?'on':''}">${ic(i,19)}<span>${t(k)}</span></a>`).join('')).join('')}</nav>
   <a class="side-foot" href="#/account" style="color:inherit;text-decoration:none"><span class="av">${esc((S.name||'?').slice(0,2).toUpperCase())}</span><div><b>${esc(S.name)}</b><small>${esc(admin?'Administrator':'Staff')}</small></div></a>
+  <button class="side-out" data-act="logout">${ic('out',18)}<span>${t('logout')}</span></button>
  </aside>
  <div class="main">
-  <header class="top"><h2>${title}</h2><span class="grow"></span>${themeBtn()}${langSel()}<a class="icon" href="#/account" aria-label="${t('account')}" title="${t('account')}">${ic('mail',19)}</a><button class="btn ghost sm" data-act="logout">${ic('out',16)}<span>${t('logout')}</span></button></header>
+  <header class="top"><h2>${title}</h2><span class="grow"></span><span class="dt">${new Date().toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span>${themeBtn()}${langSel()}<a class="icon" href="#/account" aria-label="${t('account')}" title="${t('account')}">${ic('mail',19)}</a><button class="btn ghost sm" data-act="logout">${ic('out',16)}<span>${t('logout')}</span></button></header>
   ${mailBanner()}
   <div class="content" id="content">${inner}</div>
  </div></div>`}
@@ -517,7 +544,7 @@ function ticketRow(x){return `<div class="row"><span class="n">#${x.token_no}</s
 const dkey=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const compact=n=>new Intl.NumberFormat('en-IN',{notation:'compact',maximumFractionDigits:1}).format(n);
 const barChart=(vals,labels,fmt)=>{const m=Math.max(...vals,1);return `<div class="bars" role="img" aria-label="chart">${vals.map((v,i)=>`<div title="${fmt(v)}"><small>${v?fmt(v):''}</small><i style="height:${Math.round(v/m*100)}%"></i><span>${labels[i]}</span></div>`).join('')}</div>`};
-const kpi=(i,v,l)=>`<div class="kpi"><i>${ic(i,21)}</i><div><b>${v}</b><span>${l}</span></div></div>`;
+const kpi=(i,v,l,c)=>`<div class="kpi" style="--c:${c}"><i>${ic(i,21)}</i><div><b>${v}</b><span>${l}</span></div></div>`;
 function pDoctors(){
  const card=d=>`<article class="dcard"><span class="av">${esc(d.name.replace(/^Dr\.?\s*/,'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase())}</span><h3>${esc(d.name)}</h3><div style="color:var(--muted)">${esc(d.speciality)}</div><small style="color:var(--muted)">${esc(d.qualification||'')}</small><br><span class="fee">${t('d_fee')}: ${money(d.fee)}</span><div style="margin-top:12px"><a class="btn ghost sm" href="#/appointments">${t('book_title')}</a></div></article>`;
  return `<div class="page-h"><div><h1>${t('doctors')}</h1><p>${t('doctors_sub')}</p></div></div>${S.docs.length?`<div class="dgrid">${S.docs.map(card).join('')}</div>`:`<div class="panel"><div class="empty"><b>${t('no_doctors')}</b></div></div>`}${S.role==='admin'?doctorForm():''}`}
@@ -532,7 +559,8 @@ function pDashboard(){
  const h=new Date().getHours(),g=h<12?'greet_m':h<17?'greet_a':'greet_e';
  return `<div class="page-h"><div><h1>${t(g)}, ${esc((S.name||'').split(' ')[0])}</h1><p>${t('greet_sub')}</p></div><span class="grow"></span>
   <div class="actions"><button class="btn ghost" data-act="newQueue">${ic('clock',17)}${t('add_queue')}</button><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button></div></div>
- <div class="kpis">${kpi('users',S.pts.length,t('total_patients'))}${kpi('steth',D.length,t('total_doctors'))}${kpi('cal',todayN,t('todays_appts'))}${kpi('clock',pend,t('pend_appr'))}${kpi('clock',w,t('waiting'))}${kpi('card',money(rev),t('rev_total'))}</div>
+ <section class="hero"><small>${t('app')} · ${esc(S.name)}</small><h2>${t('hero_h')}</h2><p>${t('hero_p')}</p><div class="actions" style="margin-top:18px"><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button><a class="btn ghost" href="#/appointments">${t('appointments')}</a></div></section>
+ <div class="kpis">${kpi('users',S.pts.length,t('total_patients'),'#3b82f6')}${kpi('steth',D.length,t('total_doctors'),'#14b8a6')}${kpi('cal',todayN,t('todays_appts'),'#22c55e')}${kpi('clock',pend,t('pend_appr'),'#f59e0b')}${kpi('clock',w,t('waiting'),'#8b5cf6')}${kpi('card',money(rev),t('rev_total'),'#ef4444')}</div>
  <div class="cols"><div class="panel"><div class="panel-h"><h3>${t('appt_chart')}</h3></div>${barChart(ac,lab,String)}</div>
   <div class="panel"><div class="panel-h"><h3>${t('rev_chart')}</h3><span class="grow"></span><small style="color:var(--muted)">${t('collected')}: ${money(col)}</small></div>${barChart(rc,lab,compact)}</div></div>
  <div class="cols">
