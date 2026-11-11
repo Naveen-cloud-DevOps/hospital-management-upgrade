@@ -10,7 +10,7 @@ spec:
       serviceAccountName: hms-sa
       containers:
         - name: app
-          image: 381491825192.dkr.ecr.us-east-1.amazonaws.com/hospital-management-patient:7248de1f3f290d2192cd422a1ca7d744a99ca6e5
+          image: 381491825192.dkr.ecr.us-east-1.amazonaws.com/hospital-management-patient:447ba55d0250b6b482c77da29813bd7de42e01df
           ports: [{containerPort: 8000}]
           envFrom:
             - configMapRef: {name: hms-config}
