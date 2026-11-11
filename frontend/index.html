@@ -640,7 +640,6 @@ function pDashboard(){
  const h=new Date().getHours(),g=h<12?'greet_m':h<17?'greet_a':'greet_e';
  return `<div class="page-h"><div><h1>${t(g)}, <span class="gname">${esc((S.name||'').split(' ')[0])}</span></h1><p>${t('greet_sub')}</p></div><span class="grow"></span>
   <div class="actions"><button class="btn ghost" data-act="newQueue">${ic('clock',17)}${t('add_queue')}</button><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button></div></div>
- <section class="hero"><small>${t('app')} · ${esc(S.name)}</small><h2>${t('hero_h')}</h2><p>${t('hero_p')}</p><div class="actions" style="margin-top:18px"><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button><a class="btn ghost" href="#/appointments">${t('appointments')}</a></div></section>
  <div class="kpis">${kpi('users',S.pts.length,t('total_patients'),'#3b82f6','#/patients')}${kpi('steth',D.length,t('total_doctors'),'#14b8a6','#/doctors')}${kpi('cal',todayN,t('todays_appts'),'#8b5cf6','#/appointments')}${kpi('clock',pend,t('pend_appr'),'#f59e0b','#/appointments')}${kpi('hourglass',w,t('waiting'),'#10b981','#/queue')}${kpi('card',money(rev),t('rev_total'),'#ec4899','#/payments')}</div>
  <div class="cols"><div class="panel"><div class="panel-h"><h3>${t('appt_chart')}</h3></div>${barChart(ac,lab,String,1)}</div>
   <div class="panel"><div class="panel-h"><h3>${t('rev_chart')}</h3><span class="grow"></span><small style="color:var(--muted)">${t('collected')}: ${money(col)}</small></div>${lineChart(rc,lab,compact)}</div></div>
