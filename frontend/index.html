@@ -15,9 +15,9 @@
    CarePulse - modern UI  (CSS only: all markup hooks / JS logic unchanged)
    ========================================================================== */
 :root{
-  --ink:#0b1220;--muted:#667085;--line:#e6e9f2;--bg:#f5f6fb;--soft:#eef1f8;--surface:#ffffff;--surface-2:#fafbfe;
-  --acc:#2563eb;--acc-d:#1d4ed8;--acc2:#0d9488;--acc-l:#e0eaff;
-  --brand:var(--acc);--brand-d:var(--acc-d);--brand-l:var(--acc-l);
+  --ink:#0b1220;--muted:#55607a;--line:#e6e9f2;--bg:#f5f6fb;--soft:#eef1f8;--surface:#ffffff;--surface-2:#fafbfe;
+  --acc:#2563eb;--acc-d:#1d4ed8;--acc2:#0d9488;--acc-l:color-mix(in srgb,var(--acc) 13%,var(--surface));--link:color-mix(in srgb,var(--acc) 76%,#000);
+  --brand:var(--acc);--brand-d:color-mix(in srgb,var(--acc) 70%,#000);--brand-l:var(--acc-l);
   --amber:#b45309;--amber-l:#fef3c7;--green:#047857;--green-l:#d1fae5;--red:#dc2626;--red-l:#fee2e2;
   --r:18px;--r-sm:12px;
   --sh-1:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.04);
@@ -30,15 +30,15 @@
 [data-theme=dark]{
   color-scheme:dark;
   --ink:#f1f4fb;--muted:#9aa4bf;--line:#232c45;--bg:#0a0f1d;--soft:#161d33;--surface:#10172a;--surface-2:#131b30;
-  --acc-l:color-mix(in srgb,var(--acc) 22%,#0a0f1d);--brand-d:#fff;
+  --acc-l:color-mix(in srgb,var(--acc) 24%,var(--surface));--brand-d:color-mix(in srgb,var(--acc) 35%,#fff);--link:color-mix(in srgb,var(--acc) 45%,#fff);
   --amber:#fbbf24;--amber-l:#3a2a0a;--green:#34d399;--green-l:#0d2f25;--red:#f87171;--red-l:#3a1414;
   --sh-1:0 1px 2px rgba(0,0,0,.4);--sh:0 1px 2px rgba(0,0,0,.4),0 10px 30px -10px rgba(0,0,0,.6);--sh-lg:0 24px 60px -16px rgba(0,0,0,.8);
   --glass:rgba(16,23,42,.78);
 }
-[data-accent=teal]{--acc:#0d9488;--acc-d:#0f766e;--acc2:#2563eb;--acc-l:#ccfbf1}
-[data-accent=violet]{--acc:#7c3aed;--acc-d:#6d28d9;--acc2:#2563eb;--acc-l:#ede9fe}
-[data-accent=rose]{--acc:#e11d48;--acc-d:#be123c;--acc2:#f59e0b;--acc-l:#ffe4e6}
-[data-accent=orange]{--acc:#ea580c;--acc-d:#c2410c;--acc2:#0d9488;--acc-l:#ffedd5}
+[data-accent=teal]{--acc:#0f766e;--acc-d:#115e59;--acc2:#2563eb}
+[data-accent=violet]{--acc:#7c3aed;--acc-d:#6d28d9;--acc2:#2563eb}
+[data-accent=rose]{--acc:#e11d48;--acc-d:#be123c;--acc2:#f59e0b}
+[data-accent=orange]{--acc:#c2410c;--acc-d:#9a3412;--acc2:#0d9488}
 
 *{box-sizing:border-box}
 html,body{min-height:100%}
@@ -141,7 +141,7 @@ select,option,optgroup{background-color:var(--surface);color:var(--ink)}
 .nav a:hover{background:var(--soft);color:var(--ink)}
 .nav a:hover svg{transform:scale(1.08)}
 .nav a.on{background:var(--acc-l);color:var(--brand-d);font-weight:600}
-[data-theme=dark] .nav a.on{color:#fff}
+
 .nav a.on::before{content:"";position:absolute;left:-16px;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:linear-gradient(var(--acc),var(--acc2))}
 .nav a.on svg{color:var(--acc)}
 [data-theme=dark] .nav a.on svg{color:color-mix(in srgb,var(--acc) 60%,#fff)}
@@ -153,7 +153,7 @@ select,option,optgroup{background-color:var(--surface);color:var(--ink)}
 .side-out{display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:12px;color:var(--red);font-weight:600;background:none;border:0;cursor:pointer;font-size:14.5px}
 .side-out:hover{background:var(--red-l)}
 .av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--acc-l),color-mix(in srgb,var(--acc2) 22%,var(--acc-l)));color:var(--brand-d);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none;border:1px solid color-mix(in srgb,var(--acc) 15%,transparent)}
-[data-theme=dark] .av{color:#fff}
+
 
 .main{margin-left:var(--side-w);min-width:0}
 .top{display:flex;align-items:center;gap:10px;height:var(--top-h);padding:0 32px;position:sticky;top:0;z-index:30;
@@ -232,7 +232,7 @@ select,option,optgroup{background-color:var(--surface);color:var(--ink)}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:99px;font-size:12.5px;font-weight:600;white-space:nowrap}
 .pill.waiting{background:var(--amber-l);color:var(--amber)}
 .pill.in-progress{background:var(--acc-l);color:var(--brand-d)}
-[data-theme=dark] .pill.in-progress{color:#fff}
+
 .pill.done{background:var(--green-l);color:var(--green)}
 .pill.dx{background:var(--soft);color:var(--muted);margin:1px 4px 1px 0;border:1px solid var(--line)}
 .pill.role{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
@@ -306,7 +306,7 @@ select,option,optgroup{background-color:var(--surface);color:var(--ink)}
 .dcard .av{width:62px;height:62px;font-size:19px;margin-bottom:14px;border:3px solid var(--surface);box-shadow:var(--sh)}
 .dcard h3{font-size:17px;font-weight:700}
 .fee{display:inline-block;margin-top:12px;padding:5px 12px;border-radius:99px;background:var(--acc-l);color:var(--brand-d);font-weight:700;font-size:13px}
-[data-theme=dark] .fee{color:#fff}
+
 
 /* ---------- drawer / toasts ---------- */
 .scrim{position:fixed;inset:0;background:rgba(8,12,28,.5);backdrop-filter:blur(4px);z-index:60;animation:fade .2s}
@@ -352,6 +352,36 @@ select,option,optgroup{background-color:var(--surface);color:var(--ink)}
   .drawer{border-radius:0}
   .page-h h1{font-size:24px}
 }
+
+/* ---------- premium UI layer (theme-aware text colours) ---------- */
+::placeholder{color:#6b7690}[data-theme=dark] ::placeholder{color:#8a95b3}
+.btn{background:linear-gradient(180deg,var(--acc),var(--acc-d))}
+.rowline a,.auth-card .alt button,.photo-link,.ticket .no,.mini .n,.page-h h1 .gname{color:var(--link)}
+.side{background:linear-gradient(180deg,#0c1738,#091026 70%,#070d1e);border-right:1px solid rgba(255,255,255,.07)}
+.side .brandrow{color:#fff}.nav a{color:#b9c5e6}.nav a:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav a.on{background:linear-gradient(135deg,var(--acc-d),color-mix(in srgb,var(--acc2) 70%,#000));color:#fff;box-shadow:0 8px 20px -8px color-mix(in srgb,var(--acc) 80%,transparent)}
+.nav a.on svg{color:#fff}.nav a.on::before{display:none}.nav-sec{color:#8f9cc2;opacity:1}
+.side-foot{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:#fff}.side-foot small{color:#b4c0e2}
+.side-out{color:#fda4af}.side-out:hover{background:rgba(244,63,94,.16)}
+.side .av{background:linear-gradient(135deg,var(--acc-d),color-mix(in srgb,var(--acc2) 70%,#000));color:#fff;border-color:transparent}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.kpi{flex-direction:column;align-items:flex-start;gap:14px;padding:20px;text-decoration:none;color:inherit;background:linear-gradient(145deg,color-mix(in srgb,var(--c) 15%,var(--surface)),var(--surface) 75%)}
+.kpi i{width:48px;height:48px;border-radius:50%;background:var(--c);color:#fff;box-shadow:0 8px 18px -6px var(--c)}
+.kpi b{font-size:28px}.kpi div{padding-right:34px}
+.kpi .go{position:absolute;right:14px;bottom:14px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 18%,var(--surface));color:var(--ink);transition:transform .2s}
+.kpi:hover .go{transform:translateX(3px)}
+.chart{display:grid;grid-template-columns:auto 1fr;grid-template-rows:240px auto;gap:0 12px;padding:24px 22px 16px}
+.yax{display:flex;flex-direction:column;justify-content:space-between;text-align:right;font-size:12px;line-height:18px;margin:-9px 0;color:var(--muted)}
+.plot{position:relative;border-bottom:1px solid var(--line)}
+.plot hr{position:absolute;left:0;right:0;margin:0;border:0;border-top:1px dashed var(--line)}
+.chart .bars{position:absolute;inset:0;height:auto;padding:0;gap:0;background:none}
+.chart .bars div{gap:0}.chart .bars i{width:54%;max-width:44px}
+.xax{grid-column:2;display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:12px;color:var(--muted);padding-top:10px}
+.plot svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.plot .ln{fill:none;stroke:var(--link);stroke-width:2.5;vector-effect:non-scaling-stroke}
+.plot .area{fill:color-mix(in srgb,var(--acc) 16%,transparent)}
+.dot{position:absolute;width:10px;height:10px;margin:0 0 -5px -5px;border-radius:50%;background:var(--surface);border:2.5px solid var(--link)}
+@media(max-width:860px){.side{background:#0b1430;border-color:rgba(255,255,255,.1)}.chart{grid-template-rows:200px auto;padding:18px 14px 12px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.ecg polyline{stroke-dashoffset:0}}
 </style>
 </head>
@@ -377,7 +407,9 @@ const ICON={flask:'<path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2
  pulse:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
  back:'<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
- mail:'<path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><polyline points="22,6 12,13 2,6"/>'
+ mail:'<path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><polyline points="22,6 12,13 2,6"/>',
+ hourglass:'<path d="M5 22h14M5 2h14"/><path d="M17 22v-4.2a2 2 0 0 0-.6-1.4L12 12l-4.4 4.4A2 2 0 0 0 7 17.8V22"/><path d="M7 2v4.2a2 2 0 0 0 .6 1.4L12 12l4.4-4.4A2 2 0 0 0 17 6.2V2"/>',
+ arrow:'<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>'
 };
 const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
 const logo=()=>`<span class="logo" role="img" aria-label="${t('app')}">${ic('heartpulse',21)}</span>`;
@@ -490,7 +522,7 @@ async function busy(btn,label,fn){
 /* ---------- auth screen ---------- */
 const field=(name,type,label,extra='')=>`<label class="fld"><span>${label}</span><input name="${name}" type="${type}" ${extra}></label>`;
 const themeBtn=()=>`<button type="button" class="icon" data-act="theme" aria-label="${t('theme')}" title="${t('theme')}">${ic(document.documentElement.dataset.theme==='dark'?'sun':'moon',19)}</button>`;
-const ACCENTS=[['blue','#2563eb'],['teal','#0d9488'],['violet','#7c3aed'],['rose','#e11d48'],['orange','#ea580c']];
+const ACCENTS=[['blue','#2563eb'],['teal','#0f766e'],['violet','#7c3aed'],['rose','#e11d48'],['orange','#c2410c']];
 const applyAccent=()=>{document.documentElement.dataset.accent=store.get('accent')||'blue'};
 const swatchBar=()=>`<span class="swatches" role="group" aria-label="${t('theme')}">${ACCENTS.map(([n,c])=>`<button type="button" class="sw" data-act="accent" data-a="${n}" style="--s:${c}" aria-label="${n}" title="${n}" aria-pressed="${(store.get('accent')||'blue')===n}"></button>`).join('')}</span>`;
 const applyTheme=()=>{let m=store.get('theme');if(!m)m=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.dataset.theme=m};
@@ -589,8 +621,11 @@ async function render(){
 function ticketRow(x){return `<div class="row"><span class="n">#${x.token_no}</span><span class="grow"><b>${esc(x.first_name+' '+x.last_name)}</b></span>${pill(x.status)}</div>`}
 const dkey=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const compact=n=>new Intl.NumberFormat('en-IN',{notation:'compact',maximumFractionDigits:1}).format(n);
-const barChart=(vals,labels,fmt)=>{const m=Math.max(...vals,1);return `<div class="bars" role="img" aria-label="chart">${vals.map((v,i)=>`<div title="${fmt(v)}"><small>${v?fmt(v):''}</small><i style="height:${Math.round(v/m*100)}%"></i><span>${labels[i]}</span></div>`).join('')}</div>`};
-const kpi=(i,v,l,c)=>`<div class="kpi" style="--c:${c}"><i>${ic(i,21)}</i><div><b>${v}</b><span>${l}</span></div></div>`;
+const scale=(m,int)=>{let r=m/4||(int?1:250);if(int)r=Math.max(1,Math.ceil(r));const g=10**Math.floor(Math.log10(r)),n=r/g,st=(n<=1?1:n<=2?2:n<=5?5:10)*g;return[0,1,2,3,4].map(i=>i*st)};
+const frame=(k,f,l,body)=>`<div class="chart" role="img" aria-label="chart"><div class="yax">${[...k].reverse().map(v=>`<span>${f(v)}</span>`).join('')}</div><div class="plot">${[25,50,75,100].map(p=>`<hr style="bottom:${p}%">`).join('')}${body}</div><div class="xax">${l.map(x=>`<span>${x}</span>`).join('')}</div></div>`;
+const barChart=(v,l,f,int)=>{const k=scale(Math.max(...v),int),top=k[4];return frame(k,f,l,`<div class="bars">${v.map(x=>`<div title="${f(x)}"><i style="height:${x/top*100}%"></i></div>`).join('')}</div>`)};
+const lineChart=(v,l,f)=>{const k=scale(Math.max(...v)),top=k[4],X=i=>(i+.5)/v.length*100,Y=x=>100-x/top*100;let d=`M${X(0)},${Y(v[0])}`;for(let i=1;i<v.length;i++){const m=(X(i-1)+X(i))/2;d+=`C${m},${Y(v[i-1])} ${m},${Y(v[i])} ${X(i)},${Y(v[i])}`}return frame(k,f,l,`<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="area" d="${d}L${X(v.length-1)},100L${X(0)},100Z"/><path class="ln" d="${d}"/></svg>${v.map((x,i)=>`<b class="dot" title="${f(x)}" style="left:${X(i)}%;bottom:${x/top*100}%"></b>`).join('')}`)};
+const kpi=(i,v,l,c,h)=>`<a class="kpi" href="${h}" style="--c:${c}"><i>${ic(i,21)}</i><div><b>${v}</b><span>${l}</span></div><em class="go" aria-hidden="true">${ic('arrow',16)}</em></a>`;
 function pDoctors(){
  const card=d=>`<article class="dcard"><span class="av">${esc(d.name.replace(/^Dr\.?\s*/,'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase())}</span><h3>${esc(d.name)}</h3><div style="color:var(--muted)">${esc(d.speciality)}</div><small style="color:var(--muted)">${esc(d.qualification||'')}</small><br><span class="fee">${t('d_fee')}: ${money(d.fee)}</span><div style="margin-top:12px"><a class="btn ghost sm" href="#/appointments">${t('book_title')}</a></div></article>`;
  return `<div class="page-h"><div><h1>${t('doctors')}</h1><p>${t('doctors_sub')}</p></div></div>${S.docs.length?`<div class="dgrid">${S.docs.map(card).join('')}</div>`:`<div class="panel"><div class="empty"><b>${t('no_doctors')}</b></div></div>`}${S.role==='admin'?doctorForm():''}`}
@@ -603,12 +638,12 @@ function pDashboard(){
  const ac=days.map(d=>A.filter(x=>ad(x)===dkey(d)&&x.status!=='cancelled').length),rc=days.map(d=>S.pays.filter(x=>dkey(new Date(x.created_at))===dkey(d)).reduce((n,x)=>n+Number(x.amount),0));
  const up=A.filter(x=>['booked','confirmed'].includes(x.status)&&ad(x)>=today).sort((x,y)=>(ad(x)+x.appt_time).localeCompare(ad(y)+y.appt_time)).slice(0,5);
  const h=new Date().getHours(),g=h<12?'greet_m':h<17?'greet_a':'greet_e';
- return `<div class="page-h"><div><h1>${t(g)}, ${esc((S.name||'').split(' ')[0])}</h1><p>${t('greet_sub')}</p></div><span class="grow"></span>
+ return `<div class="page-h"><div><h1>${t(g)}, <span class="gname">${esc((S.name||'').split(' ')[0])}</span></h1><p>${t('greet_sub')}</p></div><span class="grow"></span>
   <div class="actions"><button class="btn ghost" data-act="newQueue">${ic('clock',17)}${t('add_queue')}</button><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button></div></div>
  <section class="hero"><small>${t('app')} · ${esc(S.name)}</small><h2>${t('hero_h')}</h2><p>${t('hero_p')}</p><div class="actions" style="margin-top:18px"><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button><a class="btn ghost" href="#/appointments">${t('appointments')}</a></div></section>
- <div class="kpis">${kpi('users',S.pts.length,t('total_patients'),'#3b82f6')}${kpi('steth',D.length,t('total_doctors'),'var(--acc2)')}${kpi('cal',todayN,t('todays_appts'),'#22c55e')}${kpi('clock',pend,t('pend_appr'),'#f59e0b')}${kpi('clock',w,t('waiting'),'#8b5cf6')}${kpi('card',money(rev),t('rev_total'),'#ef4444')}</div>
- <div class="cols"><div class="panel"><div class="panel-h"><h3>${t('appt_chart')}</h3></div>${barChart(ac,lab,String)}</div>
-  <div class="panel"><div class="panel-h"><h3>${t('rev_chart')}</h3><span class="grow"></span><small style="color:var(--muted)">${t('collected')}: ${money(col)}</small></div>${barChart(rc,lab,compact)}</div></div>
+ <div class="kpis">${kpi('users',S.pts.length,t('total_patients'),'#3b82f6','#/patients')}${kpi('steth',D.length,t('total_doctors'),'#14b8a6','#/doctors')}${kpi('cal',todayN,t('todays_appts'),'#8b5cf6','#/appointments')}${kpi('clock',pend,t('pend_appr'),'#f59e0b','#/appointments')}${kpi('hourglass',w,t('waiting'),'#10b981','#/queue')}${kpi('card',money(rev),t('rev_total'),'#ec4899','#/payments')}</div>
+ <div class="cols"><div class="panel"><div class="panel-h"><h3>${t('appt_chart')}</h3></div>${barChart(ac,lab,String,1)}</div>
+  <div class="panel"><div class="panel-h"><h3>${t('rev_chart')}</h3><span class="grow"></span><small style="color:var(--muted)">${t('collected')}: ${money(col)}</small></div>${lineChart(rc,lab,compact)}</div></div>
  <div class="cols">
   <div class="panel"><div class="panel-h"><h3>${t('todays_queue')}</h3><span class="grow"></span><a class="btn ghost sm" href="#/queue">${t('view_all')}</a></div>
    <div class="mini" id="dq">${q.length?q.slice(0,7).map(ticketRow).join(''):`<div class="empty"><b>${t('empty_q')}</b>${t('empty_q_s')}</div>`}</div></div>
@@ -717,7 +752,7 @@ function pPayments(){
 /* ----- admin ----- */
 function pReports(){
  const by={};S.wrep.forEach(r=>by[r.patient_id+'-'+r.week]=r);
- const cell=(p,n)=>{const r=by[p.id+'-'+n];return r?`<span title="${esc(r.symptoms)}" style="color:var(--green);font-weight:600">✓</span>${r.photo_url?` <a class="photo-link" target="_blank" rel="noopener" href="${esc(r.photo_url)}" aria-label="${t('view_photo')}">${ic('cam',15)}</a>`:''}`:'<span style="color:#9aa9b1">-</span>'};
+ const cell=(p,n)=>{const r=by[p.id+'-'+n];return r?`<span title="${esc(r.symptoms)}" style="color:var(--green);font-weight:600">✓</span>${r.photo_url?` <a class="photo-link" target="_blank" rel="noopener" href="${esc(r.photo_url)}" aria-label="${t('view_photo')}">${ic('cam',15)}</a>`:''}`:'<span style="color:var(--muted)">-</span>'};
  return `<div class="page-h"><div><h1>${t('reports')}</h1></div></div><div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>${t('patient')}</th>${[1,2,3,4,5].map(n=>`<th>${t('week')} ${n}</th>`).join('')}</tr></thead><tbody>
  ${S.pts.length?S.pts.map(p=>`<tr class="click" data-act="open" data-id="${p.id}"><td><div class="who"><span class="av">${esc(ini(p))}</span><b>${esc(pname(p))}</b></div></td>${[1,2,3,4,5].map(n=>`<td>${cell(p,n)}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="6"><div class="empty"><b>${t('empty_pts')}</b></div></td></tr>`}</tbody></table></div></div>`}
 /* ----- appointments ----- */
@@ -731,7 +766,7 @@ function apptRows(){
 function pAppointments(){
  return `<div class="page-h"><div><h1>${t('book_title')}</h1><p>${t('book_sub')}</p></div></div>
  <div class="panel" style="padding:18px"><form data-form="book"><div class="fg">
-  <label class="fld full"><span>${t('doctor')}</span><select name="doctor_id" required><option value="">${t('pick_doctor')}</option>${S.docs.map(d=>`<option value="${d.id}" data-fee="${d.fee}">${esc(d.name)} - ${esc(d.speciality)} - ₹${d.fee}</option>`).join('')}</select><b id="feebox" style="display:none;margin-top:6px;color:var(--brand)"></b></label>
+  <label class="fld full"><span>${t('doctor')}</span><select name="doctor_id" required><option value="">${t('pick_doctor')}</option>${S.docs.map(d=>`<option value="${d.id}" data-fee="${d.fee}">${esc(d.name)} - ${esc(d.speciality)} - ₹${d.fee}</option>`).join('')}</select><b id="feebox" style="display:none;margin-top:6px;color:var(--link)"></b></label>
   <label class="fld"><span>${t('appt_date')}</span><input name="date" type="date" min="${todayStr()}" required></label>
   <label class="fld"><span>${t('appt_patient')}</span><input name="patient_name" value="${esc(S.name)}" maxlength="100" required></label>
   <label class="fld"><span>${t('appt_mobile')}</span><input name="patient_mobile" type="tel" inputmode="tel" maxlength="16" placeholder="9876543210" required></label>
