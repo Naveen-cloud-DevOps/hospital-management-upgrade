@@ -33,6 +33,9 @@ jobs:
           - { name: patient,  context: services, args: "SERVICE=patient" }
           - { name: billing,  context: services, args: "SERVICE=billing" }
           - { name: appointment, context: services, args: "SERVICE=appointment" }
+          - { name: doctor,      context: services, args: "SERVICE=doctor" }
+          - { name: laboratory,  context: services, args: "SERVICE=laboratory" }
+          - { name: pharmacy,    context: services, args: "SERVICE=pharmacy" }
           - { name: frontend, context: frontend, args: "" }
     steps:
       - uses: actions/checkout@v4
@@ -151,7 +154,7 @@ jobs:
       #     for i in $(seq 1 120); do
       #       OK=1
       #       [ "$(aws eks describe-cluster --name hms-eks --query cluster.status --output text 2>/dev/null)" = "ACTIVE" ] || OK=0
-      #       for d in auth patient billing appointment; do
+      #       for d in auth patient billing appointment doctor laboratory pharmacy; do
       #         for n in ${d}db ${d}db-replica; do
       #           [ "$(aws rds describe-db-instances --db-instance-identifier hms-$n --query 'DBInstances[0].DBInstanceStatus' --output text 2>/dev/null)" = "available" ] || OK=0
       #         done
@@ -194,7 +197,7 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
-          for d in auth patient billing appointment; do
+          for d in auth patient billing appointment doctor laboratory pharmacy; do
             RW=$(aws rds describe-db-instances --db-instance-identifier hms-${d}db --query 'DBInstances[0].Endpoint.Address' --output text)
             RO=$(aws rds describe-db-instances --db-instance-identifier hms-${d}db-replica --query 'DBInstances[0].Endpoint.Address' --output text)
             echo "${d}: write=$RW read=$RO"

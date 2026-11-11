@@ -294,7 +294,7 @@ button:focus-visible,a:focus-visible,.nav a:focus-visible{outline:3px solid #818
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <script>
 /* ---------- icons ---------- */
-const ICON={steth:'<path d="M11 2v2M5 2v2M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/>',heartpulse:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+const ICON={flask:'<path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/>',pill:'<path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/>',steth:'<path d="M11 2v2M5 2v2M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/>',heartpulse:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
  grid:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
@@ -317,7 +317,7 @@ const logo=()=>`<span class="logo" role="img" aria-label="${t('app')}">${ic('hea
 
 /* ---------- translations (anything missing falls back to English) ---------- */
 const T={
-en:{doctors:'Doctors',doctors_sub:'Specialists and consultation fees.',d_fee:'Fee',total_doctors:'Total doctors',todays_appts:"Today's appointments",pend_appr:'Awaiting approval',rev_total:'Total revenue',appt_chart:'Appointments - last 7 days',rev_chart:'Revenue - last 7 days',upcoming:'Upcoming appointments',no_doctors:'No doctors found',no_upcoming:'No upcoming appointments',remember:'Remember me',forgot:'Forgot password?',forgot_msg:'Ask your administrator to reset your password (Users page).',theme:'Light / dark mode',f1:'Patient records and history',f2:'Daily queue and appointments',f3:'Secure, role-based access',app:'CarePulse',tagline:'Patient records, the daily queue and payments in one place.',side_p:'Register patients, give out tokens, track five weeks of recovery and issue receipts - from any phone or computer.',
+en:{laboratory:'Laboratory',pharmacy:'Pharmacy',doctors:'Doctors',doctors_sub:'Specialists and consultation fees.',d_fee:'Fee',total_doctors:'Total doctors',todays_appts:"Today's appointments",pend_appr:'Awaiting approval',rev_total:'Total revenue',appt_chart:'Appointments - last 7 days',rev_chart:'Revenue - last 7 days',upcoming:'Upcoming appointments',no_doctors:'No doctors found',no_upcoming:'No upcoming appointments',remember:'Remember me',forgot:'Forgot password?',forgot_msg:'Ask your administrator to reset your password (Users page).',theme:'Light / dark mode',f1:'Patient records and history',f2:'Daily queue and appointments',f3:'Secure, role-based access',app:'CarePulse',tagline:'Patient records, the daily queue and payments in one place.',side_p:'Register patients, give out tokens, track five weeks of recovery and issue receipts - from any phone or computer.',
  signin:'Sign in',signup:'Create account',signin_t:'Welcome back',signup_t:'Create your account',signin_sub:'Sign in to continue to your dashboard.',signup_sub:'Create a staff account to start recording patients.',
  email:'Email address',password:'Password',confirm:'Confirm password',fullname:'Full name',pw_hint:'At least 8 characters',pw_mismatch:'The two passwords do not match.',
  no_acc:'New here?',have_acc:'Already have an account?',signing:'Signing in…',creating:'Creating account…',welcome:'Account created. Welcome, {n}!',
@@ -464,7 +464,7 @@ const strength=p=>{let s=0;if(p.length>=8)s++;if(/[A-Z]/.test(p)&&/[a-z]/.test(p
 /* ---------- shell ---------- */
 function shell(page,inner){
  const admin=S.role==='admin';
- const items=[['dashboard','grid'],['patients','users'],['doctors','steth'],['queue','clock'],['payments','card'],['appointments','cal']];
+ const items=[['dashboard','grid'],['patients','users'],['doctors','steth'],['queue','clock'],['payments','card'],['appointments','cal'],['laboratory','flask'],['pharmacy','pill']];
  if(admin)items.push(['reports','file'],['users','shield']);
  const title=t(page==='patient'?'patients':page);
  return `<div class="shell">
@@ -487,7 +487,7 @@ async function render(){
  if(!S.tok){root.innerHTML=authHTML();return}
  let {page,id}=route();
  if(['reports','users'].includes(page)&&S.role!=='admin'){go('#/dashboard');return}
- if(!['dashboard','patients','doctors','queue','payments','appointments','reports','users','account'].includes(page))page='dashboard';
+ if(!['dashboard','patients','doctors','queue','payments','appointments','laboratory','pharmacy','reports','users','account'].includes(page))page='dashboard';
  const navPage=page;
  const rid=++renderId;
  root.innerHTML=shell(navPage==='patients'&&id?'patient':navPage,`<div class="loading">…</div>`);
@@ -500,6 +500,8 @@ async function render(){
   else if(page==='queue'){[S.pts,S.queue]=await Promise.all([api('/patients'),api('/queue')]);html=pQueue()}
   else if(page==='payments'){[S.pts,S.pays]=await Promise.all([api('/patients'),api('/payments')]);html=pPayments()}
   else if(page==='appointments'){[S.docs,S.appts]=await Promise.all([api('/doctors'),api('/appointments')]);html=pAppointments()}
+  else if(page==='laboratory'){[S.pts,S.labTests,S.labOrders]=await Promise.all([api('/patients'),api('/lab/tests'),api('/lab/orders')]);html=pLab()}
+  else if(page==='pharmacy'){[S.pts,S.meds,S.phSales]=await Promise.all([api('/patients'),api('/pharmacy/medicines'),api('/pharmacy/sales')]);html=pPharmacy()}
   else if(page==='reports'){[S.pts,S.wrep]=await Promise.all([api('/patients'),api('/patients/weekly-report')]);html=pReports()}
   else if(page==='users'){S.users=await api('/auth/users');html=pUsers()}
   else if(page==='account'){html=pAccount()}
@@ -518,7 +520,7 @@ const barChart=(vals,labels,fmt)=>{const m=Math.max(...vals,1);return `<div clas
 const kpi=(i,v,l)=>`<div class="kpi"><i>${ic(i,21)}</i><div><b>${v}</b><span>${l}</span></div></div>`;
 function pDoctors(){
  const card=d=>`<article class="dcard"><span class="av">${esc(d.name.replace(/^Dr\.?\s*/,'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase())}</span><h3>${esc(d.name)}</h3><div style="color:var(--muted)">${esc(d.speciality)}</div><small style="color:var(--muted)">${esc(d.qualification||'')}</small><br><span class="fee">${t('d_fee')}: ${money(d.fee)}</span><div style="margin-top:12px"><a class="btn ghost sm" href="#/appointments">${t('book_title')}</a></div></article>`;
- return `<div class="page-h"><div><h1>${t('doctors')}</h1><p>${t('doctors_sub')}</p></div></div>${S.docs.length?`<div class="dgrid">${S.docs.map(card).join('')}</div>`:`<div class="panel"><div class="empty"><b>${t('no_doctors')}</b></div></div>`}`}
+ return `<div class="page-h"><div><h1>${t('doctors')}</h1><p>${t('doctors_sub')}</p></div></div>${S.docs.length?`<div class="dgrid">${S.docs.map(card).join('')}</div>`:`<div class="panel"><div class="empty"><b>${t('no_doctors')}</b></div></div>`}${S.role==='admin'?doctorForm():''}`}
 function pDashboard(){
  const q=S.queue,w=q.filter(x=>x.status==='waiting').length,p=q.filter(x=>x.status==='in-progress').length,d=q.filter(x=>x.status==='done').length;
  const col=S.pays.filter(x=>sameDay(x.created_at)).reduce((a,x)=>a+Number(x.amount),0);
@@ -670,7 +672,7 @@ async function loadSlots(){
  const f=$('form[data-form="book"]');if(!f)return;
  const did=f.doctor_id.value,date=f.date.value,box=$('#slots');f.time.value='';
  if(!did||!date){box.innerHTML=`<p class="hint">${t('pick_time')}</p>`;return}
- try{const l=await api(`/doctors/${did}/slots?date=${date}`);
+ try{const l=await api(`/appointments/slots/${did}?date=${date}`);
   box.innerHTML=l.some(x=>x.available)?l.map(x=>`<button type="button" class="slot" data-act="pickSlot" data-t="${x.time}" ${x.available?'':'disabled'}>${fmtT(x.time)}</button>`).join(''):`<p class="hint">${t('no_slots')}</p>`}
  catch(e){box.innerHTML=`<p class="hint">${esc(e.message)}</p>`}}
 async function refreshAppts(){try{S.appts=await api('/appointments')}catch(e){return}const b=$('#abody');if(b)b.innerHTML=apptRows()}
@@ -721,9 +723,91 @@ function shrink(file){
    c.toBlob(b=>res(b||file),'image/jpeg',.85)};
   img.onerror=()=>{URL.revokeObjectURL(u);res(file)};img.src=u})}
 
+/* ----- doctors: admin adds a doctor (doctor service) ----- */
+function doctorForm(){
+ return `<div class="page-h" style="margin-top:22px"><div><h1 style="font-size:18px">Add a doctor</h1></div></div>
+ <div class="panel" style="padding:18px"><form data-form="doctor"><div class="fg">
+  ${field('name','text','Doctor name','required maxlength="100" placeholder="Dr. Full Name"')}
+  ${field('speciality','text','Speciality','required maxlength="100"')}
+  ${field('qualification','text','Qualification','maxlength="100"')}
+  ${field('fee','number','Consultation fee (₹)','required min="0" step="1" inputmode="numeric"')}
+ </div><p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">Add doctor</button></div></form></div>`}
+
+/* ----- laboratory (laboratory service) ----- */
+const LAB_CLS={ordered:'waiting','sample-collected':'in-progress',completed:'done',cancelled:'waiting'};
+const LAB_TXT={ordered:'Ordered','sample-collected':'Sample collected',completed:'Completed',cancelled:'Cancelled'};
+const labPill=s=>`<span class="pill ${LAB_CLS[s]||''}">${esc(LAB_TXT[s]||s)}</span>`;
+function labActions(o){
+ const b=[];
+ if(o.status==='ordered')b.push(`<button class="btn ghost sm" type="button" data-act="labSample" data-id="${o.id}">Sample collected</button>`);
+ if(o.status==='ordered'||o.status==='sample-collected'){
+  b.push(`<button class="btn sm" type="button" data-act="labResult" data-id="${o.id}">Enter result</button>`);
+  b.push(`<button class="btn ghost sm" type="button" data-act="labCancel" data-id="${o.id}">Cancel</button>`)}
+ if(o.status==='completed')b.push(`<button class="btn ghost sm" type="button" data-act="labView" data-id="${o.id}">View result</button>`);
+ return b.join(' ')}
+function labRows(){
+ if(!S.labOrders.length)return `<tr><td colspan="6"><div class="empty"><b>No lab orders yet</b>Order a test above.</div></td></tr>`;
+ return S.labOrders.map(o=>`<tr><td>#${o.id}</td><td><b>${esc(o.test_name)}</b><br><small>${money(o.price)}</small></td><td>${esc(o.patient_name)}${o.patient_email?`<br><small>${esc(o.patient_email)}</small>`:''}</td><td>${labPill(o.status)}</td><td>${fmtD(o.created_at)}</td><td>${labActions(o)}</td></tr>`).join('')}
+function pLab(){
+ const admin=S.role==='admin';
+ return `<div class="page-h"><div><h1>Laboratory</h1><p>Order tests, record results and email them to the patient.</p></div></div>
+ <div class="panel" style="padding:18px"><form data-form="labOrder"><div class="fg">
+  <label class="fld full"><span>${t('patient')}</span><select name="pid" required><option value="">${t('pick_patient')}</option>${S.pts.map(p=>`<option value="${p.id}">${esc(pname(p))} (#${p.id})</option>`).join('')}</select></label>
+  <label class="fld full"><span>Test</span><select name="test_id" required><option value="">Choose a test</option>${S.labTests.map(x=>`<option value="${x.id}">${esc(x.name)} - ${esc(x.sample_type||'')} - ${money(x.price)}</option>`).join('')}</select></label>
+ </div><p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">Order test</button></div></form></div>
+ <div class="page-h" style="margin-top:22px"><div><h1 style="font-size:18px">${admin?'All lab orders':'My lab orders'}</h1></div></div>
+ <div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>ID</th><th>Test</th><th>${t('patient')}</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody id="labbody">${labRows()}</tbody></table></div></div>
+ ${admin?`<div class="page-h" style="margin-top:22px"><div><h1 style="font-size:18px">Add a lab test</h1></div></div>
+ <div class="panel" style="padding:18px"><form data-form="labTest"><div class="fg">
+  ${field('name','text','Test name','required maxlength="120"')}
+  ${field('sample_type','text','Sample type','maxlength="40" value="Blood"')}
+  ${field('price','number','Price (₹)','required min="0" step="0.01" inputmode="decimal"')}
+ </div><p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">Add test</button></div></form></div>`:''}`}
+function labResultForm(o){
+ return `<form data-form="labResult"><input type="hidden" name="oid" value="${o.id}">
+ <p style="margin-bottom:12px"><b>${esc(o.test_name)}</b> - ${esc(o.patient_name)}</p><div class="fg">
+  <label class="fld full"><span>Result</span><textarea name="result_text" rows="6" required maxlength="4000"></textarea></label>
+  <label class="fld full"><span>Report file (optional - PDF or image)</span><input name="report" type="file" accept=".pdf,image/*"></label>
+ </div><p class="ferr" id="ferr" role="alert"></p><div class="drawer-f"><button class="btn" type="submit">Save result and email patient</button></div></form>`}
+async function refreshLab(){try{S.labOrders=await api('/lab/orders')}catch(e){return}const b=$('#labbody');if(b)b.innerHTML=labRows()}
+
+/* ----- pharmacy (pharmacy service) ----- */
+function medRows(){
+ if(!S.meds.length)return `<tr><td colspan="5"><div class="empty"><b>No medicines in stock list</b></div></td></tr>`;
+ return S.meds.map(m=>`<tr><td><b>${esc(m.name)}</b><br><small>${esc(m.unit||'')}</small></td><td>${money(m.unit_price)}</td><td>${m.stock<=20?`<b style="color:var(--amber)">${m.stock} (low)</b>`:m.stock}</td><td><input name="q_${m.id}" type="number" min="0" max="${m.stock}" step="1" value="0" inputmode="numeric" style="width:90px" ${m.stock?'':'disabled'}></td>${S.role==='admin'?`<td><button class="btn ghost sm" type="button" data-act="restock" data-id="${m.id}">Restock</button></td>`:''}</tr>`).join('')}
+function saleRows(){
+ if(!S.phSales.length)return `<tr><td colspan="6"><div class="empty"><b>No pharmacy sales yet</b></div></td></tr>`;
+ return S.phSales.map(x=>`<tr><td>#${x.id}</td><td>${esc(x.patient_name)}</td><td><small>${esc(x.items||'')}</small></td><td>${money(x.total)}<br><small>${esc(x.payment_method)}</small></td><td>${fmtD(x.created_at)}</td><td><button class="btn ghost sm" type="button" data-act="saleBill" data-id="${x.id}">Bill</button></td></tr>`).join('')}
+function pPharmacy(){
+ const admin=S.role==='admin';
+ return `<div class="page-h"><div><h1>Pharmacy</h1><p>Sell medicines, track stock and email the bill.</p></div></div>
+ <div class="panel" style="padding:18px"><form data-form="sale"><div class="fg">
+  <label class="fld full"><span>${t('patient')}</span><select name="pid" required><option value="">${t('pick_patient')}</option>${S.pts.map(p=>`<option value="${p.id}">${esc(pname(p))} (#${p.id})</option>`).join('')}</select></label>
+  <label class="fld full"><span>Payment</span><select name="payment_method"><option value="cash">Cash</option><option value="upi">UPI</option><option value="card">Card</option></select></label>
+ </div>
+ <div class="scroll" style="margin-top:12px"><table class="tbl"><thead><tr><th>Medicine</th><th>Price</th><th>In stock</th><th>Quantity</th>${admin?'<th></th>':''}</tr></thead><tbody id="medbody">${medRows()}</tbody></table></div>
+ <p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">Sell and email bill</button></div></form></div>
+ <div class="page-h" style="margin-top:22px"><div><h1 style="font-size:18px">${admin?'All pharmacy sales':'My pharmacy sales'}</h1></div></div>
+ <div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>Bill</th><th>${t('patient')}</th><th>Items</th><th>Total</th><th>Date</th><th></th></tr></thead><tbody id="salebody">${saleRows()}</tbody></table></div></div>
+ ${admin?`<div class="page-h" style="margin-top:22px"><div><h1 style="font-size:18px">Add a medicine</h1></div></div>
+ <div class="panel" style="padding:18px"><form data-form="medicine"><div class="fg">
+  ${field('name','text','Medicine name','required maxlength="120"')}
+  ${field('unit','text','Unit (tablet, capsule, bottle...)','maxlength="30" value="tablet"')}
+  ${field('unit_price','number','Price per unit (₹)','required min="0" step="0.01" inputmode="decimal"')}
+  ${field('stock','number','Opening stock','required min="0" step="1" value="0" inputmode="numeric"')}
+ </div><p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">Add medicine</button></div></form></div>`:''}`}
+async function refreshPharmacy(){try{[S.meds,S.phSales]=await Promise.all([api('/pharmacy/medicines'),api('/pharmacy/sales')])}catch(e){return}const m=$('#medbody'),b=$('#salebody');if(m)m.innerHTML=medRows();if(b)b.innerHTML=saleRows()}
+
 /* ---------- events ---------- */
 const ferr=m=>{const e=$('#ferr');if(e)e.textContent=m||''};
 const ACT={
+ labSample:async b=>{b.disabled=true;try{await api('/lab/orders/'+b.dataset.id+'/status',{method:'PATCH',json:{status:'sample-collected'}});await refreshLab()}catch(e){toast(e.message,'err');b.disabled=false}},
+ labCancel:async b=>{if(!confirm('Cancel this lab order?'))return;b.disabled=true;try{await api('/lab/orders/'+b.dataset.id+'/status',{method:'PATCH',json:{status:'cancelled'}});await refreshLab()}catch(e){toast(e.message,'err');b.disabled=false}},
+ labResult:b=>{const o=S.labOrders.find(x=>String(x.id)===b.dataset.id);if(o)openDrawer('Enter lab result #'+o.id,labResultForm(o))},
+ labView:b=>{const o=S.labOrders.find(x=>String(x.id)===b.dataset.id);if(o)openDrawer('Lab result #'+o.id,`<p><b>${esc(o.test_name)}</b> - ${esc(o.patient_name)}</p><pre style="white-space:pre-wrap;font:inherit;margin:12px 0">${esc(o.result_text||'')}</pre>${o.has_report?`<button class="btn sm" type="button" data-act="labReport" data-id="${o.id}">Open report file</button>`:''}`)},
+ labReport:async b=>{try{const r=await api('/lab/orders/'+b.dataset.id+'/report');window.open(r.url,'_blank','noopener')}catch(e){toast(e.message,'err')}},
+ restock:async b=>{const n=parseInt(prompt('How many units to add to the stock?','100'),10);if(!(n>0))return;try{await api('/pharmacy/medicines/'+b.dataset.id+'/restock',{json:{qty:n}});toast('Stock updated');await refreshPharmacy()}catch(e){toast(e.message,'err')}},
+ saleBill:async b=>{try{const r=await api('/pharmacy/sales/'+b.dataset.id+'/bill');window.open(r.url,'_blank','noopener')}catch(e){toast(e.message,'err')}},
  theme:()=>{store.set('theme',document.documentElement.dataset.theme==='dark'?'light':'dark');applyTheme();render()},
  forgot:()=>toast(t('forgot_msg')),
  mode:b=>{S.mode=b.dataset.m;render()},
@@ -765,6 +849,35 @@ document.addEventListener('input',e=>{
  if(f&&f.dataset.form==='signup'&&e.target.name==='password'){const m=$('#meter');if(m)m.className='meter s'+strength(e.target.value)}});
 
 const FORMS={
+ async doctor(f,btn){
+  const d=Object.fromEntries(new FormData(f));
+  await busy(btn,'…',()=>api('/doctors',{json:{name:d.name.trim(),speciality:d.speciality.trim(),qualification:(d.qualification||'').trim(),fee:+d.fee}}));
+  toast('Doctor added');render()},
+ async labOrder(f,btn){
+  const d=Object.fromEntries(new FormData(f)),p=S.pts.find(x=>String(x.id)===d.pid);
+  if(!p)return ferr(t('pick_patient'));
+  const r=await busy(btn,'…',()=>api('/lab/orders',{json:{test_id:+d.test_id,patient_id:p.id,patient_name:pname(p),patient_email:p.email||null}}));
+  toast('Lab test ordered'+(r.emailed_to?' · emailed to '+r.emailed_to:''));f.reset();await refreshLab()},
+ async labResult(f,btn){
+  const fd=new FormData(f),oid=fd.get('oid'),file=fd.get('report');fd.delete('oid');
+  if(!(file&&file.size))fd.delete('report');
+  await busy(btn,'…',()=>api('/lab/orders/'+oid+'/result',{method:'POST',body:fd}));
+  closeDrawer();toast('Result saved. The patient is emailed if an email is on file.');await refreshLab()},
+ async labTest(f,btn){
+  const d=Object.fromEntries(new FormData(f));
+  await busy(btn,'…',()=>api('/lab/tests',{json:{name:d.name.trim(),sample_type:(d.sample_type||'').trim(),price:+d.price}}));
+  toast('Test added');render()},
+ async sale(f,btn){
+  const d=Object.fromEntries(new FormData(f)),p=S.pts.find(x=>String(x.id)===d.pid);
+  if(!p)return ferr(t('pick_patient'));
+  const items=Object.keys(d).filter(k=>k.startsWith('q_')&&+d[k]>0).map(k=>({medicine_id:+k.slice(2),qty:+d[k]}));
+  if(!items.length)return ferr('Enter a quantity for at least one medicine.');
+  const r=await busy(btn,'…',()=>api('/pharmacy/sales',{json:{patient_id:p.id,patient_name:pname(p),patient_email:p.email||null,payment_method:d.payment_method,items}}));
+  toast('Sale #'+r.id+' saved - total '+money(r.total)+(r.emailed_to?' · bill emailed to '+r.emailed_to:''));await refreshPharmacy()},
+ async medicine(f,btn){
+  const d=Object.fromEntries(new FormData(f));
+  await busy(btn,'…',()=>api('/pharmacy/medicines',{json:{name:d.name.trim(),unit:(d.unit||'tablet').trim(),unit_price:+d.unit_price,stock:+d.stock}}));
+  toast('Medicine added');render()},
  async login(f,btn){
   const d=Object.fromEntries(new FormData(f));
   if(!d.email.trim()||!d.password)return ferr('Enter your email and password.');

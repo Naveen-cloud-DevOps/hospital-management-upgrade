@@ -89,7 +89,7 @@ variable "cluster_endpoint_public_access" {
 variable "data_buckets" {
   description = "Separate S3 buckets, one per data type"
   type        = list(string)
-  default     = ["user-data", "payment-receipts", "patient-photos", "appointments"]
+  default     = ["user-data", "payment-receipts", "patient-photos", "appointments", "lab-reports", "pharmacy-bills"]
 }
 
 variable "k8s_namespace" {
@@ -108,7 +108,7 @@ variable "k8s_service_account" {
 variable "db_services" {
   description = "One PostgreSQL instance (+ read replica) per service"
   type        = list(string)
-  default     = ["auth", "patient", "billing", "appointment"]
+  default     = ["auth", "patient", "billing", "appointment", "doctor", "laboratory", "pharmacy"]
 }
 
 variable "db_engine_version" {

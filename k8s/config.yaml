@@ -17,5 +17,8 @@ data:
   RECEIPT_BUCKET: hms-855455101846-payment-receipts
   PHOTO_BUCKET: hms-855455101846-patient-photos
   APPOINTMENT_BUCKET: hms-855455101846-appointments
+  LAB_BUCKET: hms-855455101846-lab-reports
+  PHARMACY_BUCKET: hms-855455101846-pharmacy-bills
+  DOCTOR_SERVICE_URL: http://doctor-service.hms.svc.cluster.local
   SMTP_USER: ritikranjanspiderhacker@gmail.com
   SMTP_NAME: Ritik CarePulse

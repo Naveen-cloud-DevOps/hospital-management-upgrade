@@ -1,5 +1,5 @@
 """Shared helpers: DB (primary=write, replica=read), JWT auth, S3, SNS."""
-import json, os, smtplib, ssl, time
+import json, os, smtplib, ssl, time, urllib.error, urllib.request
 from email.message import EmailMessage
 from email.utils import formataddr
 import boto3, jwt, psycopg2
@@ -10,6 +10,8 @@ from psycopg2.extras import RealDictCursor
 REGION = os.environ.get("AWS_REGION", "us-east-1")
 SECRET = os.environ.get("JWT_SECRET", "dev-secret")
 TOPIC = os.environ.get("SNS_TOPIC_ARN", "")
+# in-cluster address of the doctor service (the appointment service asks it for doctor details)
+DOCTOR_URL = os.environ.get("DOCTOR_SERVICE_URL", "http://doctor-service.hms.svc.cluster.local")
 SMTP_USER = os.environ.get("SMTP_USER", "ritikranjanspiderhacker@gmail.com")   # sender (Gmail)
 SMTP_PASS = os.environ.get("SMTP_PASS", "").replace(" ", "")                        # Gmail App Password
 SMTP_NAME = os.environ.get("SMTP_NAME", "Ritik HMS")
@@ -132,3 +134,26 @@ def send_sms(phone, message):
     except Exception as e:
         print("sns sms failed", e)
         return False
+
+
+# ---------- service-to-service calls (e.g. appointment -> doctor) ----------
+def call_service(base, path, method="GET", payload=None, timeout=5):
+    """Call another HMS service inside the cluster with a short-lived internal token (role 'service').
+    Raises HTTPException with the other service's status code, or 502 if it cannot be reached."""
+    req = urllib.request.Request(
+        base.rstrip("/") + path, method=method,
+        data=json.dumps(payload).encode() if payload is not None else None,
+        headers={"Authorization": "Bearer " + make_token("internal-service", "service"),
+                 "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read() or b"null")
+    except urllib.error.HTTPError as e:
+        try:
+            detail = json.loads(e.read()).get("detail", "Request failed")
+        except Exception:
+            detail = "Request failed"
+        raise HTTPException(e.code, detail)
+    except Exception as e:
+        print("service call failed", base, path, repr(e))
+        raise HTTPException(502, "A required service is not reachable right now. Please try again.")

@@ -1,7 +1,7 @@
-# One RDS PostgreSQL per service (auth / patient / billing / appointment), each with its own read replica.
+# One RDS PostgreSQL per service (auth / patient / billing / appointment / doctor / laboratory / pharmacy), each with its own read replica.
 # primary = writes, replica = reads (RDS keeps them in sync automatically).
-# "appointment" is always included, even if an old TFVARS secret / tfvars file does not list it
-locals { dbs = toset(concat(var.db_services, ["appointment"])) }
+# appointment / doctor / laboratory / pharmacy are always included, even if an old TFVARS secret / tfvars file does not list them
+locals { dbs = toset(concat(var.db_services, ["appointment", "doctor", "laboratory", "pharmacy"])) }
 
 resource "aws_db_subnet_group" "rds" {
   name       = "${var.project}-rds"

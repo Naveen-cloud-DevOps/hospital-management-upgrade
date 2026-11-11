@@ -11,8 +11,10 @@ spec:
         paths:
           - {path: /auth,     pathType: Prefix, backend: {service: {name: auth-service,    port: {number: 80}}}}
           - {path: /patients, pathType: Prefix, backend: {service: {name: patient-service, port: {number: 80}}}}
-          - {path: /doctors,  pathType: Prefix, backend: {service: {name: appointment-service, port: {number: 80}}}}
+          - {path: /doctors,  pathType: Prefix, backend: {service: {name: doctor-service, port: {number: 80}}}}
           - {path: /appointments, pathType: Prefix, backend: {service: {name: appointment-service, port: {number: 80}}}}
+          - {path: /lab,      pathType: Prefix, backend: {service: {name: laboratory-service, port: {number: 80}}}}
+          - {path: /pharmacy, pathType: Prefix, backend: {service: {name: pharmacy-service, port: {number: 80}}}}
           - {path: /queue,    pathType: Prefix, backend: {service: {name: patient-service, port: {number: 80}}}}
           - {path: /payments, pathType: Prefix, backend: {service: {name: billing-service, port: {number: 80}}}}
           - {path: /,         pathType: Prefix, backend: {service: {name: frontend,        port: {number: 80}}}}
