@@ -35,7 +35,7 @@
   --sh-1:0 1px 2px rgba(0,0,0,.4);--sh:0 1px 2px rgba(0,0,0,.4),0 10px 30px -10px rgba(0,0,0,.6);--sh-lg:0 24px 60px -16px rgba(0,0,0,.8);
   --glass:rgba(16,23,42,.78);
 }
-[data-accent=teal]{--acc:#0f766e;--acc-d:#115e59;--acc2:#2563eb}
+[data-accent=teal]{--acc:#0e8078;--acc-d:#0f766e;--acc2:#2563eb}
 [data-accent=violet]{--acc:#7c3aed;--acc-d:#6d28d9;--acc2:#2563eb}
 [data-accent=rose]{--acc:#e11d48;--acc-d:#be123c;--acc2:#f59e0b}
 [data-accent=orange]{--acc:#c2410c;--acc-d:#9a3412;--acc2:#0d9488}
@@ -382,6 +382,38 @@ select,option,optgroup{background-color:var(--surface);color:var(--ink)}
 .plot .area{fill:color-mix(in srgb,var(--acc) 16%,transparent)}
 .dot{position:absolute;width:10px;height:10px;margin:0 0 -5px -5px;border-radius:50%;background:var(--surface);border:2.5px solid var(--link)}
 @media(max-width:860px){.side{background:#0b1430;border-color:rgba(255,255,255,.1)}.chart{grid-template-rows:200px auto;padding:18px 14px 12px}}
+
+/* ---------- reference layout ---------- */
+.side{color:#fff}.cols{align-items:stretch}
+.top{margin:16px 32px 0;top:12px;padding:0 18px;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh);backdrop-filter:none}
+.top h2,.top .dt{display:none}
+.tsearch{position:relative;flex:1;max-width:440px;margin-right:auto}
+.tsearch svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.tsearch input{width:100%;height:42px;padding:0 16px 0 44px;border:0;border-radius:99px;background:var(--soft);font-size:14px}
+.tsearch input:focus{outline:0;box-shadow:0 0 0 3px var(--ring)}
+.usr{display:flex;align-items:center;gap:10px;padding:4px 12px 4px 4px;border-radius:99px;text-decoration:none;font-weight:600;font-size:14px}.usr:hover{background:var(--soft)}
+.top .lang{border-radius:99px}
+.side .brandrow{margin:-20px -16px 12px;padding:22px 26px;background:#fff;color:#0b1220}
+[data-theme=dark] .side .brandrow{background:rgba(255,255,255,.07);color:#fff}
+.nav a.on{background:linear-gradient(135deg,var(--acc-d),var(--acc))}
+.dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:26px}
+.dhead h1{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.dhead .wl{font-size:20px;font-weight:700;margin-top:8px}.dhead p{color:var(--muted)}.dhead .wl{color:var(--ink)}
+.dh-r{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+.dchip{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:99px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-1);font-size:13.5px;font-weight:600}
+.dotg{width:8px;height:8px;border-radius:50%;background:#10b981}.dotg.off{background:#ef4444}
+.ill{width:250px;height:130px}[data-theme=dark] .ill{opacity:.8}
+.kpi::before{right:-20px;top:auto;bottom:-40px;width:150px;height:110px}
+.kpi .go{background:none;color:var(--c);width:auto;height:auto;right:16px;bottom:16px}.kpi .go svg{stroke-width:2.6}
+.panel-h:has(.pic){border-bottom:0;padding:20px 22px 0}
+.pic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--acc) 14%,var(--surface));color:var(--link)}
+.pic.v{background:color-mix(in srgb,#8b5cf6 16%,var(--surface));color:#6d4ae8}[data-theme=dark] .pic.v{color:#c4b5fd}
+.chip{padding:6px 14px;border-radius:99px;background:var(--soft);font-size:13px;font-weight:500}
+.coll{margin-left:auto;padding:7px 14px;border-radius:12px;background:color-mix(in srgb,var(--acc2) 14%,var(--surface));font-size:13.5px}.coll b{font-size:17px}
+.chart .bars i{background:linear-gradient(180deg,#0d9488,#5eead4)}
+.plot .ln{stroke:#6d4ae8}[data-theme=dark] .plot .ln{stroke:#a78bfa}
+.plot .area{fill:rgba(139,92,246,.16)}.dot{border-color:#6d4ae8}[data-theme=dark] .dot{border-color:#a78bfa}
+@media(max-width:860px){.top{margin:0;border-radius:0;top:0}.tsearch{display:none}.dhead{flex-direction:column}.ill{display:none}.dh-r{justify-content:flex-start}.usr b{display:none}.top .grow{display:block}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.ecg polyline{stroke-dashoffset:0}}
 </style>
 </head>
@@ -409,6 +441,8 @@ const ICON={flask:'<path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2
  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
  mail:'<path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><polyline points="22,6 12,13 2,6"/>',
  hourglass:'<path d="M5 22h14M5 2h14"/><path d="M17 22v-4.2a2 2 0 0 0-.6-1.4L12 12l-4.4 4.4A2 2 0 0 0 7 17.8V22"/><path d="M7 2v4.2a2 2 0 0 0 .6 1.4L12 12l4.4-4.4A2 2 0 0 0 17 6.2V2"/>',
+ bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+ trend:'<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
  arrow:'<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>'
 };
 const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
@@ -422,7 +456,7 @@ en:{sec_overview:'Overview',sec_care:'Patient care',sec_services:'Services',sec_
  no_acc:'New here?',have_acc:'Already have an account?',signing:'Signing in…',creating:'Creating account…',welcome:'Account created. Welcome, {n}!',
  acc_note:'New accounts get staff access. An administrator can add more admins from the Users page.',
  dashboard:'Dashboard',patients:'Patients',queue:'Queue',payments:'Payments',reports:'Weekly report',users:'Users',logout:'Log out',
- greet_m:'Good morning',greet_a:'Good afternoon',greet_e:'Good evening',greet_sub:"Here is what is happening at the clinic today.",
+ greet_m:'Good morning',greet_a:'Good afternoon',greet_e:'Good evening',greet_sub:"Here's your clinic's operational overview for today.",dash_over:"Dashboard Overview",welcome_b:"Welcome back",last7:"Last 7 days",search_ph:"Search patients… (Ctrl+K)",online:"System Online",offline:"Offline",
  total_patients:'Patients on record',waiting:'Waiting',in_progress:'In consultation',done:'Done',collected:'Collected today',
  new_patient:'New patient',add_queue:'Add to queue',search:'Search by name or mobile',save_patient:'Save patient',cancel:'Cancel',back:'All patients',
  todays_queue:"Today's queue",recent:'Recently registered',view_all:'View all',
@@ -522,9 +556,9 @@ async function busy(btn,label,fn){
 /* ---------- auth screen ---------- */
 const field=(name,type,label,extra='')=>`<label class="fld"><span>${label}</span><input name="${name}" type="${type}" ${extra}></label>`;
 const themeBtn=()=>`<button type="button" class="icon" data-act="theme" aria-label="${t('theme')}" title="${t('theme')}">${ic(document.documentElement.dataset.theme==='dark'?'sun':'moon',19)}</button>`;
-const ACCENTS=[['blue','#2563eb'],['teal','#0f766e'],['violet','#7c3aed'],['rose','#e11d48'],['orange','#c2410c']];
-const applyAccent=()=>{document.documentElement.dataset.accent=store.get('accent')||'blue'};
-const swatchBar=()=>`<span class="swatches" role="group" aria-label="${t('theme')}">${ACCENTS.map(([n,c])=>`<button type="button" class="sw" data-act="accent" data-a="${n}" style="--s:${c}" aria-label="${n}" title="${n}" aria-pressed="${(store.get('accent')||'blue')===n}"></button>`).join('')}</span>`;
+const ACCENTS=[['blue','#2563eb'],['teal','#0e8078'],['violet','#7c3aed'],['rose','#e11d48'],['orange','#c2410c']];
+const applyAccent=()=>{document.documentElement.dataset.accent=store.get('accent')||'teal'};
+const swatchBar=()=>`<span class="swatches" role="group" aria-label="${t('theme')}">${ACCENTS.map(([n,c])=>`<button type="button" class="sw" data-act="accent" data-a="${n}" style="--s:${c}" aria-label="${n}" title="${n}" aria-pressed="${(store.get('accent')||'teal')===n}"></button>`).join('')}</span>`;
 const applyTheme=()=>{let m=store.get('theme');if(!m)m=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.dataset.theme=m};
 const pwField=(name,label,auto,hint)=>`<label class="fld"><span>${label}${hint?` <small>${hint}</small>`:''}</span><div class="pw"><input name="${name}" type="password" autocomplete="${auto}" required><button type="button" class="icon eye" data-act="eye" aria-label="Show or hide password">${ic('eye')}</button></div></label>`;
 const langSel=cls=>`<select class="lang ${cls||''}" data-change="lang" aria-label="Language"><option value="en"${S.lang==='en'?' selected':''}>English</option><option value="hi"${S.lang==='hi'?' selected':''}>हिन्दी</option><option value="or"${S.lang==='or'?' selected':''}>ଓଡ଼ିଆ</option><option value="te"${S.lang==='te'?' selected':''}>తెలుగు</option></select>`;
@@ -579,7 +613,7 @@ function shell(page,inner){
   <button class="side-out" data-act="logout">${ic('out',18)}<span>${t('logout')}</span></button>
  </aside>
  <div class="main">
-  <header class="top"><a class="top-brand" href="#/dashboard">${logo()}<b>${t('app')}</b></a><h2>${title}</h2><span class="grow"></span><span class="dt">${new Date().toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span>${swatchBar()}${themeBtn()}${langSel()}<a class="icon" href="#/account" aria-label="${t('account')}" title="${t('account')}">${ic('mail',19)}</a><button class="btn ghost sm" data-act="logout">${ic('out',16)}<span>${t('logout')}</span></button></header>
+  <header class="top"><a class="top-brand" href="#/dashboard">${logo()}<b>${t('app')}</b></a><label class="tsearch">${ic('search',18)}<input id="gsearch" type="search" placeholder="${t('search_ph')}" aria-label="${t('search')}" autocomplete="off"></label>${swatchBar()}<a class="icon" href="#/appointments" aria-label="${t('appointments')}" title="${t('appointments')}">${ic('bell',20)}</a>${themeBtn()}${langSel()}<a class="usr" href="#/account" title="${t('account')}"><span class="av">${esc((S.name||'?').slice(0,2).toUpperCase())}</span><b>${esc((S.name||'').split(' ')[0])}</b></a><button class="btn ghost sm" data-act="logout">${ic('out',16)}<span>${t('logout')}</span></button></header>
   ${mailBanner()}
   <div class="content" id="content">${inner}</div>
  </div></div>`}
@@ -629,6 +663,7 @@ const kpi=(i,v,l,c,h)=>`<a class="kpi" href="${h}" style="--c:${c}"><i>${ic(i,21
 function pDoctors(){
  const card=d=>`<article class="dcard"><span class="av">${esc(d.name.replace(/^Dr\.?\s*/,'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase())}</span><h3>${esc(d.name)}</h3><div style="color:var(--muted)">${esc(d.speciality)}</div><small style="color:var(--muted)">${esc(d.qualification||'')}</small><br><span class="fee">${t('d_fee')}: ${money(d.fee)}</span><div style="margin-top:12px"><a class="btn ghost sm" href="#/appointments">${t('book_title')}</a></div></article>`;
  return `<div class="page-h"><div><h1>${t('doctors')}</h1><p>${t('doctors_sub')}</p></div></div>${S.docs.length?`<div class="dgrid">${S.docs.map(card).join('')}</div>`:`<div class="panel"><div class="empty"><b>${t('no_doctors')}</b></div></div>`}${S.role==='admin'?doctorForm():''}`}
+const ILL=`<svg class="ill" viewBox="0 0 250 130" aria-hidden="true"><path d="M0 118c40-30 80-34 120-18s90 4 130-20v50H0z" fill="#c7d9f5" opacity=".65"/><rect x="92" y="30" width="64" height="90" rx="4" fill="#8fbdf0"/><rect x="150" y="54" width="46" height="66" rx="4" fill="#b7d5f6"/><rect x="117" y="10" width="28" height="24" rx="3" fill="#6aa5e6"/><path d="M131 14v16M123 22h16" stroke="#fff" stroke-width="4" stroke-linecap="round"/><g fill="#eaf4ff"><rect x="101" y="44" width="11" height="11" rx="2"/><rect x="120" y="44" width="11" height="11" rx="2"/><rect x="137" y="44" width="11" height="11" rx="2"/><rect x="101" y="64" width="11" height="11" rx="2"/><rect x="137" y="64" width="11" height="11" rx="2"/><rect x="158" y="66" width="10" height="10" rx="2"/><rect x="175" y="66" width="10" height="10" rx="2"/><rect x="124" y="92" width="14" height="28" rx="2"/></g><circle cx="218" cy="72" r="20" fill="#4fb98a"/><rect x="216" y="88" width="4" height="32" fill="#7a5b3e"/><circle cx="60" cy="98" r="14" fill="#5cc49a"/><rect x="58" y="108" width="4" height="12" fill="#7a5b3e"/></svg>`;
 function pDashboard(){
  const q=S.queue,w=q.filter(x=>x.status==='waiting').length,p=q.filter(x=>x.status==='in-progress').length,d=q.filter(x=>x.status==='done').length;
  const col=S.pays.filter(x=>sameDay(x.created_at)).reduce((a,x)=>a+Number(x.amount),0);
@@ -638,11 +673,12 @@ function pDashboard(){
  const ac=days.map(d=>A.filter(x=>ad(x)===dkey(d)&&x.status!=='cancelled').length),rc=days.map(d=>S.pays.filter(x=>dkey(new Date(x.created_at))===dkey(d)).reduce((n,x)=>n+Number(x.amount),0));
  const up=A.filter(x=>['booked','confirmed'].includes(x.status)&&ad(x)>=today).sort((x,y)=>(ad(x)+x.appt_time).localeCompare(ad(y)+y.appt_time)).slice(0,5);
  const h=new Date().getHours(),g=h<12?'greet_m':h<17?'greet_a':'greet_e';
- return `<div class="page-h"><div><h1>${t(g)}, <span class="gname">${esc((S.name||'').split(' ')[0])}</span></h1><p>${t('greet_sub')}</p></div><span class="grow"></span>
-  <div class="actions"><button class="btn ghost" data-act="newQueue">${ic('clock',17)}${t('add_queue')}</button><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button></div></div>
+ return `<div class="dhead"><div class="dh-l"><h1>${t('dash_over')}</h1><p class="wl">${t('welcome_b')}, <span class="gname">${esc((S.name||'').split(' ')[0])}</span>.</p><p>${t('greet_sub')}</p>
+  <div class="actions" style="margin-top:16px"><button class="btn ghost" data-act="newQueue">${ic('clock',17)}${t('add_queue')}</button><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button></div></div>
+  <div class="dh-r"><span class="dchip">${ic('cal',16)}${new Date().toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span><span class="dchip"><i class="dotg${navigator.onLine?'':' off'}"></i>${t(navigator.onLine?'online':'offline')}</span>${ILL}</div></div>
  <div class="kpis">${kpi('users',S.pts.length,t('total_patients'),'#3b82f6','#/patients')}${kpi('steth',D.length,t('total_doctors'),'#14b8a6','#/doctors')}${kpi('cal',todayN,t('todays_appts'),'#8b5cf6','#/appointments')}${kpi('clock',pend,t('pend_appr'),'#f59e0b','#/appointments')}${kpi('hourglass',w,t('waiting'),'#10b981','#/queue')}${kpi('card',money(rev),t('rev_total'),'#ec4899','#/payments')}</div>
- <div class="cols"><div class="panel"><div class="panel-h"><h3>${t('appt_chart')}</h3></div>${barChart(ac,lab,String,1)}</div>
-  <div class="panel"><div class="panel-h"><h3>${t('rev_chart')}</h3><span class="grow"></span><small style="color:var(--muted)">${t('collected')}: ${money(col)}</small></div>${lineChart(rc,lab,compact)}</div></div>
+ <div class="cols"><div class="panel"><div class="panel-h"><span class="pic">${ic('cal',20)}</span><h3>${t('appt_chart')}</h3><span class="grow"></span><span class="chip">${t('last7')}</span></div>${barChart(ac,lab,String,1)}</div>
+  <div class="panel"><div class="panel-h"><span class="pic v">${ic('trend',20)}</span><h3>${t('rev_chart')}</h3><span class="grow"></span><span class="chip">${t('last7')}</span><span class="coll">${t('collected')}: <b>${money(col)}</b></span></div>${lineChart(rc,lab,compact)}</div></div>
  <div class="cols">
   <div class="panel"><div class="panel-h"><h3>${t('todays_queue')}</h3><span class="grow"></span><a class="btn ghost sm" href="#/queue">${t('view_all')}</a></div>
    <div class="mini" id="dq">${q.length?q.slice(0,7).map(ticketRow).join(''):`<div class="empty"><b>${t('empty_q')}</b>${t('empty_q_s')}</div>`}</div></div>
@@ -821,6 +857,8 @@ function openDrawer(title,body){
 function closeDrawer(){$('#overlay').innerHTML=''}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
 
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){const g=$('#gsearch');if(g){e.preventDefault();g.focus()}}
+ if(e.key==='Enter'&&e.target.id==='gsearch'){const v=e.target.value;go('#/patients');let n=0;const iv=setInterval(()=>{const p=$('#psearch');if(p||++n>30){clearInterval(iv);if(p&&v){p.value=v;p.dispatchEvent(new Event('input',{bubbles:true}))}}},100)}});
 /* ---------- photo shrink (phone photos are huge) ---------- */
 function shrink(file){
  return new Promise(res=>{
