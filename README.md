@@ -1,7 +1,7 @@
 # CarePulse
 
 A cloud-hosted hospital management system. Staff can register patients, hand out queue tokens, record 5 weeks of
-patient progress (with photos), take payments and email receipts. Everything is created and deployed
+patient progress (with photos), take payments and email receipts, book doctors, order lab tests and sell medicines. Everything is created and deployed
 automatically from GitHub, and it gets a clean web address (Route53 + CloudFront) and a monitoring stack
 (Prometheus, Grafana, Loki).
 
@@ -10,7 +10,10 @@ automatically from GitHub, and it gets a clean web address (Route53 + CloudFront
 - **Login** (there is no public sign-up: the first admin comes from a GitHub secret, and only an admin can create other accounts from the **Users** page)
 - **Patients**: registration, search, details, 5-week symptom records with photo upload (saved weeks cannot be changed)
 - **Welcome email**: every sign-in sends "Welcome to our CarePulse" to the user's email
-- **Doctor appointments**: pick a doctor, date and free time slot; the doctor name, date and time are emailed to the user (cancel/complete also email). Handled by a separate `appointment` service with its **own database** (`hms-appointmentdb` + read replica) and **own S3 bucket** (`hms-<account>-appointments`). Booking status (`booked` / `cancelled` / `completed`) is stored in the `appointments.status` column and as a versioned JSON record `appointments/<id>.json` in that bucket.
+- **Doctors**: a separate `doctor` service with its **own database** (`hms-doctordb` + read replica). Admins can add doctors and change fees; doctors are never deleted, only set inactive. The seeded doctors have ids 1 to 6.
+- **Laboratory**: a separate `laboratory` service with its **own database** (`hms-laboratorydb` + read replica) and **own S3 bucket** (`hms-<account>-lab-reports`). Order a test for a patient, mark the sample collected, enter the result (optional PDF or image report). The patient is emailed when the test is ordered and when the result is ready.
+- **Pharmacy**: a separate `pharmacy` service with its **own database** (`hms-pharmacydb` + read replica) and **own S3 bucket** (`hms-<account>-pharmacy-bills`). Medicine stock, sales and bills. A sale takes stock and saves the bill in one database transaction, so stock never goes below zero. The bill is emailed to the patient.
+- **Doctor appointments**: pick a doctor, date and free time slot; the doctor name, date and time are emailed to the user (cancel/complete also email). Doctor details come from the `doctor` service and are copied into each booking. Handled by a separate `appointment` service with its **own database** (`hms-appointmentdb` + read replica) and **own S3 bucket** (`hms-<account>-appointments`). Booking status (`booked` / `cancelled` / `completed`) is stored in the `appointments.status` column and as a versioned JSON record `appointments/<id>.json` in that bucket.
 - **Queue**: daily tokens with waiting / in consultation / done
 - **Payments**: receipts stored in S3, printable, and emailed
 - **Admin pages**: weekly report for all patients, user management
@@ -28,16 +31,79 @@ automatically from GitHub, and it gets a clean web address (Route53 + CloudFront
 | Network | VPC, 2 public + 2 private subnets, NAT gateway |
 | Containers | Docker, Amazon ECR |
 | Orchestration | Amazon EKS (Kubernetes), managed node group |
-| Database | Amazon RDS PostgreSQL 16, one primary + one read replica per service (auth, patient, billing, appointment) |
-| Storage | 4 encrypted, versioned S3 buckets: `user-data`, `payment-receipts`, `patient-photos`, `appointments` |
+| Database | Amazon RDS PostgreSQL 16, one primary + one read replica per service (auth, patient, billing, appointment, doctor, laboratory, pharmacy) |
+| Storage | 6 encrypted, versioned S3 buckets: `user-data`, `payment-receipts`, `patient-photos`, `appointments`, `lab-reports`, `pharmacy-bills` |
 | Email | Amazon SNS (email subscriptions) |
 | Pod permissions | IAM role for service accounts (IRSA), no `s3:DeleteObject` on purpose |
-| Backend | Python 3.12, FastAPI, 4 services: `auth`, `patient`, `billing`, `appointment` |
+| Backend | Python 3.12, FastAPI, 7 services: `auth`, `patient`, `billing`, `appointment`, `doctor`, `laboratory`, `pharmacy` |
 | Frontend | One `index.html` (plain HTML, CSS, JavaScript) served by nginx |
 | Traffic | ingress-nginx (installed through ArgoCD) in front of the app |
 | Web address | Route53 record -> CloudFront (HTTPS, ACM certificate) -> ingress-nginx load balancer |
 | Monitoring | Prometheus, Grafana, Alertmanager (email alerts), Loki + Promtail (pod logs), installed with Helm |
 | CI/CD | GitHub Actions, Trivy image scanning, ArgoCD (GitOps) |
+
+## Architecture
+
+Every service has its **own database** (a PostgreSQL primary for writes and a read replica for reads) and, where it stores files, its **own S3 bucket**. Services never read each other's database. The only service-to-service call is `appointment` asking `doctor` for doctor details when a booking is made.
+
+```mermaid
+flowchart TB
+    user([Browser]) --> r53[Route53]
+    r53 --> cf[CloudFront + ACM HTTPS]
+    cf --> lb[Load balancer]
+    lb --> ing[ingress-nginx on EKS]
+
+    subgraph eks[Amazon EKS - namespace hms]
+        fe[frontend<br/>nginx + index.html]
+        auth[auth-service]
+        pat[patient-service]
+        bil[billing-service]
+        doc[doctor-service]
+        app[appointment-service]
+        lab[laboratory-service]
+        pha[pharmacy-service]
+    end
+
+    ing -->|/| fe
+    ing -->|/auth| auth
+    ing -->|/patients  /queue| pat
+    ing -->|/payments| bil
+    ing -->|/doctors| doc
+    ing -->|/appointments| app
+    ing -->|/lab| lab
+    ing -->|/pharmacy| pha
+    app -.->|GET /doctors/id| doc
+
+    auth --> dbA[(authdb + replica)]
+    pat --> dbP[(patientdb + replica)]
+    bil --> dbB[(billingdb + replica)]
+    doc --> dbD[(doctordb + replica)]
+    app --> dbAp[(appointmentdb + replica)]
+    lab --> dbL[(laboratorydb + replica)]
+    pha --> dbPh[(pharmacydb + replica)]
+
+    auth --> s3u[[S3 user-data]]
+    pat --> s3p[[S3 patient-photos]]
+    bil --> s3r[[S3 payment-receipts]]
+    app --> s3a[[S3 appointments]]
+    lab --> s3l[[S3 lab-reports]]
+    pha --> s3ph[[S3 pharmacy-bills]]
+
+    auth & pat & bil & app & lab & pha --> mail[Gmail SMTP emails]
+    app --> sns[AWS SNS SMS]
+```
+
+| Service | URL paths | Database | S3 bucket | Sends email |
+|---|---|---|---|---|
+| `auth` | `/auth` | `hms-authdb` | `user-data` | welcome mail on login |
+| `patient` | `/patients`, `/queue` | `hms-patientdb` | `patient-photos` | registration, patient details |
+| `billing` | `/payments` | `hms-billingdb` | `payment-receipts` | payment receipt |
+| `doctor` | `/doctors` | `hms-doctordb` | none | no |
+| `appointment` | `/appointments` | `hms-appointmentdb` | `appointments` | booking, payment, cancel, refund (SMS on confirm) |
+| `laboratory` | `/lab` | `hms-laboratorydb` | `lab-reports` | test ordered, result ready |
+| `pharmacy` | `/pharmacy` | `hms-pharmacydb` | `pharmacy-bills` | pharmacy bill |
+
+Shared by all services (`services/common.py`): JWT login check, database helpers (writes go to the primary, reads to the replica), S3 upload, email, and a database trigger that blocks every `DELETE`.
 
 ## How it fits together
 
@@ -69,6 +135,10 @@ automatically from GitHub, and it gets a clean web address (Route53 + CloudFront
                                                                           ├─ /patients  → patient-service
                                                                           ├─ /queue     → patient-service
                                                                           ├─ /payments  → billing-service
+                                                                          ├─ /doctors   → doctor-service
+                                                                          ├─ /appointments → appointment-service
+                                                                          ├─ /lab       → laboratory-service
+                                                                          ├─ /pharmacy  → pharmacy-service
                                                                           └─ /          → frontend
 ```
 
@@ -85,13 +155,16 @@ automatically from GitHub, and it gets a clean web address (Route53 + CloudFront
 │   └── debug-cluster.yml      # manual: cluster checks
 ├── terraform/                 # main.tf, rds.tf, dns.tf, variables.tf, outputs.tf, terraform.tfvars
 ├── services/
-│   ├── Dockerfile             # one Dockerfile for all 4 services (build arg SERVICE)
+│   ├── Dockerfile             # one Dockerfile for all 7 services (build arg SERVICE)
 │   ├── requirements.txt       # Python dependencies (keep these patched, Trivy fails the build otherwise)
 │   ├── common.py              # shared DB, JWT, S3 and SNS helpers
 │   ├── auth/main.py           # login, users (admin creates accounts), email test
 │   ├── patient/main.py        # patients, weekly records, queue, email details
 │   ├── billing/main.py        # payments, receipts, receipt email
-│   └── appointment/main.py    # doctors, bookings, booking status (own DB + S3 bucket)
+│   ├── appointment/main.py    # bookings and booking status (own DB + S3 bucket), asks doctor-service for doctor details
+│   ├── doctor/main.py         # doctor directory (own DB)
+│   ├── laboratory/main.py     # lab tests, orders, results (own DB + S3 bucket)
+│   └── pharmacy/main.py       # medicines, stock, sales, bills (own DB + S3 bucket)
 ├── frontend/
 │   ├── Dockerfile             # nginx-unprivileged + index.html
 │   └── index.html             # the whole user interface
@@ -156,6 +229,10 @@ node_desired_size   = 3
 # web address (used by terraform/dns.tf)
 hosted_zone_name = "*****.realhandsonlabs.net"   # your Route53 public hosted zone
 app_subdomain    = "ritikhms"                                # gives https://ritikhms.******.realhandsonlabs.net
+
+# one database (+ read replica) per service, and the S3 buckets
+db_services  = ["auth", "patient", "billing", "appointment", "doctor", "laboratory", "pharmacy"]
+data_buckets = ["user-data", "payment-receipts", "patient-photos", "appointments", "lab-reports", "pharmacy-bills"]
 ```
 
 Keep `hosted_zone_name` in the file or secret permanently. If it is removed later, the next run would remove CloudFront and the Route53 record.
@@ -206,6 +283,19 @@ Installed by `monitoring.yml` after every successful deploy. Full guide: [monito
 | `POST /patients/{id}/email` | signed in | Email patient details |
 | `GET /patients/weekly-report` | signed in | All patients' weekly records |
 | `POST/GET /payments`, `GET /payments/{id}/receipt`, `POST /payments/{id}/email` | signed in | Payments and receipts |
+| `GET /doctors`, `GET /doctors/{id}` | signed in | List doctors, get one doctor |
+| `POST /doctors`, `PATCH /doctors/{id}` | admin | Add a doctor, change fee / speciality / active |
+| `GET /appointments/slots/{doctor_id}?date=` | signed in | Free time slots of a doctor |
+| `POST/GET /appointments`, `POST /appointments/{id}/pay`, `/cancel` | signed in | Book, list, pay, cancel |
+| `POST /appointments/{id}/confirm`, `/complete` | admin | Confirm (SMS) and complete a booking |
+| `GET /lab/tests` | signed in | Lab test catalogue |
+| `POST /lab/tests` | admin | Add a lab test |
+| `POST/GET /lab/orders` | signed in | Order a test, list orders (admin sees all) |
+| `PATCH /lab/orders/{id}/status` | signed in | Mark `sample-collected` or `cancelled` |
+| `POST /lab/orders/{id}/result`, `GET /lab/orders/{id}/report` | signed in | Save the result (text + optional file), get the report file link |
+| `GET /pharmacy/medicines` | signed in | Medicines and stock |
+| `POST /pharmacy/medicines`, `POST /pharmacy/medicines/{id}/restock` | admin | Add a medicine, add stock |
+| `POST/GET /pharmacy/sales`, `GET /pharmacy/sales/{id}/bill` | signed in | Sell medicines, list sales, get the bill link |
 
 ## Useful commands
 
@@ -271,7 +361,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.pas
 
 ## Cost and clean-up
 
-This setup is not free: the EKS control plane, worker nodes, a NAT gateway, six RDS instances, CloudFront and the load balancers
+This setup is not free: the EKS control plane, worker nodes, a NAT gateway, fourteen RDS instances (seven primaries and seven read replicas), CloudFront and the load balancers
 (app, ArgoCD, Grafana, Prometheus) all cost money while they run. Destroy everything when you are done:
 
 1. Delete the load balancers first, or the VPC cannot be removed:
@@ -282,7 +372,7 @@ This setup is not free: the EKS control plane, worker nodes, a NAT gateway, six 
    ```
 2. In `terraform.tfvars` set `db_deletion_protection = false` and apply it once (push to `main`).
 3. Run `terraform destroy` from the `terraform/` folder, with the same backend settings as the workflow. This also removes CloudFront, the certificate and the Route53 records created by `dns.tf`.
-4. Delete by hand what Terraform does not manage: the four ECR repositories (`hospital-management-*`) and the state bucket `hms-tfstate-<account-id>`.
+4. Delete by hand what Terraform does not manage: the seven ECR repositories (`hospital-management-*`) and the state bucket `hms-tfstate-<account-id>`.
 
 ## Security notes
 
