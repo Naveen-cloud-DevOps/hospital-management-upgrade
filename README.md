@@ -228,7 +228,7 @@ node_desired_size   = 3
 
 # web address (used by terraform/dns.tf)
 hosted_zone_name = "*****.realhandsonlabs.net"   # your Route53 public hosted zone
-app_subdomain    = "ritikhms"                                # gives https://ritikhms.******.realhandsonlabs.net
+app_subdomain    = "ritikcarepulse"                                # gives https://ritikcarepulse.******.realhandsonlabs.net
 
 # one database (+ read replica) per service, and the S3 buckets
 db_services  = ["auth", "patient", "billing", "appointment", "doctor", "laboratory", "pharmacy"]
