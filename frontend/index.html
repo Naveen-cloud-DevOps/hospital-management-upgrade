@@ -288,14 +288,14 @@ button:focus-visible,a:focus-visible,.nav a:focus-visible{outline:3px solid #818
 [data-theme=dark] ::placeholder{color:#9aa6c4;opacity:1}
 
 /* ===== MediCore-style layout: hidden sidebar that slides in from the left, hero, colourful cards ===== */
-:root{--brand:#2563eb;--brand-d:#1e40af;--brand-l:#dbeafe}[data-theme=dark]{--brand:#60a5fa;--brand-d:#fff;--brand-l:#1e2f5c}
-.btn,[data-theme=dark] .btn{background:#2563eb;border-color:#2563eb;color:#fff;box-shadow:0 6px 16px #2563eb44}.btn:hover{background:#1d4ed8}
+:root{--acc:#2563eb;--acc-d:#1d4ed8;--acc2:#0d9488;--acc-l:#dbeafe;--brand:var(--acc);--brand-d:var(--acc-d);--brand-l:var(--acc-l)}[data-theme=dark]{--brand-d:#fff;--brand-l:color-mix(in srgb,var(--acc) 25%,#0b1020)}
+.btn,[data-theme=dark] .btn{background:var(--acc);border-color:var(--acc);color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--acc) 27%,transparent)}.btn:hover{background:var(--acc-d)}
 .btn.ghost,[data-theme=dark] .btn.ghost{background:var(--surface);color:var(--ink);border-color:var(--line);box-shadow:none}
 .side,[data-theme=dark] .side{background:linear-gradient(180deg,#0b1437,#0f1f4d 55%,#0b2a52);color:#e2e8f0;border:0}
 .side .brandrow{color:#fff;font-weight:700;font-size:18px}
 .nav-sec{margin:14px 10px 4px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7c8db5}
 .nav a,.nav a:hover{color:#cbd5e1}.nav a:hover,[data-theme=dark] .nav a:hover{background:#ffffff14}
-.nav a.on,.nav a.on:hover{background:linear-gradient(90deg,#0d9488,#2563eb);color:#fff;box-shadow:0 8px 20px #2563eb55}
+.nav a.on,.nav a.on:hover{background:linear-gradient(90deg,var(--acc2),var(--acc));color:#fff;box-shadow:0 8px 20px color-mix(in srgb,var(--acc) 33%,transparent)}
 .side-foot,[data-theme=dark] .side-foot{background:#ffffff12;color:#fff}.side-foot small{color:#9fb0d3}
 .side-out{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;color:#f87171;font:inherit;font-weight:600;background:none;border:0;cursor:pointer}.side-out:hover{background:#ffffff14}
 .hero{border-radius:20px;padding:34px 38px;margin-bottom:22px;color:#fff;background:radial-gradient(900px 300px at 100% 0,#0e7490aa,transparent 60%),linear-gradient(135deg,#0b1437,#14306b 60%,#0f4c5c);box-shadow:var(--sh)}
@@ -308,9 +308,29 @@ button:focus-visible,a:focus-visible,.nav a:focus-visible{outline:3px solid #818
  .shell{grid-template-columns:1fr}.hot{display:block;position:fixed;left:0;top:0;bottom:0;width:18px;z-index:39}
  .side{position:fixed;left:0;top:0;bottom:0;width:268px;height:100vh;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);z-index:40;overflow-y:auto}
  .hot:hover+.side,.side:hover,.side:focus-within{transform:none;box-shadow:12px 0 40px #0b143780}
- .shell::before{content:'';position:fixed;left:0;top:0;bottom:0;width:4px;background:linear-gradient(#2563eb,#14b8a6);z-index:35;pointer-events:none}
+ .shell::before{content:'';position:fixed;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--acc),var(--acc2));z-index:35;pointer-events:none}
 }
 @media(max-width:860px){.nav-sec,.side-out{display:none}}
+
+[data-accent=teal]{--acc:#0d9488;--acc-d:#0f766e;--acc2:#2563eb;--acc-l:#ccfbf1}
+[data-accent=violet]{--acc:#7c3aed;--acc-d:#6d28d9;--acc2:#2563eb;--acc-l:#ede9fe}
+[data-accent=rose]{--acc:#e11d48;--acc-d:#be123c;--acc2:#f59e0b;--acc-l:#ffe4e6}
+[data-accent=orange]{--acc:#ea580c;--acc-d:#c2410c;--acc2:#0d9488;--acc-l:#ffedd5}
+.swatches{display:flex;gap:6px;margin-right:6px}.sw{width:22px;height:22px;border-radius:50%;border:2px solid var(--surface);background:var(--s);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}.sw[aria-pressed=true]{box-shadow:0 0 0 2px var(--ink)}
+@media(max-width:700px){.swatches{display:none}}
+@media(min-width:861px){.main{transition:margin-left .28s cubic-bezier(.4,0,.2,1)}.hot:hover~.main,.side:hover~.main,.side:focus-within~.main{margin-left:268px}}
+
+/* top bar keeps the CarePulse brand and stays fixed; the menu opens below it and only the page moves */
+.top{height:64px;box-sizing:border-box;z-index:50}
+.top-brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font-weight:700;font-size:18px;margin-right:12px}
+.top h2{font-size:16px;font-weight:600;color:var(--muted)}
+@media(min-width:861px){
+ .side .brandrow{display:none}.side{top:64px;height:calc(100vh - 64px)}.hot,.shell::before{top:64px}
+ .hot:hover~.main,.side:hover~.main,.side:focus-within~.main{margin-left:0}
+ .content,.mailbar{transition:margin-left .28s cubic-bezier(.4,0,.2,1)}
+ .hot:hover~.main>.content,.hot:hover~.main>.mailbar,.side:hover~.main>.content,.side:hover~.main>.mailbar,.side:focus-within~.main>.content,.side:focus-within~.main>.mailbar{margin-left:268px}
+}
+@media(max-width:860px){.top h2{display:none}}
 </style>
 </head>
 <body>
@@ -376,6 +396,7 @@ en:{sec_overview:'Overview',sec_care:'Patient care',sec_services:'Services',sec_
  my_appts:'My appointments',all_appts:'All appointments',no_appts:'No appointments yet',no_appts_s:'Book your first doctor appointment above.',
  cancel_appt:'Cancel',complete_appt:'Mark completed',cancelled:'Cancelled',completed:'Completed',booked:'Booked',appt_cancelled:'Appointment cancelled. Email sent.',pick_all:'Choose a doctor, date and time.',
  other:'Other',male:'Male',female:'Female',cash:'Cash',card_m:'Card',upi:'UPI'},
+te:{dashboard:'డాష్‌బోర్డ్',patients:'రోగులు',doctors:'వైద్యులు',queue:'క్యూ',payments:'చెల్లింపులు',appointments:'అపాయింట్‌మెంట్లు',laboratory:'ప్రయోగశాల',pharmacy:'ఫార్మసీ',reports:'నివేదికలు',users:'వినియోగదారులు',account:'ఖాతా',logout:'లాగౌట్',sec_overview:'అవలోకనం',sec_care:'రోగి సంరక్షణ',sec_services:'సేవలు',sec_admin:'నిర్వహణ',hero_h:'ప్రత్యక్ష డేటాతో కరుణామయ సంరక్షణ',hero_p:'మీ ఆసుపత్రిలోని ప్రతి రోగి, వైద్యుడు, బిల్లు — ఒకే చోట.',greet_m:'శుభోదయం',greet_a:'శుభ మధ్యాహ్నం',greet_e:'శుభ సాయంత్రం',total_patients:'మొత్తం రోగులు',total_doctors:'మొత్తం వైద్యులు',todays_appts:'నేటి అపాయింట్‌మెంట్లు',pend_appr:'ఆమోదం కోసం వేచి ఉన్నవి',waiting:'వేచి ఉన్నవారు',rev_total:'మొత్తం ఆదాయం',appt_chart:'అపాయింట్‌మెంట్లు - గత 7 రోజులు',rev_chart:'ఆదాయం - గత 7 రోజులు',upcoming:'రాబోయే అపాయింట్‌మెంట్లు',collected:'వసూలైనది',todays_queue:'నేటి క్యూ',new_patient:'కొత్త రోగి',add_queue:'క్యూలో చేర్చు',doctors_sub:'నిపుణులు మరియు సంప్రదింపు రుసుములు.',d_fee:'రుసుము',no_doctors:'వైద్యులు కనిపించలేదు',no_upcoming:'రాబోయే అపాయింట్‌మెంట్లు లేవు',signin:'సైన్ ఇన్',email:'ఇమెయిల్',password:'పాస్‌వర్డ్',remember:'నన్ను గుర్తుంచుకో',forgot:'పాస్‌వర్డ్ మర్చిపోయారా?',forgot_msg:'పాస్‌వర్డ్ రీసెట్ కోసం మీ అడ్మిన్‌ను అడగండి.',theme:'థీమ్',f1:'రోగి రికార్డులు మరియు చరిత్ర',f2:'రోజువారీ క్యూ మరియు అపాయింట్‌మెంట్లు',f3:'సురక్షితం, పాత్ర ఆధారిత ప్రవేశం',search:'వెతకండి',cancel:'రద్దు',back:'వెనుకకు',save:'సేవ్',name:'పేరు',mobile:'మొబైల్',address:'చిరునామా',city:'నగరం',age:'వయస్సు',gender:'లింగం',amount:'మొత్తం',method:'పద్ధతి',start:'ప్రారంభించు',finish:'ముగించు',done:'పూర్తయింది',in_progress:'కొనసాగుతోంది',save_patient:'రోగిని సేవ్ చేయి',save_payment:'చెల్లింపును సేవ్ చేయి',record_payment:'చెల్లింపు నమోదు',generate_token:'టోకెన్ రూపొందించు',first_name:'మొదటి పేరు',last_name:'ఇంటి పేరు',blood_group:'రక్త వర్గం',role:'పాత్ర',add_user:'వినియోగదారుని చేర్చు'},
 hi:{sec_overview:'अवलोकन',sec_care:'रोगी सेवा',sec_services:'सेवाएँ',sec_admin:'प्रशासन',hero_h:'सहानुभूतिपूर्ण देखभाल, लाइव डेटा के साथ',hero_p:'आपके अस्पताल का हर रोगी, डॉक्टर और बिल, एक ही जगह।',doctors:'डॉक्टर',doctors_sub:'विशेषज्ञ और परामर्श शुल्क।',d_fee:'शुल्क',total_doctors:'कुल डॉक्टर',todays_appts:'आज की अपॉइंटमेंट',pend_appr:'अनुमोदन की प्रतीक्षा',rev_total:'कुल आय',appt_chart:'अपॉइंटमेंट - पिछले 7 दिन',rev_chart:'आय - पिछले 7 दिन',upcoming:'आगामी अपॉइंटमेंट',no_doctors:'कोई डॉक्टर नहीं मिला',no_upcoming:'कोई आगामी अपॉइंटमेंट नहीं',remember:'मुझे याद रखें',forgot:'पासवर्ड भूल गए?',forgot_msg:'पासवर्ड रीसेट के लिए अपने एडमिन से कहें।',theme:'लाइट / डार्क मोड',f1:'रोगी रिकॉर्ड और इतिहास',f2:'दैनिक कतार और अपॉइंटमेंट',f3:'सुरक्षित, भूमिका-आधारित पहुँच',tagline:'मरीज़ों का रिकॉर्ड, रोज़ की कतार और भुगतान - एक ही जगह।',signin:'साइन इन',signup:'खाता बनाएँ',signin_t:'वापसी पर स्वागत है',signup_t:'अपना खाता बनाएँ',email:'ईमेल पता',password:'पासवर्ड',confirm:'पासवर्ड दोबारा लिखें',fullname:'पूरा नाम',
  dashboard:'डैशबोर्ड',patients:'मरीज़',queue:'कतार',payments:'भुगतान',reports:'साप्ताहिक रिपोर्ट',users:'उपयोगकर्ता',logout:'लॉग आउट',
  greet_m:'सुप्रभात',greet_a:'नमस्कार',greet_e:'शुभ संध्या',total_patients:'दर्ज मरीज़',waiting:'प्रतीक्षा में',in_progress:'परामर्श में',done:'पूरा',collected:'आज की वसूली',
@@ -403,12 +424,12 @@ const BLOOD=['A+','A-','B+','B-','O+','O-','AB+','AB-'];
 
 /* ---------- state + helpers ---------- */
 const store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
-const S={tok:store.get('tok'),role:store.get('role'),name:store.get('name'),lang:['en','hi','or'].includes(store.get('lang'))?store.get('lang'):'en',mode:'login',
+const S={tok:store.get('tok'),role:store.get('role'),name:store.get('name'),lang:['en','hi','or','te'].includes(store.get('lang'))?store.get('lang'):'en',mode:'login',
  pts:[],queue:[],pays:[],docs:[],appts:[],users:[],wrep:[],detail:null,wk:0,q:''};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const t=(k,v)=>{let s=(T[S.lang]&&T[S.lang][k])||T.en[k]||k;if(v)for(const x in v)s=s.replace('{'+x+'}',v[x]);return s};
-const loc=()=>S.lang==='hi'?'hi-IN':S.lang==='or'?'or-IN':'en-IN';
+const loc=()=>S.lang==='hi'?'hi-IN':S.lang==='or'?'or-IN':S.lang==='te'?'te-IN':'en-IN';
 const fmtD=i=>i?new Date(i).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'}):'-';
 const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
 const ini=p=>((p.first_name||'?')[0]+((p.last_name||'')[0]||'')).toUpperCase();
@@ -447,9 +468,12 @@ async function busy(btn,label,fn){
 /* ---------- auth screen ---------- */
 const field=(name,type,label,extra='')=>`<label class="fld"><span>${label}</span><input name="${name}" type="${type}" ${extra}></label>`;
 const themeBtn=()=>`<button type="button" class="icon" data-act="theme" aria-label="${t('theme')}" title="${t('theme')}">${ic(document.documentElement.dataset.theme==='dark'?'sun':'moon',19)}</button>`;
+const ACCENTS=[['blue','#2563eb'],['teal','#0d9488'],['violet','#7c3aed'],['rose','#e11d48'],['orange','#ea580c']];
+const applyAccent=()=>{document.documentElement.dataset.accent=store.get('accent')||'blue'};
+const swatchBar=()=>`<span class="swatches" role="group" aria-label="${t('theme')}">${ACCENTS.map(([n,c])=>`<button type="button" class="sw" data-act="accent" data-a="${n}" style="--s:${c}" aria-label="${n}" title="${n}" aria-pressed="${(store.get('accent')||'blue')===n}"></button>`).join('')}</span>`;
 const applyTheme=()=>{let m=store.get('theme');if(!m)m=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.dataset.theme=m};
 const pwField=(name,label,auto,hint)=>`<label class="fld"><span>${label}${hint?` <small>${hint}</small>`:''}</span><div class="pw"><input name="${name}" type="password" autocomplete="${auto}" required><button type="button" class="icon eye" data-act="eye" aria-label="Show or hide password">${ic('eye')}</button></div></label>`;
-const langSel=cls=>`<select class="lang ${cls||''}" data-change="lang" aria-label="Language"><option value="en"${S.lang==='en'?' selected':''}>English</option><option value="hi"${S.lang==='hi'?' selected':''}>हिन्दी</option><option value="or"${S.lang==='or'?' selected':''}>ଓଡ଼ିଆ</option></select>`;
+const langSel=cls=>`<select class="lang ${cls||''}" data-change="lang" aria-label="Language"><option value="en"${S.lang==='en'?' selected':''}>English</option><option value="hi"${S.lang==='hi'?' selected':''}>हिन्दी</option><option value="or"${S.lang==='or'?' selected':''}>ଓଡ଼ିଆ</option><option value="te"${S.lang==='te'?' selected':''}>తెలుగు</option></select>`;
 
 function authHTML(){
  const su=false; // self sign-up is disabled: only an admin creates accounts (Users page)
@@ -501,7 +525,7 @@ function shell(page,inner){
   <button class="side-out" data-act="logout">${ic('out',18)}<span>${t('logout')}</span></button>
  </aside>
  <div class="main">
-  <header class="top"><h2>${title}</h2><span class="grow"></span><span class="dt">${new Date().toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span>${themeBtn()}${langSel()}<a class="icon" href="#/account" aria-label="${t('account')}" title="${t('account')}">${ic('mail',19)}</a><button class="btn ghost sm" data-act="logout">${ic('out',16)}<span>${t('logout')}</span></button></header>
+  <header class="top"><a class="top-brand" href="#/dashboard">${logo()}<b>${t('app')}</b></a><h2>${title}</h2><span class="grow"></span><span class="dt">${new Date().toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span>${swatchBar()}${themeBtn()}${langSel()}<a class="icon" href="#/account" aria-label="${t('account')}" title="${t('account')}">${ic('mail',19)}</a><button class="btn ghost sm" data-act="logout">${ic('out',16)}<span>${t('logout')}</span></button></header>
   ${mailBanner()}
   <div class="content" id="content">${inner}</div>
  </div></div>`}
@@ -560,7 +584,7 @@ function pDashboard(){
  return `<div class="page-h"><div><h1>${t(g)}, ${esc((S.name||'').split(' ')[0])}</h1><p>${t('greet_sub')}</p></div><span class="grow"></span>
   <div class="actions"><button class="btn ghost" data-act="newQueue">${ic('clock',17)}${t('add_queue')}</button><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button></div></div>
  <section class="hero"><small>${t('app')} · ${esc(S.name)}</small><h2>${t('hero_h')}</h2><p>${t('hero_p')}</p><div class="actions" style="margin-top:18px"><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button><a class="btn ghost" href="#/appointments">${t('appointments')}</a></div></section>
- <div class="kpis">${kpi('users',S.pts.length,t('total_patients'),'#3b82f6')}${kpi('steth',D.length,t('total_doctors'),'#14b8a6')}${kpi('cal',todayN,t('todays_appts'),'#22c55e')}${kpi('clock',pend,t('pend_appr'),'#f59e0b')}${kpi('clock',w,t('waiting'),'#8b5cf6')}${kpi('card',money(rev),t('rev_total'),'#ef4444')}</div>
+ <div class="kpis">${kpi('users',S.pts.length,t('total_patients'),'#3b82f6')}${kpi('steth',D.length,t('total_doctors'),'var(--acc2)')}${kpi('cal',todayN,t('todays_appts'),'#22c55e')}${kpi('clock',pend,t('pend_appr'),'#f59e0b')}${kpi('clock',w,t('waiting'),'#8b5cf6')}${kpi('card',money(rev),t('rev_total'),'#ef4444')}</div>
  <div class="cols"><div class="panel"><div class="panel-h"><h3>${t('appt_chart')}</h3></div>${barChart(ac,lab,String)}</div>
   <div class="panel"><div class="panel-h"><h3>${t('rev_chart')}</h3><span class="grow"></span><small style="color:var(--muted)">${t('collected')}: ${money(col)}</small></div>${barChart(rc,lab,compact)}</div></div>
  <div class="cols">
@@ -836,6 +860,7 @@ const ACT={
  labReport:async b=>{try{const r=await api('/lab/orders/'+b.dataset.id+'/report');window.open(r.url,'_blank','noopener')}catch(e){toast(e.message,'err')}},
  restock:async b=>{const n=parseInt(prompt('How many units to add to the stock?','100'),10);if(!(n>0))return;try{await api('/pharmacy/medicines/'+b.dataset.id+'/restock',{json:{qty:n}});toast('Stock updated');await refreshPharmacy()}catch(e){toast(e.message,'err')}},
  saleBill:async b=>{try{const r=await api('/pharmacy/sales/'+b.dataset.id+'/bill');window.open(r.url,'_blank','noopener')}catch(e){toast(e.message,'err')}},
+ accent:b=>{store.set('accent',b.dataset.a);applyAccent();render()},
  theme:()=>{store.set('theme',document.documentElement.dataset.theme==='dark'?'light':'dark');applyTheme();render()},
  forgot:()=>toast(t('forgot_msg')),
  mode:b=>{S.mode=b.dataset.m;render()},
@@ -950,7 +975,7 @@ document.addEventListener('submit',async e=>{
 
 window.addEventListener('hashchange',()=>render());
 setInterval(()=>{if(S.tok&&!document.hidden&&['queue','dashboard'].includes(route().page)&&!$('#overlay').innerHTML)refreshQueue()},20000);
-applyTheme();try{if(store.get('remember')==='0'&&!sessionStorage.getItem('alive')){['tok','role','name'].forEach(store.del);S.tok=S.role=S.name=''}}catch(e){}
+applyTheme();applyAccent();try{if(store.get('remember')==='0'&&!sessionStorage.getItem('alive')){['tok','role','name'].forEach(store.del);S.tok=S.role=S.name=''}}catch(e){}
 render();
 </script>
 </body>
