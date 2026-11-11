@@ -414,6 +414,27 @@ select,option,optgroup{background-color:var(--surface);color:var(--ink)}
 .plot .ln{stroke:#6d4ae8}[data-theme=dark] .plot .ln{stroke:#a78bfa}
 .plot .area{fill:rgba(139,92,246,.16)}.dot{border-color:#6d4ae8}[data-theme=dark] .dot{border-color:#a78bfa}
 @media(max-width:860px){.top{margin:0;border-radius:0;top:0}.tsearch{display:none}.dhead{flex-direction:column}.ill{display:none}.dh-r{justify-content:flex-start}.usr b{display:none}.top .grow{display:block}}
+
+/* ---------- auto-hide sidebar: icon rail, opens on hover, page resizes itself ---------- */
+@media(min-width:861px){
+.shell{--side-w:84px;transition:none}
+.shell:has(.side:hover),.shell:has(.side:focus-within){--side-w:272px}
+.side{transition:width .25s cubic-bezier(.2,.8,.2,1);overflow-x:hidden}
+.main{transition:margin-left .25s cubic-bezier(.2,.8,.2,1)}
+.side .brandrow{padding:22px 0;justify-content:center;gap:0}.side .brandrow>span:not(.logo){width:0;opacity:0;overflow:hidden;white-space:nowrap}
+.nav a{justify-content:center;gap:0;padding:11px 0}.nav a span{width:0;opacity:0;overflow:hidden;white-space:nowrap}
+.nav-sec{height:1px;margin:12px 14px;padding:0;font-size:0;background:rgba(255,255,255,.12)}
+.side-foot{padding:6px;justify-content:center;gap:0}.side-foot div{width:0;opacity:0;overflow:hidden}
+.side-out{justify-content:center;gap:0;padding:10px 0}.side-out span{width:0;opacity:0;overflow:hidden;white-space:nowrap}
+.side:hover .brandrow,.side:focus-within .brandrow{padding:22px 26px;justify-content:flex-start;gap:12px}
+.side:hover .brandrow>span:not(.logo),.side:focus-within .brandrow>span:not(.logo){width:auto;opacity:1}
+.side:hover .nav a,.side:focus-within .nav a{justify-content:flex-start;gap:12px;padding:10px 14px}
+.side:hover .nav a span,.side:focus-within .nav a span,.side:hover .side-out span,.side:focus-within .side-out span{width:auto;opacity:1;transition:opacity .2s .08s}
+.side:hover .nav-sec,.side:focus-within .nav-sec{height:auto;margin:18px 12px 6px;font-size:11px;background:none}
+.side:hover .side-foot,.side:focus-within .side-foot{padding:12px;justify-content:flex-start;gap:11px}
+.side:hover .side-foot div,.side:focus-within .side-foot div{width:auto;opacity:1;transition:opacity .2s .08s}
+.side:hover .side-out,.side:focus-within .side-out{justify-content:flex-start;gap:10px;padding:10px 14px}
+}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.ecg polyline{stroke-dashoffset:0}}
 </style>
 </head>
@@ -673,8 +694,7 @@ function pDashboard(){
  const ac=days.map(d=>A.filter(x=>ad(x)===dkey(d)&&x.status!=='cancelled').length),rc=days.map(d=>S.pays.filter(x=>dkey(new Date(x.created_at))===dkey(d)).reduce((n,x)=>n+Number(x.amount),0));
  const up=A.filter(x=>['booked','confirmed'].includes(x.status)&&ad(x)>=today).sort((x,y)=>(ad(x)+x.appt_time).localeCompare(ad(y)+y.appt_time)).slice(0,5);
  const h=new Date().getHours(),g=h<12?'greet_m':h<17?'greet_a':'greet_e';
- return `<div class="dhead"><div class="dh-l"><h1>${t('dash_over')}</h1><p class="wl">${t('welcome_b')}, <span class="gname">${esc((S.name||'').split(' ')[0])}</span>.</p><p>${t('greet_sub')}</p>
-  <div class="actions" style="margin-top:16px"><button class="btn ghost" data-act="newQueue">${ic('clock',17)}${t('add_queue')}</button><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button></div></div>
+ return `<div class="dhead"><div class="dh-l"><h1>${t('dash_over')}</h1><p class="wl">${t('welcome_b')}, <span class="gname">${esc((S.name||'').split(' ')[0])}</span>.</p><p>${t('greet_sub')}</p></div>
   <div class="dh-r"><span class="dchip">${ic('cal',16)}${new Date().toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span><span class="dchip"><i class="dotg${navigator.onLine?'':' off'}"></i>${t(navigator.onLine?'online':'offline')}</span>${ILL}</div></div>
  <div class="kpis">${kpi('users',S.pts.length,t('total_patients'),'#3b82f6','#/patients')}${kpi('steth',D.length,t('total_doctors'),'#14b8a6','#/doctors')}${kpi('cal',todayN,t('todays_appts'),'#8b5cf6','#/appointments')}${kpi('clock',pend,t('pend_appr'),'#f59e0b','#/appointments')}${kpi('hourglass',w,t('waiting'),'#10b981','#/queue')}${kpi('card',money(rev),t('rev_total'),'#ec4899','#/payments')}</div>
  <div class="cols"><div class="panel"><div class="panel-h"><span class="pic">${ic('cal',20)}</span><h3>${t('appt_chart')}</h3><span class="grow"></span><span class="chip">${t('last7')}</span></div>${barChart(ac,lab,String,1)}</div>
