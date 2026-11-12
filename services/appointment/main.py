@@ -3,10 +3,10 @@ Own database (hms-appointmentdb) and own S3 bucket (APPOINTMENT_BUCKET).
 Booking status is stored in two places:
   1. the `status` column of the `appointments` table (booked / cancelled / completed)
   2. a JSON record in S3: appointments/<id>.json (bucket is versioned, so every status change is kept)."""
-import os, re
+import json, os, re, urllib.error, urllib.request
 from datetime import date as Date, datetime, timedelta, timezone
 import psycopg2.errors
-from fastapi import Depends, HTTPException
+from fastapi import Depends, Header, HTTPException
 from pydantic import BaseModel
 from common import *
 
@@ -29,6 +29,7 @@ ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_method TEXT;
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_status TEXT;
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ;
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS sms_sent BOOLEAN;
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS fee INT;   -- fee at the time of booking (a later fee change must not alter old bookings)
 CREATE UNIQUE INDEX IF NOT EXISTS one_booking_per_slot ON appointments(doctor_id, appt_date, appt_time) WHERE status<>'cancelled';
 """
 DOCTORS = [("Dr. Anil Kumar", "General Physician", "MBBS, MD", 500),
@@ -59,9 +60,45 @@ def receipt_text(a):
 @app.on_event("startup")
 def start():
     init_db(DDL, ["doctors", "appointments"])
+    write("UPDATE appointments a SET fee=d.fee FROM doctors d WHERE d.id=a.doctor_id AND a.fee IS NULL")
     for n, sp, q, fee in DOCTORS:
         write("INSERT INTO doctors(name,speciality,qualification,fee) VALUES(%s,%s,%s,%s) "
               "ON CONFLICT(name) DO UPDATE SET fee=EXCLUDED.fee", (n, sp, q, fee))
+
+
+DOCTOR_URL = os.environ.get("DOCTOR_SERVICE_URL", "http://doctor-service.hms.svc.cluster.local").rstrip("/")
+
+
+def sync_doctor(did, token):
+    """Doctors are managed in the doctor service. Ask it for doctor `did` and copy the details into this service's
+    own doctors table (same id), so a doctor added later can be booked and a changed fee is picked up.
+    If the doctor service cannot be reached, a doctor we already have is still bookable."""
+    d = None
+    try:
+        req = urllib.request.Request(f"{DOCTOR_URL}/doctors/{did}", headers={"Authorization": token})
+        with urllib.request.urlopen(req, timeout=5) as r:
+            d = json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise HTTPException(404, "Doctor not found")
+    except Exception as e:
+        print("doctor service call failed", e)
+    have = write("SELECT 1 FROM doctors WHERE id=%s", (did,), fetch=True)
+    if d is None:
+        if have:
+            return
+        raise HTTPException(503, "Doctor details are not available right now. Please try again in a moment.")
+    if not d.get("active", True):
+        raise HTTPException(409, "This doctor is not available for booking")
+    try:
+        write("INSERT INTO doctors(id,name,speciality,qualification,fee) VALUES(%s,%s,%s,%s,%s) "
+              "ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name, speciality=EXCLUDED.speciality, "
+              "qualification=EXCLUDED.qualification, fee=EXCLUDED.fee",
+              (d["id"], d["name"], d["speciality"], d.get("qualification") or "", d["fee"]))
+        write("SELECT setval(pg_get_serial_sequence('doctors','id'), (SELECT MAX(id) FROM doctors))")
+    except psycopg2.errors.UniqueViolation:
+        if not have:
+            raise HTTPException(409, "Could not add this doctor because the name is already used by another doctor")
 
 
 def clean_mobile(m):
@@ -113,8 +150,8 @@ def save_record(a):
 
 
 def get_full(aid):
-    rows = write("SELECT a.*, d.name AS doctor, d.speciality, d.fee FROM appointments a JOIN doctors d ON d.id=a.doctor_id "
-                 "WHERE a.id=%s", (aid,), fetch=True)
+    rows = write("SELECT a.*, d.name AS doctor, d.speciality, COALESCE(a.fee, d.fee) AS fee FROM appointments a "
+                 "JOIN doctors d ON d.id=a.doctor_id WHERE a.id=%s", (aid,), fetch=True)
     if not rows:
         raise HTTPException(404, "Appointment not found")
     return rows[0]
@@ -146,7 +183,7 @@ def slots(did: int, date: Date, _=Depends(current_user)):
 
 
 @app.post("/appointments")
-def book(b: Booking, u=Depends(current_user)):
+def book(b: Booking, u=Depends(current_user), authorization: str = Header("")):
     if b.time not in SLOTS:
         raise HTTPException(400, "Choose a valid time slot")
     now = now_ist()
@@ -154,8 +191,8 @@ def book(b: Booking, u=Depends(current_user)):
         raise HTTPException(400, "Choose a date and time in the future")
     if b.date > now.date() + timedelta(days=60):
         raise HTTPException(400, "You can book up to 60 days ahead")
-    if not write("SELECT 1 FROM doctors WHERE id=%s", (b.doctor_id,), fetch=True):
-        raise HTTPException(404, "Doctor not found")
+    sync_doctor(b.doctor_id, authorization)
+    doc_fee = write("SELECT fee FROM doctors WHERE id=%s", (b.doctor_id,), fetch=True)[0]["fee"]
     name = (b.patient_name or "").strip()[:100] or u["sub"]
     mobile = clean_mobile(b.patient_mobile)
     email = (b.patient_email or "").strip().lower()[:150]
@@ -165,8 +202,8 @@ def book(b: Booking, u=Depends(current_user)):
     pstatus = "Pending" if method == "later" else "Paid"
     try:
         row = write("INSERT INTO appointments(doctor_id,appt_date,appt_time,patient_name,patient_mobile,patient_email,reason,booked_by,"
-                    "payment_method,payment_status) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
-                    (b.doctor_id, b.date, b.time, name, mobile, email, b.reason.strip()[:300], u["sub"], method, pstatus), fetch=True)[0]
+                    "payment_method,payment_status,fee) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
+                    (b.doctor_id, b.date, b.time, name, mobile, email, b.reason.strip()[:300], u["sub"], method, pstatus, doc_fee), fetch=True)[0]
     except psycopg2.errors.UniqueViolation:
         raise HTTPException(409, "That time is already booked. Please pick another slot.")
     a = get_full(row["id"])
@@ -181,7 +218,7 @@ def book(b: Booking, u=Depends(current_user)):
 @app.get("/appointments")
 def my_appointments(u=Depends(current_user)):
     q = ("SELECT a.id,a.appt_date,a.appt_time,a.patient_name,a.patient_mobile,a.patient_email,a.alt_email,a.payment_method,a.payment_status,a.reason,a.status,a.booked_by,"
-         "a.confirmed_at,a.sms_sent,d.name AS doctor,d.speciality,d.fee "
+         "a.confirmed_at,a.sms_sent,d.name AS doctor,d.speciality,COALESCE(a.fee,d.fee) AS fee "
          "FROM appointments a JOIN doctors d ON d.id=a.doctor_id ")
     if u["role"] == "admin":
         return write(q + "ORDER BY a.appt_date DESC, a.appt_time DESC", fetch=True)
