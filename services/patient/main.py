@@ -90,21 +90,23 @@ def add_patient(p: Patient, u=Depends(current_user)):
 @app.post("/patients/quick")
 def quick_register(q: QuickPatient, u=Depends(current_user)):
     """Register a new patient from the appointment page so they appear in the patient list (and therefore in the
-    Laboratory and Pharmacy patient pickers). If the same mobile number is already registered, that patient is
-    returned instead of creating a duplicate."""
+    Laboratory and Pharmacy patient pickers). If a patient with the same name AND mobile number already exists, that patient is
+    returned instead of creating a duplicate (different people may share one phone)."""
     digits = "".join(ch for ch in q.mobile if ch.isdigit())[-10:]
     if len(digits) < 10:
         raise HTTPException(400, "Enter a valid mobile number")
     first = q.first_name.strip()[:100]
     if not first:
         raise HTTPException(400, "Patient name is required")
+    last = q.last_name.strip()[:100]
     old = write("SELECT id FROM patients WHERE right(regexp_replace(coalesce(mobile,''), '\\D', '', 'g'), 10)=%s "
-                "ORDER BY id LIMIT 1", (digits,), fetch=True)
+                "AND lower(trim(first_name))=lower(%s) AND lower(trim(last_name))=lower(%s) ORDER BY id LIMIT 1",
+                (digits, first, last), fetch=True)
     if old:
         return {"id": old[0]["id"], "created": False}
     row = write("INSERT INTO patients(first_name,last_name,mobile,email,registered_via,created_by) "
                 "VALUES(%s,%s,%s,%s,'appointment',%s) RETURNING id",
-                (first, q.last_name.strip()[:100], q.mobile.strip(), (q.email or "").strip().lower() or None, u["sub"]),
+                (first, last, q.mobile.strip(), (q.email or "").strip().lower() or None, u["sub"]),
                 fetch=True)[0]
     return {"id": row["id"], "created": True}
 

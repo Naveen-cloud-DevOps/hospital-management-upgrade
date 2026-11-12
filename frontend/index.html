@@ -738,7 +738,7 @@ function ptRows(list){
   <td>${(x.diseases||[]).map(d=>`<span class="pill dx">${esc(d)}</span>`).join('')||'-'}</td><td>${fmtD(x.created_at)}</td></tr>`).join('')}
 const filtered=()=>{const q=S.q.trim().toLowerCase();return q?S.pts.filter(x=>(pname(x)+' '+(x.mobile||'')+' #'+x.id).toLowerCase().includes(q)):S.pts};
 function pPatients(){S.q='';
- return `<div class="page-h"><div><h1>${t('patients')}</h1></div><span class="grow"></span><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button></div>
+ return `<div class="page-h"><div><h1>${t('patients')}</h1></div><span class="grow"></span><button class="btn ghost" data-act="syncAppts" title="Add anyone who booked an appointment but is missing here">Add from appointments</button> <button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button></div>
  <div class="panel"><div class="panel-h"><div class="search">${ic('search',17)}<input id="psearch" type="search" placeholder="${t('search')}" aria-label="${t('search')}"></div></div>
  <div class="scroll"><table class="tbl"><thead><tr><th>${t('patient')}</th><th>${t('age')} / ${t('gender')}</th><th>${t('mobile')}</th><th>${t('diseases')}</th><th>${t('registered')}</th></tr></thead><tbody id="ptbody">${ptRows(S.pts)}</tbody></table></div></div>`}
 
@@ -1140,12 +1140,13 @@ const FORMS={
  async book(f,btn){
   const d=Object.fromEntries(new FormData(f));
   if(!d.doctor_id||!d.date||!d.time)return ferr(t('pick_all'));
+  if(d.patient_kind==='existing'&&!d.existing_pid)return ferr(t('pick_patient')+' (or change Patient type to New patient)');
   if(!/^(\+?91|0)?[6-9]\d{9}$/.test(d.patient_mobile.replace(/[\s-]/g,'')))return ferr(t('bad_mobile'));
   const r=await busy(btn,'…',()=>api('/appointments',{json:{doctor_id:+d.doctor_id,date:d.date,time:d.time,patient_name:d.patient_name.trim(),patient_mobile:d.patient_mobile.trim(),patient_email:d.patient_email.trim(),payment_method:d.payment_method,reason:d.reason.trim()}}));
   let extra='';
   if(d.patient_kind!=='existing'){
    try{const nm=d.patient_name.trim().split(/\s+/),q=await api('/patients/quick',{json:{first_name:nm[0],last_name:nm.slice(1).join(' '),mobile:d.patient_mobile.trim(),email:d.patient_email.trim()}});
-    extra=q.created?' · New patient #'+q.id+' registered':' · Already registered as patient #'+q.id;
+    extra=q.created?' · New patient #'+q.id+' added to the patient list':' · Same name and mobile already in the patient list as #'+q.id;
     S.pts=await api('/patients')}catch(e){extra=' · (Booked, but the patient could not be added to the patient list: '+e.message+')'}}
   toast(t('booked_ok',{d:r.doctor,dt:r.date,tm:r.time,e:r.emailed_to})+extra);
   f.reason.value='';if(d.patient_kind!=='existing'){f.patient_name.value=f.patient_mobile.value=f.patient_email.value=''}
@@ -1161,6 +1162,18 @@ Object.assign(ACT,{confirmPending:async b=>{
  const m=b.parentElement.querySelector('.paysel').value;b.disabled=true;
  try{await api('/appointments/'+b.dataset.id+'/pay',{json:{method:m}});toast('Payment confirmed. Receipt emailed to the patient.');
   S.appts=await api('/appointments');refreshPending()}
+ catch(e){toast(e.message,'err');b.disabled=false}}});
+const mob10=m=>String(m||'').replace(/\D/g,'').slice(-10);
+const nkey=(n,m)=>mob10(m)+'|'+String(n||'').trim().replace(/\s+/g,' ').toLowerCase();
+Object.assign(ACT,{syncAppts:async b=>{
+ b.disabled=true;
+ try{const [A,P]=await Promise.all([api('/appointments'),api('/patients')]);
+  const have=new Set(P.map(p=>nkey(pname(p),p.mobile))),seen=new Set(),todo=[];
+  A.forEach(a=>{if(a.status==='cancelled'||!a.patient_mobile||!a.patient_name)return;const k=nkey(a.patient_name,a.patient_mobile);if(have.has(k)||seen.has(k))return;seen.add(k);todo.push(a)});
+  for(const a of todo){const nm=a.patient_name.trim().split(/\s+/);
+   await api('/patients/quick',{json:{first_name:nm[0],last_name:nm.slice(1).join(' '),mobile:a.patient_mobile,email:a.patient_email||a.alt_email||null}})}
+  toast(todo.length?todo.length+' patient(s) added from appointments':'Patient list is already up to date');
+  if(todo.length)render();else b.disabled=false}
  catch(e){toast(e.message,'err');b.disabled=false}}});
 const byId=(a,id)=>(a||[]).find(x=>String(x.id)===String(id));
 const val=v=>`value="${esc(v)}"`;
