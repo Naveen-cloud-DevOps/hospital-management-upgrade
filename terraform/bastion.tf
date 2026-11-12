@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------------
 # bastion.tf - public "client" server in the SAME VPC that can run kubectl/helm
-# against the EKS cluster. Nothing in main.tf / rds.tf / dns.tf is edited.
+# against the EKS cluster. Nothing in main.tf / rds.tf / dns.tf is edited. 
 #
 # Access:  AWS Systems Manager Session Manager (no inbound port needed)
 #          + optional SSH, only from the CIDRs you list in bastion_allowed_cidrs.
