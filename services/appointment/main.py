@@ -288,3 +288,9 @@ def complete(aid: int, _=Depends(admin_only)):
         raise HTTPException(409, "Only a booked appointment can be completed")
     change_status(a, "completed", "APPOINTMENT COMPLETED")
     return {"ok": True, "status": "completed"}
+
+
+@app.get("/appointments/slots/{did}")
+def booking_slots(did: int, date: Date, u=Depends(current_user)):
+    """The booking page asks for free times here (/appointments goes to this service); same answer as /doctors/{did}/slots."""
+    return slots(did, date, u)
