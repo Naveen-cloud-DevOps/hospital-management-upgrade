@@ -31,6 +31,7 @@ automatically from GitHub, and it gets a clean web address (Route53 + CloudFront
 | Network | VPC, 2 public + 2 private subnets, NAT gateway |
 | Containers | Docker, Amazon ECR |
 | Orchestration | Amazon EKS (Kubernetes), managed node group |
+| Kubernetes client | Public bastion EC2 server in the same VPC (`terraform/bastion.tf`) with `kubectl` and `helm` |
 | Database | Amazon RDS PostgreSQL 16, one primary + one read replica per service (auth, patient, billing, appointment, doctor, laboratory, pharmacy) |
 | Storage | 6 encrypted, versioned S3 buckets: `user-data`, `payment-receipts`, `patient-photos`, `appointments`, `lab-reports`, `pharmacy-bills` |
 | Email | Amazon SNS (email subscriptions) |
@@ -91,6 +92,9 @@ flowchart TB
 
     auth & pat & bil & app & lab & pha --> mail[Gmail SMTP emails]
     app --> sns[AWS SNS SMS]
+
+    admin([Admin / DevOps]) -->|SSH or SSM| bast[Bastion EC2<br/>public subnet]
+    bast -->|kubectl, port 443| eks
 ```
 
 | Service | URL paths | Database | S3 bucket | Sends email |
@@ -111,7 +115,7 @@ Shared by all services (`services/common.py`): JWT login check, database helpers
  push to main
      │
      ▼
- terraform-infra ──► VPC · EKS · RDS · S3 · SNS · IAM        (terraform.yml)
+ terraform-infra ──► VPC · EKS · RDS · S3 · SNS · IAM · bastion   (terraform.yml)
      │ only if successful
      ▼
  cicd ──► build images ─► Trivy scan ─► push to ECR           (docker-build.yml)
@@ -153,7 +157,7 @@ Shared by all services (`services/common.py`): JWT login check, database helpers
 │   ├── monitoring.yml         # Prometheus + Grafana + Loki (runs after cicd), prints the Grafana login
 │   ├── monitoring-tools.yml   # manual: reset Grafana password, CPU alert test
 │   └── debug-cluster.yml      # manual: cluster checks
-├── terraform/                 # main.tf, rds.tf, dns.tf, variables.tf, outputs.tf, terraform.tfvars
+├── terraform/                 # main.tf, rds.tf, dns.tf, bastion.tf, variables.tf, outputs.tf, terraform.tfvars
 ├── services/
 │   ├── Dockerfile             # one Dockerfile for all 7 services (build arg SERVICE)
 │   ├── requirements.txt       # Python dependencies (keep these patched, Trivy fails the build otherwise)
@@ -182,6 +186,7 @@ You need:
 - A **Route53 public hosted zone** for your domain (for example `855455101846.realhandsonlabs.net`).
 - A **GitHub repository** with this code on the `main` branch.
 - If the repository is **private**, ArgoCD needs credentials to read it. A public repository works without extra setup.
+- An existing **EC2 key pair** in `us-east-1` (this project uses `ritik`) if you want SSH access to the bastion server.
 
 ### 1. Add GitHub secrets
 
@@ -201,11 +206,9 @@ These are the secrets this project uses (all 15 are already added in this repo):
 | `DB_USERNAME` | terraform-infra, cicd | Database master username, for example `hmsadmin` (not `admin`, it is reserved) |
 | `GH_PAT` | cicd | GitHub personal access token, used instead of the built-in `GITHUB_TOKEN` to push manifests |
 | `GH_USERNAME` | cicd | Your GitHub username |
-| `GRAFANA_ADMIN_PASSWORD` | not used by the current `monitoring.yml` | Old Grafana password. The login is now written in `monitoring.yml` (`GRAFANA_USER`, `GRAFANA_PASSWORD`). Safe to delete |
-| `GRAFANA_ADMIN_USER` | not used by the current `monitoring.yml` | Old Grafana username. Safe to delete |
 | `JWT_SECRET` | cicd | A long random string used to sign login tokens |
 | `SMTP_PASS` | cicd | Mail password the app uses to send emails |
-| `TFVARS` | terraform-infra, edge-cloudfront | Full contents of `terraform.tfvars`, including `hosted_zone_name` (see step 2). It replaces the file in the repo on every run |
+| `TFVARS` | terraform-infra, edge-cloudfront | Full contents of `terraform.tfvars`, including `hosted_zone_name` and the bastion lines (see step 2). It replaces the file in the repo on every run |
 
 Optional secrets you have not set: `PROMETHEUS_ALLOWED_CIDR` (for example `203.0.113.10/32`, limits who can open Prometheus, which has no login) and `HOSTED_ZONE_NAME` (only needed if `hosted_zone_name` is not in `TFVARS`).
 
@@ -231,12 +234,18 @@ hosted_zone_name = "*****.realhandsonlabs.net"   # your Route53 public hosted zo
 app_subdomain    = "ritikcarepulse"                                # gives https://ritikcarepulse.******.realhandsonlabs.net
 
 # one database (+ read replica) per service, and the S3 buckets
-db_services  = ["auth", "patient", "billing", "appointment", "doctor", "laboratory", "pharmacy"]
-data_buckets = ["user-data", "payment-receipts", "patient-photos", "appointments", "lab-reports", "pharmacy-bills"]
+db_services  = ****
+data_buckets = ****
+
+# public client server (bastion) used to run kubectl against EKS (terraform/bastion.tf)
+bastion_key_name      = "ritik"                  # existing EC2 key pair in us-east-1
+bastion_allowed_cidrs = ["YOUR.PUBLIC.IP/32"]    # your public IP only, never 0.0.0.0/0
 ```
 
 Keep `hosted_zone_name` in the file or secret permanently. If it is removed later, the next run would remove CloudFront and the Route53 record.
 If you change `region`, `project` or `cluster_name`, also update the workflows and the files in `k8s/`.
+
+The two `bastion_*` lines must also be in the `TFVARS` secret. Otherwise the pipeline applies the defaults (no SSH key, SSH closed, SSM only).
 
 ## Deploy
 
@@ -297,9 +306,43 @@ Installed by `monitoring.yml` after every successful deploy. Full guide: [monito
 | `POST /pharmacy/medicines`, `POST /pharmacy/medicines/{id}/restock` | admin | Add a medicine, add stock |
 | `POST/GET /pharmacy/sales`, `GET /pharmacy/sales/{id}/bill` | signed in | Sell medicines, list sales, get the bill link |
 
+## Bastion server (kubectl client inside the VPC)
+
+`terraform/bastion.tf` creates a small EC2 server (Amazon Linux 2023, `t3.micro`) in a **public subnet** of the same VPC. It has an Elastic IP, and `kubectl`, `helm`, `git` and `jq` are installed on first boot. Terraform also:
+
+- opens port 443 of the EKS cluster security group to the bastion, so `kubectl` can reach the API;
+- creates an IAM role and an EKS access entry (`AmazonEKSClusterAdminPolicy`), so `kubectl` is allowed in;
+- opens SSH (port 22) only to the IPs in `bastion_allowed_cidrs`.
+
+Outputs after the pipeline runs: `bastion_public_ip`, `bastion_instance_id`, `bastion_ssm_command`.
+
+Connect with SSH (the key pair `ritik` must exist in `us-east-1`):
+
+```bash
+chmod 400 ritik.pem
+ssh -i ritik.pem ec2-user@<bastion_public_ip>
+kubectl get nodes
+kubectl config set-context --current --namespace=hms   # so you do not need -n hms every time
+```
+
+Or with AWS Systems Manager (needs the Session Manager plugin and `ssm:StartSession` permission):
+
+```bash
+aws ssm start-session --target <bastion_instance_id> --region us-east-1
+sudo su - ec2-user
+```
+
+On Windows, if SSH complains about the key file permissions:
+
+```powershell
+icacls C:\Users\ritik\ritik.pem /inheritance:r /grant:r "$($env:USERNAME):R"
+```
+
+To remove the server, set `bastion_enabled = false` in `terraform.tfvars` and push.
+
 ## Useful commands
 
-Connect to the cluster (use the same AWS account as the pipeline):
+Connect to the cluster (use the same AWS account as the pipeline, or run these on the bastion server):
 
 ```bash
 aws eks update-kubeconfig --name hms-eks --region us-east-1
@@ -359,9 +402,76 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.pas
 4. Re-run **terraform-infra**. If the database already exists, the new password is applied on the next successful run.
 5. Run **cicd** after it, so the pods get the new credentials (see problem 3).
 
+### 5. Booking page: time slots show "Not Found" after choosing a doctor and date
+
+**Cause:** the page asks `GET /appointments/slots/{doctor_id}?date=...`, but the running `appointment-service` pod was on an **older image** that does not have this route. ECR had a newer image (tag `efae1bf...`, also `latest`), while the pod still ran `bff161d...`, because the image tag in the `k8s/` manifest was not updated.
+
+**How to confirm:**
+1. Check the image the pod runs:
+   ```bash
+   kubectl -n hms get deploy appointment-service -o jsonpath='{.spec.template.spec.containers[0].image}'
+   ```
+2. Check that the route exists inside the pod:
+   ```bash
+   kubectl -n hms exec deploy/appointment-service -- python -c "import urllib.request;print(urllib.request.urlopen('http://localhost:8000/openapi.json').read().decode())" | grep -o '"/appointments/slots[^"]*"'
+   ```
+   Nothing printed means the pod has the old code.
+
+**Fix:**
+1. Quick test: set the new image by hand.
+   ```bash
+   kubectl -n hms set image deployment/appointment-service \
+     app=497046674646.dkr.ecr.us-east-1.amazonaws.com/hospital-management-appointment:<new-tag>
+   kubectl -n hms rollout status deployment/appointment-service
+   ```
+2. ArgoCD can undo a manual change (auto-sync). For a permanent fix, put the new tag in the `k8s/` manifest, commit and push to `main`, or re-run the failed **cicd** workflow so it writes the image names into `k8s/` again.
+3. Reload the booking page and pick the doctor and date again.
+
+### 6. kubectl: `Error from server (NotFound): pods "..." not found`
+
+**Cause:** the app runs in the `hms` namespace, but `kubectl` looks in `default` when no namespace is given.
+
+**Fix:** add `-n hms` (for example `kubectl describe pod <pod> -n hms`), or set it once:
+
+```bash
+kubectl config set-context --current --namespace=hms
+```
+
+Typing mistakes give a different error, `unknown command "describw" for "kubectl"` or `the server doesn't have a resource type "epod"`. Check the spelling of `describe` and `pod`.
+
+### 7. `ws: command not found` / `unknown command` when starting an SSM session
+
+**Cause:** the command was typed without the first letter (`ws` instead of `aws`), or the region was left as `***`.
+
+**Fix:** use the full command with a real region:
+
+```bash
+aws ssm start-session --target i-xxxxxxxxxxxxxxxxx --region us-east-1
+```
+
+### 8. SSM: `An error occurred (403) when calling the StartSession operation ... Forbidden`
+
+**Cause:** AWS refused the request before it reached the server, so this is a credentials or permissions problem, not a Terraform or EKS problem. Common reasons: expired or wrong AWS credentials, a Windows clock that is out of sync, no `ssm:StartSession` permission, or a lab account policy (SCP) that blocks Session Manager.
+
+**Fix:**
+1. Check who you are: `aws sts get-caller-identity` and `aws configure list` (region must be `us-east-1`).
+2. Turn on automatic time in Windows (Settings, Time & Language).
+3. Try EC2 console, the instance, Connect, Session Manager. If that also fails, the account blocks SSM.
+4. Use SSH instead (see "Bastion server"): `ssh -i ritik.pem ec2-user@<bastion_public_ip>`. Make sure `bastion_allowed_cidrs` has your current public IP.
+
+### 9. Bastion: `kubectl` problems
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `Unauthorized` | the EKS access entry for the bastion role does not exist yet | check that `aws_eks_access_policy_association.bastion` applied |
+| timeout | port 443 from the bastion to the EKS cluster security group is missing | check `aws_security_group_rule.eks_api_from_bastion` |
+| `kubectl: command not found` or no kubeconfig | first-boot script still running or failed | wait 1 to 2 minutes, read `/var/log/cloud-init-output.log`, then run `aws eks update-kubeconfig --name hms-eks --region us-east-1` |
+| `InvalidKeyPair.NotFound` during apply | the key pair `ritik` is not in `us-east-1` | create it in `us-east-1` or change `bastion_key_name` |
+| SSH `Connection timed out` | your public IP is not in `bastion_allowed_cidrs` (your IP changed) | update the value in `TFVARS` and re-apply |
+
 ## Cost and clean-up
 
-This setup is not free: the EKS control plane, worker nodes, a NAT gateway, fourteen RDS instances (seven primaries and seven read replicas), CloudFront and the load balancers
+This setup is not free: the EKS control plane, worker nodes, a NAT gateway, fourteen RDS instances (seven primaries and seven read replicas), the bastion server and its Elastic IP, CloudFront and the load balancers
 (app, ArgoCD, Grafana, Prometheus) all cost money while they run. Destroy everything when you are done:
 
 1. Delete the load balancers first, or the VPC cannot be removed:
@@ -371,7 +481,7 @@ This setup is not free: the EKS control plane, worker nodes, a NAT gateway, four
    helm -n monitoring uninstall kube-prometheus-stack loki
    ```
 2. In `terraform.tfvars` set `db_deletion_protection = false` and apply it once (push to `main`).
-3. Run `terraform destroy` from the `terraform/` folder, with the same backend settings as the workflow. This also removes CloudFront, the certificate and the Route53 records created by `dns.tf`.
+3. Run `terraform destroy` from the `terraform/` folder, with the same backend settings as the workflow. This also removes the bastion server, CloudFront, the certificate and the Route53 records created by `dns.tf`.
 4. Delete by hand what Terraform does not manage: the seven ECR repositories (`hospital-management-*`) and the state bucket `hms-tfstate-<account-id>`.
 
 ## Security notes
@@ -382,3 +492,4 @@ This setup is not free: the EKS control plane, worker nodes, a NAT gateway, four
 - Prometheus has no login. Set the `PROMETHEUS_ALLOWED_CIDR` secret to limit who can open it.
 - There is no public sign-up: only an admin can create accounts, so nobody with just the URL can get staff access. Use strong passwords for the admin account.
 - The Kubernetes API is public (`cluster_endpoint_public_access = true`) so GitHub runners can deploy. Restrict it for production.
+- The bastion server has cluster-admin rights on EKS. Keep `bastion_allowed_cidrs` limited to your own IP (never `0.0.0.0/0`), keep the `ritik.pem` private key safe, and set `bastion_enabled = false` when you do not need it.
