@@ -9,7 +9,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: 381491825192.dkr.ecr.us-east-1.amazonaws.com/hospital-management-frontend:c1288aef5334e4fe969dd80267a7ee4858c7492d
+          image: 497046674646.dkr.ecr.us-east-1.amazonaws.com/hospital-management-frontend:bff161d2e6fe2516a6806dabcf306ed572d62d35
           ports: [{containerPort: 8080}]
           resources: {requests: {cpu: 20m, memory: 32Mi}, limits: {memory: 64Mi}}
 ---
