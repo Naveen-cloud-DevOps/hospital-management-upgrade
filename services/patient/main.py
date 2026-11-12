@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS patients(
  id SERIAL PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL, address TEXT, city TEXT, state TEXT,
  age INT, mobile TEXT, email TEXT, gender TEXT, blood_group TEXT, occupation TEXT, heard_about_us TEXT,
  referred_by TEXT, diseases TEXT[] DEFAULT '{}', created_by TEXT, created_at TIMESTAMPTZ DEFAULT now());
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS registered_via TEXT;
 CREATE TABLE IF NOT EXISTS weekly_records(
  id SERIAL PRIMARY KEY, patient_id INT REFERENCES patients(id), week INT CHECK (week BETWEEN 1 AND 5),
  symptoms TEXT, photo_key TEXT, created_by TEXT, created_at TIMESTAMPTZ DEFAULT now(), UNIQUE(patient_id, week));
@@ -42,6 +43,14 @@ class Patient(BaseModel):
     heard_about_us: str = ""
     referred_by: str = ""
     diseases: List[str] = []   # Jaundice, Hepatitis B, Fatty liver, Liver cirrhosis, Others
+
+
+class QuickPatient(BaseModel):
+    """Minimal registration used when a NEW patient books an appointment."""
+    first_name: str
+    last_name: str = ""
+    mobile: str
+    email: Optional[str] = None
 
 
 def with_photo(rows):
@@ -78,9 +87,32 @@ def add_patient(p: Patient, u=Depends(current_user)):
     return {**row, "emailed_to": p.email}
 
 
+@app.post("/patients/quick")
+def quick_register(q: QuickPatient, u=Depends(current_user)):
+    """Register a new patient from the appointment page so they appear in the patient list (and therefore in the
+    Laboratory and Pharmacy patient pickers). If the same mobile number is already registered, that patient is
+    returned instead of creating a duplicate."""
+    digits = "".join(ch for ch in q.mobile if ch.isdigit())[-10:]
+    if len(digits) < 10:
+        raise HTTPException(400, "Enter a valid mobile number")
+    first = q.first_name.strip()[:100]
+    if not first:
+        raise HTTPException(400, "Patient name is required")
+    old = write("SELECT id FROM patients WHERE right(regexp_replace(coalesce(mobile,''), '\\D', '', 'g'), 10)=%s "
+                "ORDER BY id LIMIT 1", (digits,), fetch=True)
+    if old:
+        return {"id": old[0]["id"], "created": False}
+    row = write("INSERT INTO patients(first_name,last_name,mobile,email,registered_via,created_by) "
+                "VALUES(%s,%s,%s,%s,'appointment',%s) RETURNING id",
+                (first, q.last_name.strip()[:100], q.mobile.strip(), (q.email or "").strip().lower() or None, u["sub"]),
+                fetch=True)[0]
+    return {"id": row["id"], "created": True}
+
+
 @app.get("/patients")
 def list_patients(_=Depends(current_user)):
-    return read("SELECT * FROM patients ORDER BY id DESC")
+    # primary (not the replica) so a patient registered a moment ago shows up immediately in every picker
+    return write("SELECT * FROM patients ORDER BY id DESC", fetch=True)
 
 
 @app.get("/patients/weekly-report")

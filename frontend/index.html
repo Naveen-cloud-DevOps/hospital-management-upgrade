@@ -678,7 +678,7 @@ async function render(){
   else if(page==='patients'){S.pts=await api('/patients');html=pPatients()}
   else if(page==='queue'){[S.pts,S.queue]=await Promise.all([api('/patients'),api('/queue')]);html=pQueue()}
   else if(page==='payments'){[S.pts,S.pays]=await Promise.all([api('/patients'),api('/payments')]);html=pPayments()}
-  else if(page==='appointments'){[S.docs,S.appts]=await Promise.all([api('/doctors'),api('/appointments')]);html=pAppointments()}
+  else if(page==='appointments'){[S.docs,S.appts,S.pts]=await Promise.all([api('/doctors'),api('/appointments'),api('/patients').catch(()=>[])]);html=pAppointments()}
   else if(page==='laboratory'){[S.pts,S.labTests,S.labOrders]=await Promise.all([api('/patients'),api('/lab/tests'),api('/lab/orders')]);html=pLab()}
   else if(page==='pharmacy'){[S.pts,S.meds,S.phSales]=await Promise.all([api('/patients'),api('/pharmacy/medicines'),api('/pharmacy/sales')]);html=pPharmacy()}
   else if(page==='reports'){[S.pts,S.wrep]=await Promise.all([api('/patients'),api('/patients/weekly-report')]);html=pReports()}
@@ -731,7 +731,7 @@ function pDashboard(){
 function ptRows(list){
  if(!list.length)return `<tr><td colspan="5"><div class="empty"><b>${S.pts.length?t('no_match'):t('empty_pts')}</b>${S.pts.length?'':t('empty_pts_s')}${S.pts.length?'':`<br><button class="btn" data-act="newPatient">${ic('plus',17)}${t('new_patient')}</button>`}</div></td></tr>`;
  return list.map(x=>`<tr class="click" data-act="open" data-id="${x.id}">
-  <td><div class="who"><span class="av">${esc(ini(x))}</span><div><b>${esc(pname(x))}</b><small>#${x.id}</small></div></div></td>
+  <td><div class="who"><span class="av">${esc(ini(x))}</span><div><b>${esc(pname(x))}</b>${x.registered_via==='appointment'?' <span class="pill dx">Registered via appointment</span>':''}<small>#${x.id}</small></div></div></td>
   <td>${esc(x.age??'')}${x.gender?', '+esc(x.gender):''}</td><td>${esc(x.mobile||'')}</td>
   <td>${(x.diseases||[]).map(d=>`<span class="pill dx">${esc(d)}</span>`).join('')||'-'}</td><td>${fmtD(x.created_at)}</td></tr>`).join('')}
 const filtered=()=>{const q=S.q.trim().toLowerCase();return q?S.pts.filter(x=>(pname(x)+' '+(x.mobile||'')+' #'+x.id).toLowerCase().includes(q)):S.pts};
@@ -842,7 +842,9 @@ function pAppointments(){
  <div class="panel" style="padding:18px"><form data-form="book"><div class="fg">
   <label class="fld full"><span>${t('doctor')}</span><select name="doctor_id" required><option value="">${t('pick_doctor')}</option>${S.docs.map(d=>`<option value="${d.id}" data-fee="${d.fee}">${esc(d.name)} - ${esc(d.speciality)} - ₹${d.fee}</option>`).join('')}</select><b id="feebox" style="display:none;margin-top:6px;color:var(--link)"></b></label>
   <label class="fld"><span>${t('appt_date')}</span><input name="date" type="date" min="${todayStr()}" required></label>
-  <label class="fld"><span>${t('appt_patient')}</span><input name="patient_name" value="${esc(S.name)}" maxlength="100" required></label>
+  <label class="fld full"><span>Patient type</span><select name="patient_kind"><option value="new">New patient (will be registered automatically)</option><option value="existing">Existing patient (already registered)</option></select></label>
+  <label class="fld full" id="existwrap" style="display:none"><span>Registered patient</span><select name="existing_pid"><option value="">${t('pick_patient')}</option>${S.pts.map(p=>`<option value="${p.id}">${esc(pname(p))} (#${p.id})${p.mobile?' - '+esc(p.mobile):''}</option>`).join('')}</select></label>
+  <label class="fld"><span>${t('appt_patient')}</span><input name="patient_name" maxlength="100" required></label>
   <label class="fld"><span>${t('appt_mobile')}</span><input name="patient_mobile" type="tel" inputmode="tel" maxlength="16" placeholder="9876543210" required></label>
   <label class="fld"><span>${t('appt_alt')}</span><input name="patient_email" type="email" maxlength="150" required></label>
   <label class="fld full"><span>${t('appt_time')}</span><input type="hidden" name="time"><div id="slots" class="slots"><p class="hint">${t('pick_time')}</p></div></label>
@@ -1030,6 +1032,14 @@ document.addEventListener('click',e=>{
  if(b.dataset.act==='closeDrawer'&&e.target.closest('.drawer')&&!e.target.closest('button[data-act="closeDrawer"]'))return;
  const f=ACT[b.dataset.act];if(f){if(b.tagName==='A')e.preventDefault();f(b,e)}});
 document.addEventListener('change',e=>{
+ const bf=e.target.closest('form[data-form="book"]');
+ if(bf&&(e.target.name==='patient_kind'||e.target.name==='existing_pid')){
+  const ex=bf.patient_kind.value==='existing',w=$('#existwrap'),F=[bf.patient_name,bf.patient_mobile,bf.patient_email];
+  if(w)w.style.display=ex?'grid':'none';
+  if(e.target.name==='patient_kind'){bf.existing_pid.value='';F.forEach(i=>{i.value='';i.readOnly=false})}
+  if(ex){const p=S.pts.find(x=>String(x.id)===bf.existing_pid.value);
+   if(p){bf.patient_name.value=pname(p);bf.patient_mobile.value=p.mobile||'';bf.patient_email.value=p.email||'';bf.patient_name.readOnly=true;bf.patient_mobile.readOnly=!!p.mobile;bf.patient_email.readOnly=!!p.email}
+   else F.forEach(i=>{i.value='';i.readOnly=false})}}
  if(e.target.closest('form[data-form="book"]')&&['doctor_id','date'].includes(e.target.name))loadSlots();
  if(e.target.name==='doctor_id'&&e.target.closest('form[data-form="book"]')){const o=e.target.selectedOptions[0],fb=$('#feebox');if(fb){fb.style.display=o&&o.dataset.fee?'block':'none';fb.textContent=o&&o.dataset.fee?t('fee')+': ₹'+o.dataset.fee:''}}
  if(e.target.dataset.change==='lang'){S.lang=e.target.value;store.set('lang',S.lang);render()}});
@@ -1099,7 +1109,14 @@ const FORMS={
   if(!d.doctor_id||!d.date||!d.time)return ferr(t('pick_all'));
   if(!/^(\+?91|0)?[6-9]\d{9}$/.test(d.patient_mobile.replace(/[\s-]/g,'')))return ferr(t('bad_mobile'));
   const r=await busy(btn,'…',()=>api('/appointments',{json:{doctor_id:+d.doctor_id,date:d.date,time:d.time,patient_name:d.patient_name.trim(),patient_mobile:d.patient_mobile.trim(),patient_email:d.patient_email.trim(),payment_method:d.payment_method,reason:d.reason.trim()}}));
-  toast(t('booked_ok',{d:r.doctor,dt:r.date,tm:r.time,e:r.emailed_to}));f.reason.value='';await loadSlots();await refreshAppts()},
+  let extra='';
+  if(d.patient_kind!=='existing'){
+   try{const nm=d.patient_name.trim().split(/\s+/),q=await api('/patients/quick',{json:{first_name:nm[0],last_name:nm.slice(1).join(' '),mobile:d.patient_mobile.trim(),email:d.patient_email.trim()}});
+    extra=q.created?' · New patient #'+q.id+' registered':' · Already registered as patient #'+q.id;
+    S.pts=await api('/patients')}catch(e){extra=' · (Booked, but the patient could not be added to the patient list: '+e.message+')'}}
+  toast(t('booked_ok',{d:r.doctor,dt:r.date,tm:r.time,e:r.emailed_to})+extra);
+  f.reason.value='';if(d.patient_kind!=='existing'){f.patient_name.value=f.patient_mobile.value=f.patient_email.value=''}
+  await loadSlots();await refreshAppts()},
  async user(f,btn){
   const d=Object.fromEntries(new FormData(f));d.email=d.email.trim().toLowerCase();d.name=d.name.trim();
   if(d.password.length<8)return ferr(t('pw_hint')+'.');
