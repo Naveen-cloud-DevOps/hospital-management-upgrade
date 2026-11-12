@@ -454,6 +454,7 @@ select,option,optgroup{background-color:var(--surface);color:var(--ink)}
 .btn:active{transform:scale(.97)}
 @media(max-width:860px){.dh-in{max-width:none}.dtog{display:none}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.ecg polyline{stroke-dashoffset:0}}
+.rvgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.rvbox{margin-bottom:0}.rvamt{font-size:28px;font-weight:800;letter-spacing:-.03em;color:var(--c,var(--ink))}@media(max-width:760px){.rvgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -490,7 +491,7 @@ const logo=()=>`<span class="logo" role="img" aria-label="${t('app')}">${ic('hea
 
 /* ---------- translations (anything missing falls back to English) ---------- */
 const T={
-en:{sec_overview:'Overview',sec_care:'Patient care',sec_services:'Services',sec_admin:'Admin',hero_h:'Care that never skips a beat',hero_p:'Patients, appointments, lab, pharmacy and billing — all in one place.',laboratory:'Laboratory',pharmacy:'Pharmacy',doctors:'Doctors',doctors_sub:'Specialists and consultation fees.',d_fee:'Fee',total_doctors:'Total doctors',todays_appts:"Today's appointments",pend_appr:'Awaiting approval',rev_total:'Total revenue',appt_chart:'Appointments - last 7 days',rev_chart:'Revenue - last 7 days',upcoming:'Upcoming appointments',no_doctors:'No doctors found',no_upcoming:'No upcoming appointments',remember:'Remember me',forgot:'Forgot password?',forgot_msg:'Ask your administrator to reset your password (Users page).',theme:'Light / dark mode',f1:'Patient records and history',f2:'Daily queue and appointments',f3:'Secure, role-based access',app:'CarePulse',tagline:'Patient records, the daily queue and payments in one place.',side_p:'Register patients, give out tokens, track five weeks of recovery and issue receipts - from any phone or computer.',
+en:{sec_overview:'Overview',sec_care:'Patient care',sec_services:'Services',sec_admin:'Admin',hero_h:'Care that never skips a beat',hero_p:'Patients, appointments, lab, pharmacy and billing — all in one place.',laboratory:'Laboratory',pharmacy:'Pharmacy',doctors:'Doctors',doctors_sub:'Specialists and consultation fees.',d_fee:'Fee',total_doctors:'Total doctors',todays_appts:"Today's appointments",pend_appr:'Awaiting approval',rev_total:'Total revenue',revenue:'Revenue',appt_chart:'Appointments - last 7 days',rev_chart:'Revenue - last 7 days',upcoming:'Upcoming appointments',no_doctors:'No doctors found',no_upcoming:'No upcoming appointments',remember:'Remember me',forgot:'Forgot password?',forgot_msg:'Ask your administrator to reset your password (Users page).',theme:'Light / dark mode',f1:'Patient records and history',f2:'Daily queue and appointments',f3:'Secure, role-based access',app:'CarePulse',tagline:'Patient records, the daily queue and payments in one place.',side_p:'Register patients, give out tokens, track five weeks of recovery and issue receipts - from any phone or computer.',
  signin:'Sign in',signup:'Create account',signin_t:'Welcome back',signup_t:'Create your account',signin_sub:'Sign in to continue to your dashboard.',signup_sub:'Create a staff account to start recording patients.',
  email:'Email address',password:'Password',confirm:'Confirm password',fullname:'Full name',pw_hint:'At least 8 characters',pw_mismatch:'The two passwords do not match.',
  no_acc:'New here?',have_acc:'Already have an account?',signing:'Signing in…',creating:'Creating account…',welcome:'Account created. Welcome, {n}!',
@@ -666,13 +667,14 @@ async function render(){
  if(!S.tok){root.innerHTML=authHTML();return}
  let {page,id}=route();
  if(['reports','users'].includes(page)&&S.role!=='admin'){go('#/dashboard');return}
- if(!['dashboard','patients','doctors','queue','payments','appointments','laboratory','pharmacy','reports','users','account'].includes(page))page='dashboard';
+ if(!['dashboard','patients','doctors','queue','payments','appointments','laboratory','pharmacy','reports','users','account','revenue'].includes(page))page='dashboard';
  const navPage=page;
  const rid=++renderId;
  root.innerHTML=shell(navPage==='patients'&&id?'patient':navPage,`<div class="loading">…</div>`);
  try{
   let html='';
-  if(page==='dashboard'){[S.pts,S.queue,S.pays,S.docs,S.appts]=await Promise.all([api('/patients'),api('/queue'),api('/payments'),api('/doctors').catch(()=>[]),api('/appointments').catch(()=>[])]);html=pDashboard()}
+  if(page==='dashboard'){[S.pts,S.queue,S.pays,S.docs,S.appts,S.phSales,S.labOrders]=await Promise.all([api('/patients'),api('/queue'),api('/payments'),api('/doctors').catch(()=>[]),api('/appointments').catch(()=>[]),api('/pharmacy/sales').catch(()=>[]),api('/lab/orders').catch(()=>[])]);html=pDashboard()}
+  else if(page==='revenue'){[S.pays,S.appts,S.phSales,S.labOrders]=await Promise.all([api('/payments').catch(()=>[]),api('/appointments').catch(()=>[]),api('/pharmacy/sales').catch(()=>[]),api('/lab/orders').catch(()=>[])]);html=pRevenue()}
   else if(page==='doctors'){S.docs=await api('/doctors');html=pDoctors()}
   else if(page==='patients'&&id){const [d,pts]=await Promise.all([api('/patients/'+encodeURIComponent(id)),api('/patients')]);S.detail=d;S.pts=pts;S.wk=nextWeek(d);html=pDetail()}
   else if(page==='patients'){S.pts=await api('/patients');html=pPatients()}
@@ -706,16 +708,16 @@ function pDoctors(){
 const ILL=`<svg class="ill" viewBox="0 0 250 130" aria-hidden="true"><path d="M0 118c40-30 80-34 120-18s90 4 130-20v50H0z" fill="#c7d9f5" opacity=".65"/><rect x="92" y="30" width="64" height="90" rx="4" fill="#8fbdf0"/><rect x="150" y="54" width="46" height="66" rx="4" fill="#b7d5f6"/><rect x="117" y="10" width="28" height="24" rx="3" fill="#6aa5e6"/><path d="M131 14v16M123 22h16" stroke="#fff" stroke-width="4" stroke-linecap="round"/><g fill="#eaf4ff"><rect x="101" y="44" width="11" height="11" rx="2"/><rect x="120" y="44" width="11" height="11" rx="2"/><rect x="137" y="44" width="11" height="11" rx="2"/><rect x="101" y="64" width="11" height="11" rx="2"/><rect x="137" y="64" width="11" height="11" rx="2"/><rect x="158" y="66" width="10" height="10" rx="2"/><rect x="175" y="66" width="10" height="10" rx="2"/><rect x="124" y="92" width="14" height="28" rx="2"/></g><circle cx="218" cy="72" r="20" fill="#4fb98a"/><rect x="216" y="88" width="4" height="32" fill="#7a5b3e"/><circle cx="60" cy="98" r="14" fill="#5cc49a"/><rect x="58" y="108" width="4" height="12" fill="#7a5b3e"/></svg>`;
 function pDashboard(){
  const q=S.queue,w=q.filter(x=>x.status==='waiting').length,p=q.filter(x=>x.status==='in-progress').length,d=q.filter(x=>x.status==='done').length;
- const col=S.pays.filter(x=>sameDay(x.created_at)).reduce((a,x)=>a+Number(x.amount),0);
+ const RV=revenueData(),col=RV.events.filter(e=>e.day===dkey(new Date())).reduce((a,e)=>a+e.amt,0);
  const A=S.appts||[],D=S.docs||[],today=dkey(new Date()),ad=x=>String(x.appt_date).slice(0,10);
- const todayN=A.filter(x=>ad(x)===today&&x.status!=='cancelled').length,pend=A.filter(x=>x.status==='booked').length,rev=S.pays.reduce((n,x)=>n+Number(x.amount),0);
+ const todayN=A.filter(x=>ad(x)===today&&x.status!=='cancelled').length,pend=A.filter(x=>x.status==='booked').length,rev=RV.total;
  const days=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d}),lab=days.map(d=>d.toLocaleDateString(loc(),{weekday:'short'}));
- const ac=days.map(d=>A.filter(x=>ad(x)===dkey(d)&&x.status!=='cancelled').length),rc=days.map(d=>S.pays.filter(x=>dkey(new Date(x.created_at))===dkey(d)).reduce((n,x)=>n+Number(x.amount),0));
+ const ac=days.map(d=>A.filter(x=>ad(x)===dkey(d)&&x.status!=='cancelled').length),rc=days.map(d=>RV.events.filter(e=>e.day===dkey(d)).reduce((n,e)=>n+e.amt,0));
  const up=A.filter(x=>['booked','confirmed'].includes(x.status)&&ad(x)>=today).sort((x,y)=>(ad(x)+x.appt_time).localeCompare(ad(y)+y.appt_time)).slice(0,5);
  const h=new Date().getHours(),g=h<12?'greet_m':h<17?'greet_a':'greet_e';
  return `<div class="dhead${store.get('dhr')?' hide-r':''}"><div class="dh-l"><h1>${t('dash_over')}</h1><p class="wl">${t('welcome_b')}, <span class="gname">${esc((S.name||'').split(' ')[0])}</span>.</p><p>${t('greet_sub')}</p></div>
   <div class="dh-r"><button type="button" class="dtog" data-act="toggleRight" aria-label="Show / hide panel" aria-expanded="${!store.get('dhr')}">${ic('chev',18)}</button><div class="dh-in"><span class="dchip">${ic('cal',16)}${new Date().toLocaleDateString(loc(),{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span><span class="dchip"><i class="dotg${navigator.onLine?'':' off'}"></i>${t(navigator.onLine?'online':'offline')}</span>${ILL}</div></div></div>
- <div class="kpis">${kpi('users',S.pts.length,t('total_patients'),'#3b82f6','#/patients')}${kpi('steth',D.length,t('total_doctors'),'#14b8a6','#/doctors')}${kpi('cal',todayN,t('todays_appts'),'#8b5cf6','#/appointments')}${kpi('clock',pend,t('pend_appr'),'#f59e0b','#/appointments')}${kpi('hourglass',w,t('waiting'),'#10b981','#/queue')}${kpi('card',money(rev),t('rev_total'),'#ec4899','#/payments')}</div>
+ <div class="kpis">${kpi('users',S.pts.length,t('total_patients'),'#3b82f6','#/patients')}${kpi('steth',D.length,t('total_doctors'),'#14b8a6','#/doctors')}${kpi('cal',todayN,t('todays_appts'),'#8b5cf6','#/appointments')}${kpi('clock',pend,t('pend_appr'),'#f59e0b','#/appointments')}${kpi('hourglass',w,t('waiting'),'#10b981','#/queue')}${kpi('card',money(rev),t('rev_total'),'#ec4899','#/revenue')}</div>
  <div class="cols"><div class="panel"><div class="panel-h"><span class="pic">${ic('cal',20)}</span><h3>${t('appt_chart')}</h3><span class="grow"></span><span class="chip">${t('last7')}</span></div>${barChart(ac,lab,String,1)}</div>
   <div class="panel"><div class="panel-h"><span class="pic v">${ic('trend',20)}</span><h3>${t('rev_chart')}</h3><span class="grow"></span><span class="chip">${t('last7')}</span><span class="coll">${t('collected')}: <b>${money(col)}</b></span></div>${lineChart(rc,lab,compact)}</div></div>
  <div class="cols">
@@ -825,6 +827,29 @@ function pendRows(){
 function pendPanel(){
  return `<div class="panel" style="margin-bottom:18px"><div class="panel-h"><h3>Pending payments (<span id="pendcount">${pendingAppts().length}</span>)</h3></div><div class="scroll"><table class="tbl"><thead><tr><th>Booking</th><th>${t('patient')}</th><th>Doctor / when</th><th>${t('amount')}</th><th>${t('by')}</th><th></th></tr></thead><tbody id="pendbody">${pendRows()}</tbody></table></div></div>`}
 function refreshPending(){const b=$('#pendbody');if(b)b.innerHTML=pendRows();const c=$('#pendcount');if(c)c.textContent=pendingAppts().length}
+/* ----- revenue: everything collected, split by source ----- */
+function revenueData(){
+ const fee=a=>Number(a.fee||0),day=i=>dkey(new Date(i));
+ // appointments: Paid = full fee; cancelled after paying (Partially Refunded) = the 50% the hospital keeps
+ const ap=(S.appts||[]).filter(a=>a.payment_status==='Paid'||a.payment_status==='Partially Refunded')
+  .map(a=>({amt:a.payment_status==='Paid'?fee(a):fee(a)-Math.floor(fee(a)/2),day:String(a.appt_date).slice(0,10),who:a.patient_name,sub:a.doctor+' · '+fmtD(String(a.appt_date).slice(0,10)+'T00:00:00')+(a.payment_status==='Partially Refunded'?' · cancelled, 50% kept':'')}));
+ // laboratory: every test that was ordered and not cancelled
+ const lb=(S.labOrders||[]).filter(o=>o.status!=='cancelled').map(o=>({amt:Number(o.price||0),day:day(o.created_at),who:o.patient_name,sub:o.test_name+' · '+o.status}));
+ const ph=(S.phSales||[]).map(x=>({amt:Number(x.total||0),day:day(x.created_at),who:x.patient_name,sub:(x.items||'')+' · '+x.payment_method}));
+ const bl=(S.pays||[]).map(x=>({amt:Number(x.amount||0),day:day(x.created_at),who:x.patient_name,sub:'Receipt #'+x.id+' · '+(x.method||'')}));
+ const sum=l=>l.reduce((n,x)=>n+x.amt,0);
+ return {appts:{items:ap,total:sum(ap),count:ap.length},lab:{items:lb,total:sum(lb),count:lb.length},
+  pharm:{items:ph,total:sum(ph),count:ph.length},bill:{items:bl,total:sum(bl),count:bl.length},
+  total:sum(ap)+sum(lb)+sum(ph)+sum(bl),events:[...ap,...lb,...ph,...bl]}}
+function pRevenue(){
+ const R=revenueData(),pend=pendingAppts().reduce((n,a)=>n+Number(a.fee||0),0);
+ const box=(title,icon,color,x,href,note)=>`<div class="panel rvbox" style="--c:${color}"><div class="panel-h"><span class="pic">${ic(icon,20)}</span><h3>${title}</h3><span class="grow"></span><a class="btn ghost sm" href="${href}">${t('view_all')}</a></div>
+  <div class="panel-b"><div class="rvamt">${money(x.total)}</div><small style="color:var(--muted)">${x.count} ${x.count===1?'entry':'entries'}${R.total?' · '+Math.round(x.total*100/R.total)+'% of total':''}</small>${note?`<p class="hint" style="margin-top:6px">${note}</p>`:''}
+  <div class="mini" style="margin-top:12px">${x.items.length?x.items.slice(0,5).map(i=>`<div class="row"><span class="grow"><b>${esc(i.who||'')}</b><br><small style="color:var(--muted)">${esc(i.sub||'')}</small></span><b>${money(i.amt)}</b></div>`).join(''):'<div class="empty"><b>Nothing collected yet</b></div>'}</div></div></div>`;
+ return `<div class="page-h"><div><h1>${t('rev_total')}</h1><p>Everything collected, split by where it came from.</p></div><span class="grow"></span><a class="btn ghost sm" href="#/dashboard">${t('dashboard')}</a></div>
+ <div class="panel rvbox" style="--c:#ec4899;margin-bottom:18px"><div class="panel-b"><small style="color:var(--muted)">Total collected (all sources)</small><div class="rvamt" style="font-size:36px">${money(R.total)}</div>
+  <small style="color:var(--muted)">Appointments ${money(R.appts.total)} + Laboratory ${money(R.lab.total)} + Pharmacy ${money(R.pharm.total)} + Payments ${money(R.bill.total)}</small></div></div>
+ <div class="rvgrid">${box('Appointments','cal','#8b5cf6',R.appts,'#/appointments',pend?'Pending, not yet collected: <b>'+money(pend)+'</b>':'')}${box('Laboratory','flask','#14b8a6',R.lab,'#/laboratory','Counts every ordered test that is not cancelled.')}${box('Pharmacy','pill','#3b82f6',R.pharm,'#/pharmacy','')}${box('Payments (receipts)','card','#ec4899',R.bill,'#/payments','')}</div>`}
 function pPayments(){
  const tot=S.pays.reduce((a,x)=>a+Number(x.amount),0);
  return `<div class="page-h"><div><h1>${t('payments')}</h1><p>${t('total')}: <b id="paytot">${money(tot)}</b></p></div></div>
