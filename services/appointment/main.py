@@ -267,8 +267,8 @@ def pay_appointment(aid: int, p: PayIn, u=Depends(current_user)):
     a = get_full(aid)
     if u["role"] != "admin" and a["booked_by"] != u["sub"]:
         raise HTTPException(403, "This appointment belongs to another user")
-    if a["status"] != "booked":
-        raise HTTPException(409, "Only a booked appointment can be paid")
+    if a["status"] == "cancelled":
+        raise HTTPException(409, "A cancelled appointment cannot be paid")
     if a.get("payment_status") == "Paid":
         raise HTTPException(409, "This appointment is already paid")
     if p.method not in ("cash", "upi", "card"):
