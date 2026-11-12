@@ -149,3 +149,21 @@ def set_status(tid: int, s: Status, _=Depends(current_user)):
         raise HTTPException(400, "Bad status")
     write("UPDATE tokens SET status=%s WHERE id=%s", (s.status, tid))
     return {"ok": True}
+@app.put("/patients/{pid}")
+def edit_patient(pid: int, p: Patient, _=Depends(current_user)):
+    d = p.model_dump()
+    sets = ",".join(f"{k}=%s" for k in d)          # keys come from the model above, never from the user
+    rows = write(f"UPDATE patients SET {sets} WHERE id=%s RETURNING id", [*d.values(), pid], fetch=True)
+    if not rows:
+        raise HTTPException(404, "Not found")
+    return {"ok": True}
+
+
+@app.delete("/patients/{pid}")
+def delete_patient(pid: int, _=Depends(admin_only)):
+    """Admin only. Removes the patient together with their weekly records and queue tokens."""
+    rows = write_allow_delete("DELETE FROM weekly_records WHERE patient_id=%s; DELETE FROM tokens WHERE patient_id=%s; "
+                              "DELETE FROM patients WHERE id=%s RETURNING id", (pid, pid, pid), fetch=True)
+    if not rows:
+        raise HTTPException(404, "Not found")
+    return {"ok": True}

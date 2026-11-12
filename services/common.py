@@ -48,6 +48,7 @@ def init_db(ddl, tables):
     """Create tables + a trigger that blocks every DELETE (saved data can never be deleted)."""
     sql = "SELECT pg_advisory_xact_lock(42);" + ddl + (
         "CREATE OR REPLACE FUNCTION no_delete() RETURNS trigger AS $$ BEGIN "
+        "IF current_setting('app.allow_delete', true) = 'on' THEN RETURN OLD; END IF; "
         "RAISE EXCEPTION 'Deleting saved data is not allowed'; END $$ LANGUAGE plpgsql;")
     for t in tables:
         sql += (f"DROP TRIGGER IF EXISTS nd ON {t}; CREATE TRIGGER nd BEFORE DELETE ON {t} "
@@ -157,3 +158,9 @@ def call_service(base, path, method="GET", payload=None, timeout=5):
     except Exception as e:
         print("service call failed", base, path, repr(e))
         raise HTTPException(502, "A required service is not reachable right now. Please try again.")
+
+
+def write_allow_delete(sql, args=None, fetch=False):
+    """Used ONLY by the explicit Delete endpoints. Runs sql in one transaction with the delete guard lifted for
+    that transaction alone; every other statement is still blocked by the no_delete trigger."""
+    return write("SELECT set_config('app.allow_delete','on',true);" + sql, args, fetch)

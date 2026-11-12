@@ -166,3 +166,22 @@ def bill(sid: int, u=Depends(current_user)):
         if not key:
             raise HTTPException(503, "The bill could not be saved right now. Please try again.")
     return {"url": presign(BUCKET, key)}
+@app.put("/pharmacy/medicines/{mid}")
+def edit_medicine(mid: int, m: MedicineIn, _=Depends(admin_only)):
+    try:
+        rows = write("UPDATE medicines SET name=%s, unit=%s, unit_price=%s, stock=%s WHERE id=%s RETURNING id",
+                     (m.name.strip(), (m.unit or "tablet").strip(), m.unit_price, m.stock, mid), fetch=True)
+    except psycopg2.errors.UniqueViolation:
+        raise HTTPException(409, "This medicine already exists")
+    if not rows:
+        raise HTTPException(404, "Medicine not found")
+    return {"ok": True}
+
+
+@app.delete("/pharmacy/medicines/{mid}")
+def delete_medicine(mid: int, _=Depends(admin_only)):
+    """Past sales and bills keep their own copy of the medicine name and price (no link to this row)."""
+    rows = write_allow_delete("DELETE FROM medicines WHERE id=%s RETURNING id", (mid,), fetch=True)
+    if not rows:
+        raise HTTPException(404, "Medicine not found")
+    return {"ok": True}

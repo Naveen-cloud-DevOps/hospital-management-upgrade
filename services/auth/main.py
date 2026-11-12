@@ -87,3 +87,51 @@ def test_email(u=Depends(current_user)):
     notify(u["sub"], "Test email - CarePulse",
            "This is a test. If you can read this, email alerts and payment receipts will reach you.", strict=True)
     return {"ok": True, "email": u["sub"]}
+class UserEdit(BaseModel):
+    name: str
+    role: str
+    password: str = ""          # leave empty to keep the current password
+
+
+def main_admin(email):
+    return email.lower() == os.environ["ADMIN_EMAIL"].lower()
+
+
+@app.put("/auth/users/{uid}")
+def edit_user(uid: int, b: UserEdit, adm=Depends(admin_only)):
+    name = b.name.strip()
+    if not name:
+        raise HTTPException(400, "Enter a name")
+    if b.role not in ("admin", "employee"):
+        raise HTTPException(400, "Role must be admin or employee")
+    if b.password and len(b.password) < 8:
+        raise HTTPException(400, "Password needs at least 8 characters")
+    rows = write("SELECT email, role FROM users WHERE id=%s", (uid,), fetch=True)
+    if not rows:
+        raise HTTPException(404, "User not found")
+    row = rows[0]
+    if b.role != row["role"] and (row["email"].lower() == adm["sub"].lower() or main_admin(row["email"])):
+        raise HTTPException(400, "The role of your own account or of the main administrator cannot be changed")
+    if b.password:
+        write("UPDATE users SET name=%s, role=%s, password_hash=%s WHERE id=%s", (name, b.role, hash_pw(b.password), uid))
+    else:
+        write("UPDATE users SET name=%s, role=%s WHERE id=%s", (name, b.role, uid))
+    try:
+        put_json(os.environ["USER_BUCKET"], f"users/{row['email']}.json", {"email": row["email"], "name": name, "role": b.role})
+    except Exception as e:
+        print("user s3 record failed", e)
+    return {"ok": True}
+
+
+@app.delete("/auth/users/{uid}")
+def delete_user(uid: int, adm=Depends(admin_only)):
+    rows = write("SELECT email FROM users WHERE id=%s", (uid,), fetch=True)
+    if not rows:
+        raise HTTPException(404, "User not found")
+    email = rows[0]["email"]
+    if email.lower() == adm["sub"].lower():
+        raise HTTPException(400, "You cannot delete your own account")
+    if main_admin(email):
+        raise HTTPException(400, "The main administrator account cannot be deleted")
+    write_allow_delete("DELETE FROM users WHERE id=%s", (uid,))
+    return {"ok": True}

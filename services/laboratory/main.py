@@ -152,3 +152,23 @@ def report_link(oid: int, u=Depends(current_user)):
     if not o.get("report_key"):
         raise HTTPException(404, "No report file was uploaded for this order")
     return {"url": presign(BUCKET, o["report_key"])}
+@app.put("/lab/tests/{tid}")
+def edit_test(tid: int, body: TestIn, _=Depends(admin_only)):
+    try:
+        rows = write("UPDATE lab_tests SET name=%s, sample_type=%s, price=%s WHERE id=%s AND active RETURNING id",
+                     (body.name.strip(), body.sample_type.strip(), body.price, tid), fetch=True)
+    except psycopg2.errors.UniqueViolation:
+        raise HTTPException(409, "This test already exists")
+    if not rows:
+        raise HTTPException(404, "Test not found")
+    return {"ok": True}
+
+
+@app.delete("/lab/tests/{tid}")
+def delete_test(tid: int, _=Depends(admin_only)):
+    """The test is switched to active=false (it leaves every list and can no longer be ordered). Old lab orders keep
+    their own copy of the test name and price."""
+    rows = write("UPDATE lab_tests SET active=FALSE WHERE id=%s AND active RETURNING id", (tid,), fetch=True)
+    if not rows:
+        raise HTTPException(404, "Test not found")
+    return {"ok": True}

@@ -80,3 +80,23 @@ def update_doctor(did: int, p: DoctorPatch, _=Depends(admin_only)):
     if not rows:
         raise HTTPException(404, "Doctor not found")
     return {"ok": True}
+@app.put("/doctors/{did}")
+def edit_doctor(did: int, d: DoctorIn, _=Depends(admin_only)):
+    try:
+        rows = write("UPDATE doctors SET name=%s, speciality=%s, qualification=%s, fee=%s WHERE id=%s RETURNING id",
+                     (d.name.strip(), d.speciality.strip(), d.qualification.strip(), d.fee, did), fetch=True)
+    except psycopg2.errors.UniqueViolation:
+        raise HTTPException(409, "A doctor with this name already exists")
+    if not rows:
+        raise HTTPException(404, "Doctor not found")
+    return {"ok": True}
+
+
+@app.delete("/doctors/{did}")
+def delete_doctor(did: int, _=Depends(admin_only)):
+    """Same rule as the rest of this service: the row is kept, the doctor is switched to active=false and
+    disappears from every list (the 6 starter doctors would otherwise be re-created on the next restart)."""
+    rows = write("UPDATE doctors SET active=FALSE WHERE id=%s RETURNING id", (did,), fetch=True)
+    if not rows:
+        raise HTTPException(404, "Doctor not found")
+    return {"ok": True}

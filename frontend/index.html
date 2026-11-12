@@ -701,7 +701,7 @@ const barChart=(v,l,f,int)=>{const k=scale(Math.max(...v),int),top=k[4];return f
 const lineChart=(v,l,f)=>{const k=scale(Math.max(...v)),top=k[4],X=i=>(i+.5)/v.length*100,Y=x=>100-x/top*100;let d=`M${X(0)},${Y(v[0])}`;for(let i=1;i<v.length;i++){const m=(X(i-1)+X(i))/2;d+=`C${m},${Y(v[i-1])} ${m},${Y(v[i])} ${X(i)},${Y(v[i])}`}return frame(k,f,l,`<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="area" d="${d}L${X(v.length-1)},100L${X(0)},100Z"/><path class="ln" d="${d}"/></svg>${v.map((x,i)=>`<b class="dot" title="${f(x)}" style="left:${X(i)}%;bottom:${x/top*100}%"></b>`).join('')}`)};
 const kpi=(i,v,l,c,h)=>`<a class="kpi" href="${h}" style="--c:${c}"><i>${ic(i,21)}</i><div><b>${v}</b><span>${l}</span></div><em class="go" aria-hidden="true">${ic('arrow',16)}</em></a>`;
 function pDoctors(){
- const card=d=>`<article class="dcard"><span class="av">${esc(d.name.replace(/^Dr\.?\s*/,'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase())}</span><h3>${esc(d.name)}</h3><div style="color:var(--muted)">${esc(d.speciality)}</div><small style="color:var(--muted)">${esc(d.qualification||'')}</small><br><span class="fee">${t('d_fee')}: ${money(d.fee)}</span><div style="margin-top:12px"><a class="btn ghost sm" href="#/appointments">${t('book_title')}</a></div></article>`;
+ const card=d=>`<article class="dcard"><span class="av">${esc(d.name.replace(/^Dr\.?\s*/,'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase())}</span><h3>${esc(d.name)}</h3><div style="color:var(--muted)">${esc(d.speciality)}</div><small style="color:var(--muted)">${esc(d.qualification||'')}</small><br><span class="fee">${t('d_fee')}: ${money(d.fee)}</span><div style="margin-top:12px"><a class="btn ghost sm" href="#/appointments">${t('book_title')}</a>${S.role==='admin'?` <button type="button" class="btn ghost sm" data-act="editDoctor" data-id="${d.id}">Edit</button> <button type="button" class="btn ghost sm" style="color:var(--red)" data-act="delDoctor" data-id="${d.id}">Delete</button>`:''}</div></article>`;
  return `<div class="page-h"><div><h1>${t('doctors')}</h1><p>${t('doctors_sub')}</p></div></div>${S.docs.length?`<div class="dgrid">${S.docs.map(card).join('')}</div>`:`<div class="panel"><div class="empty"><b>${t('no_doctors')}</b></div></div>`}${S.role==='admin'?doctorForm():''}`}
 const ILL=`<svg class="ill" viewBox="0 0 250 130" aria-hidden="true"><path d="M0 118c40-30 80-34 120-18s90 4 130-20v50H0z" fill="#c7d9f5" opacity=".65"/><rect x="92" y="30" width="64" height="90" rx="4" fill="#8fbdf0"/><rect x="150" y="54" width="46" height="66" rx="4" fill="#b7d5f6"/><rect x="117" y="10" width="28" height="24" rx="3" fill="#6aa5e6"/><path d="M131 14v16M123 22h16" stroke="#fff" stroke-width="4" stroke-linecap="round"/><g fill="#eaf4ff"><rect x="101" y="44" width="11" height="11" rx="2"/><rect x="120" y="44" width="11" height="11" rx="2"/><rect x="137" y="44" width="11" height="11" rx="2"/><rect x="101" y="64" width="11" height="11" rx="2"/><rect x="137" y="64" width="11" height="11" rx="2"/><rect x="158" y="66" width="10" height="10" rx="2"/><rect x="175" y="66" width="10" height="10" rx="2"/><rect x="124" y="92" width="14" height="28" rx="2"/></g><circle cx="218" cy="72" r="20" fill="#4fb98a"/><rect x="216" y="88" width="4" height="32" fill="#7a5b3e"/><circle cx="60" cy="98" r="14" fill="#5cc49a"/><rect x="58" y="108" width="4" height="12" fill="#7a5b3e"/></svg>`;
 function pDashboard(){
@@ -763,7 +763,7 @@ function pDetail(){
  const d=S.detail,k=(l,v,f)=>`<div class="${f?'full':''}"><small>${l}</small><span>${v?esc(v):'-'}</span></div>`;
  return `<div class="page-h"><a class="btn ghost sm" href="#/patients">${ic('back',16)}${t('back')}</a></div>
  <div class="page-h"><div class="who"><span class="av" style="width:52px;height:52px;font-size:18px">${esc(ini(d))}</span><div><h1>${esc(pname(d))}</h1><p>#${d.id} · ${t('registered')} ${fmtD(d.created_at)}</p></div></div><span class="grow"></span>
-  <div class="actions"><button class="btn ghost" data-act="emailPatient" data-id="${d.id}">${ic('mail',17)}${t('email_details')}</button><button class="btn ghost" data-act="token" data-id="${d.id}">${ic('clock',17)}${t('generate_token')}</button><button class="btn" data-act="payFor" data-id="${d.id}">${ic('card',17)}${t('record_payment')}</button></div></div>
+  <div class="actions"><button class="btn ghost" data-act="emailPatient" data-id="${d.id}">${ic('mail',17)}${t('email_details')}</button><button class="btn ghost" data-act="token" data-id="${d.id}">${ic('clock',17)}${t('generate_token')}</button><button class="btn" data-act="payFor" data-id="${d.id}">${ic('card',17)}${t('record_payment')}</button><button class="btn ghost" data-act="editPatient" data-id="${d.id}">${ic('edit',17)}Edit</button>${S.role==='admin'?`<button class="btn ghost" style="color:var(--red)" data-act="deletePatient" data-id="${d.id}">${ic('trash',17)}Delete</button>`:''}</div></div>
  <div class="cols">
   <div class="panel"><div class="panel-h"><h3>${t('weekly')}</h3></div><div class="panel-b" id="wkbox">${weeksHTML()}</div></div>
   <div class="panel"><div class="panel-h"><h3>${t('patient')}</h3></div><div class="panel-b"><div class="kv">
@@ -860,9 +860,9 @@ async function loadSlots(){
  catch(e){box.innerHTML=`<p class="hint">${esc(e.message)}</p>`}}
 async function refreshAppts(){try{S.appts=await api('/appointments')}catch(e){return}const b=$('#abody');if(b)b.innerHTML=apptRows()}
 
-function userRows(){return S.users.map(u=>`<tr><td><div class="who"><span class="av">${esc((u.name||'?').slice(0,2).toUpperCase())}</span><b>${esc(u.name)}</b></div></td><td>${esc(u.email)}</td><td><span class="pill role ${u.role==='admin'?'admin':''}">${esc(u.role)}</span></td><td>${fmtD(u.created_at)}</td></tr>`).join('')}
+function userRows(){return S.users.map(u=>`<tr><td><div class="who"><span class="av">${esc((u.name||'?').slice(0,2).toUpperCase())}</span><b>${esc(u.name)}</b></div></td><td>${esc(u.email)}</td><td><span class="pill role ${u.role==='admin'?'admin':''}">${esc(u.role)}</span></td><td>${fmtD(u.created_at)}</td><td><button class="btn ghost sm" type="button" data-act="editUser" data-id="${u.id}">Edit</button>${u.email===me()?'':` <button class="btn ghost sm" type="button" style="color:var(--red)" data-act="delUser" data-id="${u.id}">Delete</button>`}</td></tr>`).join('')}
 function pUsers(){
- return `<div class="page-h"><div><h1>${t('users')}</h1></div></div><div class="cols"><div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>${t('name')}</th><th>${t('email')}</th><th>${t('role')}</th><th>${t('joined')}</th></tr></thead><tbody id="ubody">${userRows()}</tbody></table></div></div>
+ return `<div class="page-h"><div><h1>${t('users')}</h1></div></div><div class="cols"><div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>${t('name')}</th><th>${t('email')}</th><th>${t('role')}</th><th>${t('joined')}</th><th></th></tr></thead><tbody id="ubody">${userRows()}</tbody></table></div></div>
  <div class="panel"><div class="panel-h"><h3>${t('add_user')}</h3></div><div class="panel-b"><form data-form="user" style="display:grid;gap:14px">
   ${field('name','text',t('name'),'required')}${field('email','email',t('email'),'required')}${pwField('password',t('password'),'new-password',t('pw_hint'))}
   <label class="fld"><span>${t('role')}</span><select name="role"><option value="employee">employee</option><option value="admin">admin</option></select></label>
@@ -948,7 +948,9 @@ function pLab(){
   ${field('name','text','Test name','required maxlength="120"')}
   ${field('sample_type','text','Sample type','maxlength="40" value="Blood"')}
   ${field('price','number','Price (₹)','required min="0" step="0.01" inputmode="decimal"')}
- </div><p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">Add test</button></div></form></div>`:''}`}
+ </div><p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">Add test</button></div></form></div>
+ <div class="page-h" style="margin-top:22px"><div><h1 style="font-size:18px">Manage lab tests</h1></div></div>
+ <div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>Test</th><th>Sample</th><th>Price</th><th></th></tr></thead><tbody>${labTestRows()}</tbody></table></div></div>`:''}`}
 function labResultForm(o){
  return `<form data-form="labResult"><input type="hidden" name="oid" value="${o.id}">
  <p style="margin-bottom:12px"><b>${esc(o.test_name)}</b> - ${esc(o.patient_name)}</p><div class="fg">
@@ -960,7 +962,7 @@ async function refreshLab(){try{S.labOrders=await api('/lab/orders')}catch(e){re
 /* ----- pharmacy (pharmacy service) ----- */
 function medRows(){
  if(!S.meds.length)return `<tr><td colspan="5"><div class="empty"><b>No medicines in stock list</b></div></td></tr>`;
- return S.meds.map(m=>`<tr><td><b>${esc(m.name)}</b><br><small>${esc(m.unit||'')}</small></td><td>${money(m.unit_price)}</td><td>${m.stock<=20?`<b style="color:var(--amber)">${m.stock} (low)</b>`:m.stock}</td><td><input name="q_${m.id}" type="number" min="0" max="${m.stock}" step="1" value="0" inputmode="numeric" style="width:90px" ${m.stock?'':'disabled'}></td>${S.role==='admin'?`<td><button class="btn ghost sm" type="button" data-act="restock" data-id="${m.id}">Restock</button></td>`:''}</tr>`).join('')}
+ return S.meds.map(m=>`<tr><td><b>${esc(m.name)}</b><br><small>${esc(m.unit||'')}</small></td><td>${money(m.unit_price)}</td><td>${m.stock<=20?`<b style="color:var(--amber)">${m.stock} (low)</b>`:m.stock}</td><td><input name="q_${m.id}" type="number" min="0" max="${m.stock}" step="1" value="0" inputmode="numeric" style="width:90px" ${m.stock?'':'disabled'}></td>${S.role==='admin'?`<td><button class="btn ghost sm" type="button" data-act="restock" data-id="${m.id}">Restock</button> <button class="btn ghost sm" type="button" data-act="editMed" data-id="${m.id}">Edit</button> <button class="btn ghost sm" type="button" style="color:var(--red)" data-act="delMed" data-id="${m.id}">Delete</button></td>`:''}</tr>`).join('')}
 function saleRows(){
  if(!S.phSales.length)return `<tr><td colspan="6"><div class="empty"><b>No pharmacy sales yet</b></div></td></tr>`;
  return S.phSales.map(x=>`<tr><td>#${x.id}</td><td>${esc(x.patient_name)}</td><td><small>${esc(x.items||'')}</small></td><td>${money(x.total)}<br><small>${esc(x.payment_method)}</small></td><td>${fmtD(x.created_at)}</td><td><button class="btn ghost sm" type="button" data-act="saleBill" data-id="${x.id}">Bill</button></td></tr>`).join('')}
@@ -1103,6 +1105,51 @@ const FORMS={
   if(d.password.length<8)return ferr(t('pw_hint')+'.');
   await busy(btn,'…',()=>api('/auth/register',{json:d}));toast(t('user_added'));render()}
 };
+/* ---------- edit / delete (added) ---------- */
+Object.assign(ICON,{edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',trash:'<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>'});
+const byId=(a,id)=>(a||[]).find(x=>String(x.id)===String(id));
+const val=v=>`value="${esc(v)}"`;
+const eForm=(kind,id,fields)=>`<form data-form="${kind}"><input type="hidden" name="id" value="${esc(id)}"><div class="fg">${fields}</div><p class="ferr" role="alert"></p><div class="drawer-f"><button type="button" class="btn ghost" data-act="closeDrawer">${t('cancel')}</button><button class="btn" type="submit">Save changes</button></div></form>`;
+const delReq=async(url,ok,after)=>{try{await api(url,{method:'DELETE'});toast(ok);await after()}catch(e){toast(e.message,'err')}};
+const G=fn=>async(f,btn)=>{try{await fn(f,btn)}catch(x){const e=f.querySelector('.ferr');if(e)e.textContent=x.message;else toast(x.message,'err')}};
+function labTestRows(){
+ if(!(S.labTests||[]).length)return `<tr><td colspan="4"><div class="empty"><b>No lab tests</b></div></td></tr>`;
+ return S.labTests.map(x=>`<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.sample_type||'')}</td><td>${money(x.price)}</td><td><button class="btn ghost sm" type="button" data-act="editLabTest" data-id="${x.id}">Edit</button> <button class="btn ghost sm" type="button" style="color:var(--red)" data-act="delLabTest" data-id="${x.id}">Delete</button></td></tr>`).join('')}
+Object.assign(ACT,{
+ editPatient:()=>{const d=S.detail;if(!d)return;openDrawer('Edit patient',patientForm());
+  const f=$('#overlay form');f.dataset.form='patientEdit';
+  ['first_name','last_name','age','gender','mobile','email','blood_group','occupation','address','city','state','heard_about_us','referred_by'].forEach(k=>{if(f.elements[k])f.elements[k].value=d[k]??''});
+  f.querySelectorAll('input[name="diseases"]').forEach(c=>{c.checked=(d.diseases||[]).includes(c.value)});
+  f.querySelector('button[type=submit]').textContent='Save changes'},
+ deletePatient:async b=>{const d=S.detail;if(!d||!confirm('Delete '+pname(d)+' permanently? Their weekly records and queue tokens are deleted too. This cannot be undone.'))return;
+  b.disabled=true;try{await api('/patients/'+d.id,{method:'DELETE'});toast('Patient deleted');go('#/patients')}catch(e){toast(e.message,'err');b.disabled=false}},
+ editDoctor:b=>{const d=byId(S.docs,b.dataset.id);if(!d)return;
+  openDrawer('Edit doctor',eForm('doctorEdit',d.id,field('name','text','Doctor name','required maxlength="100" '+val(d.name))+field('speciality','text','Speciality','required maxlength="100" '+val(d.speciality))+field('qualification','text','Qualification','maxlength="100" '+val(d.qualification))+field('fee','number','Consultation fee (₹)','required min="0" step="1" inputmode="numeric" '+val(d.fee))))},
+ delDoctor:b=>{const d=byId(S.docs,b.dataset.id);if(!d||!confirm('Delete '+d.name+'? The doctor will no longer be listed.'))return;delReq('/doctors/'+d.id,'Doctor deleted',()=>render())},
+ editLabTest:b=>{const x=byId(S.labTests,b.dataset.id);if(!x)return;
+  openDrawer('Edit lab test',eForm('labTestEdit',x.id,field('name','text','Test name','required maxlength="120" '+val(x.name))+field('sample_type','text','Sample type','maxlength="40" '+val(x.sample_type))+field('price','number','Price (₹)','required min="0" step="0.01" inputmode="decimal" '+val(x.price))))},
+ delLabTest:b=>{const x=byId(S.labTests,b.dataset.id);if(!x||!confirm('Delete '+x.name+'? It can no longer be ordered. Existing lab orders are kept.'))return;delReq('/lab/tests/'+x.id,'Test deleted',()=>render())},
+ editMed:b=>{const m=byId(S.meds,b.dataset.id);if(!m)return;
+  openDrawer('Edit medicine',eForm('medEdit',m.id,field('name','text','Medicine name','required maxlength="120" '+val(m.name))+field('unit','text','Unit (tablet, capsule, bottle...)','maxlength="30" '+val(m.unit))+field('unit_price','number','Price per unit (₹)','required min="0" step="0.01" inputmode="decimal" '+val(m.unit_price))+field('stock','number','Stock','required min="0" step="1" inputmode="numeric" '+val(m.stock))))},
+ delMed:b=>{const m=byId(S.meds,b.dataset.id);if(!m||!confirm('Delete '+m.name+' permanently? Past bills keep their own copy of it.'))return;delReq('/pharmacy/medicines/'+m.id,'Medicine deleted',()=>refreshPharmacy())},
+ editUser:b=>{const u=byId(S.users,b.dataset.id);if(!u)return;
+  openDrawer('Edit user',eForm('userEdit',u.id,field('name','text',t('name'),'required '+val(u.name))+`<label class="fld"><span>${t('email')}</span><input type="email" value="${esc(u.email)}" disabled></label>`+`<label class="fld"><span>${t('role')}</span><select name="role"><option value="employee"${u.role==='employee'?' selected':''}>employee</option><option value="admin"${u.role==='admin'?' selected':''}>admin</option></select></label>`+`<label class="fld"><span>${t('password')} <small>(leave empty to keep the current one)</small></span><input name="password" type="password" autocomplete="new-password" minlength="8"></label>`))},
+ delUser:b=>{const u=byId(S.users,b.dataset.id);if(!u||!confirm('Delete the account of '+u.name+' ('+u.email+')? This cannot be undone.'))return;delReq('/auth/users/'+u.id,'User deleted',()=>render())}
+});
+Object.assign(FORMS,{
+ patientEdit:G(async(f,btn)=>{const fd=new FormData(f),d=Object.fromEntries(fd);d.age=+d.age;d.diseases=fd.getAll('diseases');d.email=(d.email||'').trim()||null;
+  await busy(btn,'…',()=>api('/patients/'+S.detail.id,{method:'PUT',json:d}));closeDrawer();toast('Patient updated');render()}),
+ doctorEdit:G(async(f,btn)=>{const d=Object.fromEntries(new FormData(f));
+  await busy(btn,'…',()=>api('/doctors/'+d.id,{method:'PUT',json:{name:d.name.trim(),speciality:d.speciality.trim(),qualification:(d.qualification||'').trim(),fee:+d.fee}}));closeDrawer();toast('Doctor updated');render()}),
+ labTestEdit:G(async(f,btn)=>{const d=Object.fromEntries(new FormData(f));
+  await busy(btn,'…',()=>api('/lab/tests/'+d.id,{method:'PUT',json:{name:d.name.trim(),sample_type:(d.sample_type||'').trim(),price:+d.price}}));closeDrawer();toast('Test updated');render()}),
+ medEdit:G(async(f,btn)=>{const d=Object.fromEntries(new FormData(f));
+  await busy(btn,'…',()=>api('/pharmacy/medicines/'+d.id,{method:'PUT',json:{name:d.name.trim(),unit:(d.unit||'tablet').trim(),unit_price:+d.unit_price,stock:+d.stock}}));closeDrawer();toast('Medicine updated');await refreshPharmacy()}),
+ userEdit:G(async(f,btn)=>{const d=Object.fromEntries(new FormData(f));
+  if(d.password&&d.password.length<8)throw new Error(t('pw_hint')+'.');
+  await busy(btn,'…',()=>api('/auth/users/'+d.id,{method:'PUT',json:{name:d.name.trim(),role:d.role,password:d.password||''}}));closeDrawer();toast('User updated');render()})
+});
+
 document.addEventListener('submit',async e=>{
  const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();
  const fn=FORMS[f.dataset.form];if(!fn)return;ferr('');
