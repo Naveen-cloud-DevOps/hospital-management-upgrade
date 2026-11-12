@@ -5,6 +5,12 @@ patient progress (with photos), take payments and email receipts, book doctors, 
 automatically from GitHub, and it gets a clean web address (Route53 + CloudFront) and a monitoring stack
 (Prometheus, Grafana, Loki).
 
+### Dashboard
+
+https://kommodo.ai/i/2kqxAwrpaTLsisfmSJrf
+
+*The admin dashboard: patients on record, doctors, today's appointments, queue, total revenue and the 7-day charts.*
+
 ## What it does
 
 - **Login** (there is no public sign-up: the first admin comes from a GitHub secret, and only an admin can create other accounts from the **Users** page)
@@ -169,6 +175,7 @@ Shared by all services (`services/common.py`): JWT login check, database helpers
 │   ├── doctor/main.py         # doctor directory (own DB)
 │   ├── laboratory/main.py     # lab tests, orders, results (own DB + S3 bucket)
 │   └── pharmacy/main.py       # medicines, stock, sales, bills (own DB + S3 bucket)
+├── docs/images/               # screenshots used in this README
 ├── frontend/
 │   ├── Dockerfile             # nginx-unprivileged + index.html
 │   └── index.html             # the whole user interface
