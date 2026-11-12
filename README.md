@@ -5,9 +5,10 @@ patient progress (with photos), take payments and email receipts, book doctors, 
 automatically from GitHub, and it gets a clean web address (Route53 + CloudFront) and a monitoring stack
 (Prometheus, Grafana, Loki).
 
+
 ### Dashboard
 
-https://kommodo.ai/i/2kqxAwrpaTLsisfmSJrf
+![CarePulse dashboard](https://plain-apac-prod-public.komododecks.com/202611/12/2kqxAwrpaTLsisfmSJrf/image.png)
 
 *The admin dashboard: patients on record, doctors, today's appointments, queue, total revenue and the 7-day charts.*
 
