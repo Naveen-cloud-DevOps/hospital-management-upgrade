@@ -58,6 +58,12 @@ variable "eks_version" {
   default     = "1.33"
 }
 
+variable "ami_type" {
+  description = "AMI type for EKS managed worker nodes"
+  type        = string
+  default     = "AL2023_x86_64_STANDARD"
+}
+
 variable "node_instance_types" {
   description = "EC2 instance types for the managed node group"
   type        = list(string)
