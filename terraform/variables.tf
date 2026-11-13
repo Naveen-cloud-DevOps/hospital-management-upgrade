@@ -55,11 +55,11 @@ variable "single_nat_gateway" {
 variable "eks_version" {
   description = "Kubernetes version of the EKS cluster"
   type        = string
-  default     = "1.33"
+  default     = "1.35"
 }
 
 variable "ami_type" {
-  description = "AMI type for EKS managed worker nodes"
+  description = "EKS worker node AMI type"
   type        = string
   default     = "AL2023_x86_64_STANDARD"
 }
