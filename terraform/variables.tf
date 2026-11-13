@@ -67,7 +67,7 @@ variable "ami_type" {
 variable "node_instance_types" {
   description = "EC2 instance types for the managed node group"
   type        = list(string)
-  default     = ["t3.large"]
+  default     = ["t2.medium"]
 }
 
 variable "node_min_size" {
