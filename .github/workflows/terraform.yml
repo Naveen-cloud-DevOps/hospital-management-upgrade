@@ -137,6 +137,6 @@ jobs:
 
       - run: terraform validate
       - run: terraform plan -input=false -out=tfplan
-      #- run: terraform apply -input=false -auto-approve tfplan
-      - run: terraform destroy -input=false -auto-approve tfplan
+      - run: terraform apply -input=false -auto-approve tfplan
+      
       
