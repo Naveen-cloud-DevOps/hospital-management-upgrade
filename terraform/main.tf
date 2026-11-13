@@ -40,14 +40,16 @@ module "eks" {
   enable_irsa                              = true
   enable_cluster_creator_admin_permissions = true
 
-  eks_managed_node_groups = {
-    default = {
-      ami_type       = var.ami_type
-      instance_types = var.node_instance_types
-      min_size       = var.node_min_size
-      max_size       = var.node_max_size
-      desired_size   = var.node_desired_size
-    }
+ eks_managed_node_groups = {
+  default = {
+    cluster_version = var.eks_version
+
+    ami_type       = var.ami_type
+    instance_types = var.node_instance_types
+
+    min_size     = var.node_min_size
+    max_size     = var.node_max_size
+    desired_size = var.node_desired_size
   }
 }
 
