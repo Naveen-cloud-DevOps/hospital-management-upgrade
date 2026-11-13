@@ -1,4 +1,3 @@
-
 terraform {
   required_version = ">= 1.10"
 
@@ -96,8 +95,6 @@ resource "aws_s3_bucket" "data" {
   bucket = "${var.project}-${data.aws_caller_identity.me.account_id}-${each.key}"
 }
 
-# Block public access
-
 resource "aws_s3_bucket_public_access_block" "data" {
   for_each = aws_s3_bucket.data
 
@@ -109,8 +106,6 @@ resource "aws_s3_bucket_public_access_block" "data" {
   restrict_public_buckets = true
 }
 
-# Enable bucket versioning
-
 resource "aws_s3_bucket_versioning" "data" {
   for_each = aws_s3_bucket.data
 
@@ -120,8 +115,6 @@ resource "aws_s3_bucket_versioning" "data" {
     status = "Enabled"
   }
 }
-
-# Enable server-side encryption
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "data" {
   for_each = aws_s3_bucket.data
@@ -144,8 +137,6 @@ resource "aws_sns_topic" "notify" {
 # ---------------- IAM POLICY FOR APPLICATION ----------------
 
 data "aws_iam_policy_document" "app" {
-
-  # S3 access to application buckets
   statement {
     actions = [
       "s3:PutObject",
@@ -157,23 +148,14 @@ data "aws_iam_policy_document" "app" {
     ]
   }
 
-  # SNS topic notifications
   statement {
-    actions = [
-      "sns:Publish"
-    ]
-
-    resources = [
-      aws_sns_topic.notify.arn
-    ]
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.notify.arn]
   }
 
-  # Direct SMS notifications
+  # Direct SMS publishing
   statement {
-    actions = [
-      "sns:Publish"
-    ]
-
+    actions   = ["sns:Publish"]
     resources = ["*"]
   }
 }
