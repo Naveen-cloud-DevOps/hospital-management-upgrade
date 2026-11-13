@@ -1,7 +1,7 @@
 name: terraform-infra
 on:
-  push:
-    branches: [main]      # any push to main triggers it
+  #push:
+   # branches: [main]      # any push to main triggers it
   workflow_dispatch:
 
 permissions:
