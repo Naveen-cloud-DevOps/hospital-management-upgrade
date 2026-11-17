@@ -26,7 +26,7 @@ automatically from GitHub, and it gets a clean web address (Route53 + CloudFront
 - **Admin pages**: weekly report for all patients, user management
 - **Languages**: English, Hindi, Odia
 - **Safety**: a database trigger blocks every `DELETE`, so saved data cannot be removed
-- **Own web address**: `https://ritikhms.<your-domain>` through Route53 and CloudFront (HTTPS)
+- **Own web address**: `https://ritikcarepulse.<your-domain>` through Route53 and CloudFront (HTTPS)
 - **Monitoring**: CPU/memory dashboards, pod logs (Loki) and CPU alert emails
 
 ## Tech stack
