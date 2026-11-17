@@ -16,6 +16,7 @@ spec:
             - configMapRef: {name: hms-config}
             - secretRef: {name: hms-secrets}
             - secretRef: {name: authdb-conn}   # RDS endpoints + credentials, created by the deploy job
+            - secretRef: {name: cognito-conn} 
           readinessProbe: {httpGet: {path: /healthz, port: 8000}, initialDelaySeconds: 5}
           resources: {requests: {cpu: 50m, memory: 128Mi}, limits: {memory: 256Mi}}
 ---
