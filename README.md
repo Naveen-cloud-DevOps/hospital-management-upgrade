@@ -14,7 +14,7 @@ automatically from GitHub, and it gets a clean web address (Route53 + CloudFront
 
 ## What it does
 
-- **Login** (there is no public sign-up: the first admin comes from a GitHub secret, and only an admin can create other accounts from the **Users** page)
+- **Login with Amazon Cognito** (there is no public sign-up: the first admin comes from a GitHub secret, and only an admin can create other accounts from the **Users** page; includes **Forgot password?** by emailed code)
 - **Patients**: registration, search, details, 5-week symptom records with photo upload (saved weeks cannot be changed)
 - **Welcome email**: every sign-in sends "Welcome to our CarePulse" to the user's email
 - **Doctors**: a separate `doctor` service with its **own database** (`hms-doctordb` + read replica). Admins can add doctors and change fees; doctors are never deleted, only set inactive. The seeded doctors have ids 1 to 6.
@@ -164,12 +164,12 @@ Shared by all services (`services/common.py`): JWT login check, database helpers
 │   ├── monitoring.yml         # Prometheus + Grafana + Loki (runs after cicd), prints the Grafana login
 │   ├── monitoring-tools.yml   # manual: reset Grafana password, CPU alert test
 │   └── debug-cluster.yml      # manual: cluster checks
-├── terraform/                 # main.tf, rds.tf, dns.tf, bastion.tf, variables.tf, outputs.tf, terraform.tfvars
+├── terraform/                 # main.tf, rds.tf, cognito.tf (sign-in), dns.tf, bastion.tf, variables.tf, outputs.tf, terraform.tfvars
 ├── services/
 │   ├── Dockerfile             # one Dockerfile for all 7 services (build arg SERVICE)
 │   ├── requirements.txt       # Python dependencies (keep these patched, Trivy fails the build otherwise)
 │   ├── common.py              # shared DB, JWT, S3 and SNS helpers
-│   ├── auth/main.py           # login, users (admin creates accounts), email test
+│   ├── auth/main.py           # sign-in with Amazon Cognito, forgot password, users (admin creates accounts), email test
 │   ├── patient/main.py        # patients, weekly records, queue, email details
 │   ├── billing/main.py        # payments, receipts, receipt email
 │   ├── appointment/main.py    # bookings and booking status (own DB + S3 bucket), asks doctor-service for doctor details
@@ -274,8 +274,25 @@ To release a change later, just push to `main`. Only changes to `terraform/`, `s
 ## Using the app
 
 - **Admin:** sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`. Admins see the Weekly report and Users pages and can create other admins.
-- **Create accounts:** the login page has no sign-up. Sign in as admin, open **Users**, and use **Add user** (name, email, password, role `employee` or `admin`). Staff then sign in with the email and password the admin gave them.
+- **Create accounts:** the login page has no sign-up. Sign in as admin, open **Users**, and use **Add user** (name, email, password, role `employee` or `admin`). Staff then sign in with the email and password the admin gave them. Accounts live in the Amazon Cognito user pool `hms-users`; the role is the Cognito group (`admin` or `employee`). Passwords need at least 8 characters with an upper-case letter, a lower-case letter and a number.
 - **Email:** emails go out through Amazon SNS. Each address must confirm once by clicking **Confirm subscription** in the message AWS sends. Until then no emails arrive. The **Account** page has **Resend email** and **Send test email** buttons.
+
+## Sign-in with Amazon Cognito
+
+```
+Browser --email+password--> auth-service --AdminInitiateAuth--> Cognito user pool "hms-users"
+                                 |  reads the group (admin / employee), returns the usual app token
+                                 v
+                      other services (unchanged: they check the app token)
+```
+
+- **Terraform** (`terraform/cognito.tf`) creates the user pool (email sign-in, admin-created users only), the `admin` and `employee` groups and the app client `hms-web`. `terraform/main.tf` gives the pod role (IRSA) permission to call Cognito on that pool only.
+- **Deploy job** looks up the pool and client ids with the AWS CLI and stores them in the `cognito-conn` secret, which `k8s/auth.yaml` loads (`COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`). The GitHub AWS key therefore also needs `cognito-idp:ListUserPools` and `cognito-idp:ListUserPoolClients`.
+- **First admin:** when the auth-service starts it creates `ADMIN_EMAIL` in Cognito with `ADMIN_PASSWORD` (group `admin`) if it does not exist. If that password breaks the rules above, the account is still created and you set a password with **Forgot password?**.
+- **Existing users** (created before Cognito) keep working: the first time one signs in with the right old password, the account is created in Cognito with that password. If the old password breaks the new rules they are told to use **Forgot password?**.
+- **Users page** (add / edit / delete / reset password) now changes the Cognito user and the group, and keeps the `users` table as the list shown on that page.
+- **Password reset emails** come from Cognito's built-in sender (limited to about 50 per day). Move to Amazon SES in `email_configuration` if you need more.
+- App tokens still last 8 hours (`make_token` in `services/common.py`). Disabling or deleting a user in Cognito stops new sign-ins, but an already issued token works until it expires.
 
 ## Monitoring
 
@@ -290,7 +307,9 @@ Installed by `monitoring.yml` after every successful deploy. Full guide: [monito
 
 | Method and path | Who | Purpose |
 |---|---|---|
-| `POST /auth/login` | public | Get a login token |
+| `POST /auth/login` | public | Check email + password with Amazon Cognito, get a login token (or a `NEW_PASSWORD_REQUIRED` step) |
+| `POST /auth/new-password` | public | Finish a `NEW_PASSWORD_REQUIRED` step (user must choose their own password) |
+| `POST /auth/forgot` / `forgot/confirm` | public | Cognito emails a 6-digit code / set a new password with that code |
 | `POST /auth/register` | admin | Create a user with any role |
 | `GET /auth/users` | admin | List users |
 | `POST /auth/notifications/resend` / `test` | signed in | Re-send the AWS confirmation email / send a test email |
