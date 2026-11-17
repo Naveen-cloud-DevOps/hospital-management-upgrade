@@ -168,6 +168,32 @@ jobs:
 
       - name: Connect to EKS
         run: aws eks update-kubeconfig --name hms-eks --region "$AWS_REGION"
+        
+      # - name: Register private GitHub repository with ArgoCD
+      #   env:
+      #     GH_PAT: ${{ secrets.GH_PAT }}
+      #     GH_USERNAME: ${{ secrets.GH_USERNAME || github.repository_owner }}
+      #   run: |
+      #     if [ -z "$GH_PAT" ]; then
+      #       echo "::error::GH_PAT secret is missing"
+      #       exit 1
+      #     fi
+
+      #     kubectl create secret generic hospital-management-repo \
+      #       --namespace argocd \
+      #       --from-literal=type=git \
+      #       --from-literal=url="https://github.com/${GITHUB_REPOSITORY}.git" \
+      #       --from-literal=username="$GH_USERNAME" \
+      #       --from-literal=password="$GH_PAT" \
+      #       --dry-run=client -o yaml | kubectl apply -f -
+
+      #     kubectl label secret hospital-management-repo \
+      #       --namespace argocd \
+      #       argocd.argoproj.io/secret-type=repository \
+      #       --overwrite
+
+      #     echo "Private GitHub repository credentials configured for ArgoCD" 
+
 
       - name: Install ArgoCD (idempotent)
         run: |
