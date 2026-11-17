@@ -493,7 +493,7 @@ const logo=()=>`<span class="logo" role="img" aria-label="${t('app')}">${ic('hea
 const T={
 en:{sec_overview:'Overview',sec_care:'Patient care',sec_services:'Services',sec_admin:'Admin',hero_h:'Care that never skips a beat',hero_p:'Patients, appointments, lab, pharmacy and billing — all in one place.',laboratory:'Laboratory',pharmacy:'Pharmacy',doctors:'Doctors',doctors_sub:'Specialists and consultation fees.',d_fee:'Fee',total_doctors:'Total doctors',todays_appts:"Today's appointments",pend_appr:'Awaiting approval',rev_total:'Total revenue',revenue:'Revenue',appt_chart:'Appointments - last 7 days',rev_chart:'Revenue - last 7 days',upcoming:'Upcoming appointments',no_doctors:'No doctors found',no_upcoming:'No upcoming appointments',remember:'Remember me',forgot:'Forgot password?',forgot_msg:'Ask your administrator to reset your password (Users page).',theme:'Light / dark mode',f1:'Patient records and history',f2:'Daily queue and appointments',f3:'Secure, role-based access',app:'CarePulse',tagline:'Patient records, the daily queue and payments in one place.',side_p:'Register patients, give out tokens, track five weeks of recovery and issue receipts - from any phone or computer.',
  signin:'Sign in',signup:'Create account',signin_t:'Welcome back',signup_t:'Create your account',signin_sub:'Sign in to continue to your dashboard.',signup_sub:'Create a staff account to start recording patients.',
- email:'Email address',password:'Password',confirm:'Confirm password',fullname:'Full name',pw_hint:'At least 8 characters',pw_mismatch:'The two passwords do not match.',
+ email:'Email address',password:'Password',confirm:'Confirm password',fullname:'Full name',pw_hint:'At least 8 characters, with upper & lower case and a number',forgot_t:'Reset your password',forgot_sub:'Enter your account email. Amazon Cognito will email you a 6-digit code.',send_code:'Send code',reset_t:'Enter the code',reset_sub:'We sent a 6-digit code to {e}. Enter it with your new password.',code:'Verification code',new_pw:'New password',reset_pw:'Reset password',back_signin:'Back to sign in',enter_email:'Enter your email address.',enter_code:'Enter the 6-digit code from the email.',code_sent:'If {e} has an account, a code is on its way.',pw_reset_ok:'Password changed. Please sign in.',newpw_t:'Choose a new password',newpw_sub:'For your security, set your own password before continuing.',set_pw:'Set password and sign in',pw_mismatch:'The two passwords do not match.',
  no_acc:'New here?',have_acc:'Already have an account?',signing:'Signing in…',creating:'Creating account…',welcome:'Account created. Welcome, {n}!',
  acc_note:'New accounts get staff access. An administrator can add more admins from the Users page.',
  dashboard:'Dashboard',patients:'Patients',queue:'Queue',payments:'Payments',reports:'Weekly report',users:'Users',logout:'Log out',
@@ -586,7 +586,7 @@ async function api(path,o={}){
  return d}
 
 function saveSession(r){S.tok=r.token;S.role=r.role;S.name=r.name;store.set('tok',r.token);store.set('role',r.role);store.set('name',r.name)}
-function signOut(){['tok','role','name'].forEach(store.del);S.tok=S.role=S.name='';S.detail=null;closeDrawer();history.replaceState(null,'','#/');render()}
+function signOut(){['tok','role','name'].forEach(store.del);S.tok=S.role=S.name='';S.mode='login';S.ch=null;S.detail=null;closeDrawer();history.replaceState(null,'','#/');render()}
 const route=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');return{page:h[0]||'dashboard',id:h[1]}};
 const go=h=>{location.hash=h};
 
@@ -604,6 +604,35 @@ const applyTheme=()=>{let m=store.get('theme');if(!m)m=matchMedia('(prefers-colo
 const pwField=(name,label,auto,hint)=>`<label class="fld"><span>${label}${hint?` <small>${hint}</small>`:''}</span><div class="pw"><input name="${name}" type="password" autocomplete="${auto}" required><button type="button" class="icon eye" data-act="eye" aria-label="Show or hide password">${ic('eye')}</button></div></label>`;
 const langSel=cls=>`<select class="lang ${cls||''}" data-change="lang" aria-label="Language"><option value="en"${S.lang==='en'?' selected':''}>English</option><option value="hi"${S.lang==='hi'?' selected':''}>हिन्दी</option><option value="or"${S.lang==='or'?' selected':''}>ଓଡ଼ିଆ</option><option value="te"${S.lang==='te'?' selected':''}>తెలుగు</option></select>`;
 
+/* ---------- sign-in screens (Amazon Cognito) ---------- */
+function authBody(){
+ const m=S.mode,back=`<div class="rowline" style="justify-content:center;margin-top:14px"><a href="#" data-act="mode" data-m="login">${t('back_signin')}</a></div>`,err=`<p class="ferr" id="ferr" role="alert"></p>`;
+ if(m==='forgot')return `<h2>${t('forgot_t')}</h2><p class="sub">${t('forgot_sub')}</p>
+    <form data-form="forgot" novalidate>
+     ${field('email','email',t('email'),'autocomplete="email" required value="'+esc(S.authEmail||'')+'"')}
+     ${err}<button class="btn block" type="submit">${t('send_code')}</button>${back}
+    </form>`;
+ if(m==='reset')return `<h2>${t('reset_t')}</h2><p class="sub">${t('reset_sub',{e:esc(S.authEmail||'')})}</p>
+    <form data-form="reset" novalidate>
+     ${field('code','text',t('code'),'inputmode="numeric" autocomplete="one-time-code" required')}
+     ${pwField('password',t('new_pw'),'new-password',t('pw_hint'))}${pwField('confirm',t('confirm'),'new-password')}
+     ${err}<button class="btn block" type="submit">${t('reset_pw')}</button>${back}
+    </form>`;
+ if(m==='newpw'&&S.ch)return `<h2>${t('newpw_t')}</h2><p class="sub">${t('newpw_sub')}</p>
+    <form data-form="newpw" novalidate>
+     ${pwField('password',t('new_pw'),'new-password',t('pw_hint'))}${pwField('confirm',t('confirm'),'new-password')}
+     ${err}<button class="btn block" type="submit">${t('set_pw')}</button>${back}
+    </form>`;
+ return `<h2>${t('signin_t')}</h2>
+    <p class="sub">${t('signin_sub')}</p>
+    <form data-form="login" novalidate>
+     ${field('email','email',t('email'),'autocomplete="email" required')}
+     ${pwField('password',t('password'),'current-password')}
+     <div class="rowline"><label class="chk"><input type="checkbox" name="remember" checked>${t('remember')}</label><a href="#" data-act="mode" data-m="forgot">${t('forgot')}</a></div>
+     ${err}
+     <button class="btn block" type="submit">${t('signin')}</button>
+    </form>`}
+
 function authHTML(){
  const su=false; // self sign-up is disabled: only an admin creates accounts (Users page)
  return `<div class="auth">
@@ -616,21 +645,13 @@ function authHTML(){
   <div class="auth-top">${themeBtn()}${langSel()}</div>
   <div class="auth-card">
    <div class="brandrow mob">${logo()}<span>${t('app')}</span></div>
-   <h2>${su?t('signup_t'):t('signin_t')}</h2>
-   <p class="sub">${su?t('signup_sub'):t('signin_sub')}</p>
-   <form data-form="${su?'signup':'login'}" novalidate>
-    ${su?field('name','text',t('fullname'),'autocomplete="name" required'):''}
-    ${field('email','email',t('email'),'autocomplete="email" required')}
-    ${su?pwField('password',t('password'),'new-password',t('pw_hint'))+`<div class="meter" id="meter"><i></i><i></i><i></i></div>`+pwField('confirm',t('confirm'),'new-password'):pwField('password',t('password'),'current-password')}
-    ${su?'':`<div class="rowline"><label class="chk"><input type="checkbox" name="remember" checked>${t('remember')}</label><a href="#" data-act="forgot">${t('forgot')}</a></div>`}
-    <p class="ferr" id="ferr" role="alert"></p>
-    <button class="btn block" type="submit">${su?t('signup'):t('signin')}</button>
-   </form>
+    ${authBody()}
   </div>
  </main></div>`}
 
 async function doLogin(email,password){
  const r=await api('/auth/login',{json:{email:email.trim(),password},noLogout:true});
+ if(r.challenge){S.ch=r;S.mode='newpw';await render();return}
  saveSession(r);history.replaceState(null,'','#/dashboard');await render()}
 
 const mailKey=()=>'mail_'+me();
@@ -1111,6 +1132,24 @@ const FORMS={
   const d=Object.fromEntries(new FormData(f));
   await busy(btn,'…',()=>api('/pharmacy/medicines',{json:{name:d.name.trim(),unit:(d.unit||'tablet').trim(),unit_price:+d.unit_price,stock:+d.stock}}));
   toast('Medicine added');render()},
+ async forgot(f,btn){
+   const em=(Object.fromEntries(new FormData(f)).email||'').trim().toLowerCase();
+   if(!em)return ferr(t('enter_email'));
+   await busy(btn,'…',()=>api('/auth/forgot',{json:{email:em},noLogout:true}));
+   S.authEmail=em;S.mode='reset';await render();toast(t('code_sent',{e:em}))},
+ async reset(f,btn){
+   const d=Object.fromEntries(new FormData(f));
+   if(!d.code.trim())return ferr(t('enter_code'));
+   if(d.password!==d.confirm)return ferr(t('pw_mismatch'));
+   if(d.password.length<8)return ferr(t('pw_hint')+'.');
+   await busy(btn,'…',()=>api('/auth/forgot/confirm',{json:{email:S.authEmail,code:d.code.trim(),new_password:d.password},noLogout:true}));
+   S.mode='login';await render();toast(t('pw_reset_ok'))},
+ async newpw(f,btn){
+   const d=Object.fromEntries(new FormData(f));
+   if(d.password!==d.confirm)return ferr(t('pw_mismatch'));
+   if(d.password.length<8)return ferr(t('pw_hint')+'.');
+   const r=await busy(btn,'…',()=>api('/auth/new-password',{json:{email:S.ch.email,username:S.ch.username,session:S.ch.session,new_password:d.password},noLogout:true}));
+   S.ch=null;saveSession(r);history.replaceState(null,'','#/dashboard');await render()},
  async login(f,btn){
   const d=Object.fromEntries(new FormData(f));
   if(!d.email.trim()||!d.password)return ferr('Enter your email and password.');
