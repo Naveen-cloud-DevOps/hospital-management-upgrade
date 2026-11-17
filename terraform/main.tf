@@ -108,7 +108,22 @@ resource "aws_sns_topic" "notify" {
   }
 }
 
-# ---------------- IAM for pods (IRSA). No s3:DeleteObject on purpose ----------------
+# ---------------- IAM for pods (IRSA). No s3:DeleteObject on purpose  change ----------------
+# data "aws_iam_policy_document" "app" {
+#   statement {
+#     actions   = ["s3:PutObject", "s3:GetObject"]
+#     resources = [for b in aws_s3_bucket.data : "${b.arn}/*"]
+#   }
+#   statement {
+#     actions   = ["sns:Publish", "sns:Subscribe"]
+#     resources = [aws_sns_topic.notify.arn]
+#   }
+#   statement {
+#     # direct SMS to a phone number (appointment confirmation)
+#     actions   = ["sns:Publish"]
+#     resources = ["*"]
+#   }
+# }
 data "aws_iam_policy_document" "app" {
   statement {
     actions   = ["s3:PutObject", "s3:GetObject"]
@@ -122,6 +137,23 @@ data "aws_iam_policy_document" "app" {
     # direct SMS to a phone number (appointment confirmation)
     actions   = ["sns:Publish"]
     resources = ["*"]
+  }
+
+  # Amazon Cognito: the auth-service signs staff in and manages their accounts
+  statement {
+    actions = [
+      "cognito-idp:AdminInitiateAuth",
+      "cognito-idp:AdminRespondToAuthChallenge",
+      "cognito-idp:AdminCreateUser",
+      "cognito-idp:AdminGetUser",
+      "cognito-idp:AdminSetUserPassword",
+      "cognito-idp:AdminUpdateUserAttributes",
+      "cognito-idp:AdminAddUserToGroup",
+      "cognito-idp:AdminRemoveUserFromGroup",
+      "cognito-idp:AdminListGroupsForUser",
+      "cognito-idp:AdminDeleteUser",
+    ]
+    resources = [aws_cognito_user_pool.main.arn]
   }
 }
 
@@ -144,3 +176,7 @@ module "app_irsa" {
     main = { provider_arn = module.eks.oidc_provider_arn, namespace_service_accounts = ["${var.k8s_namespace}:${var.k8s_service_account}"] }
   }
 }
+
+
+
+

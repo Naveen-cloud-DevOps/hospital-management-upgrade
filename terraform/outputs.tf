@@ -4,3 +4,5 @@ output "sns_topic_arn" { value = aws_sns_topic.notify.arn }
 output "buckets" { value = { for k, b in aws_s3_bucket.data : k => b.bucket } }
 output "db_write_endpoints" { value = { for k, d in aws_db_instance.primary : k => d.address } }
 output "db_read_endpoints" { value = { for k, d in aws_db_instance.replica : k => d.address } }
+output "cognito_user_pool_id" { value = aws_cognito_user_pool.main.id }
+output "cognito_client_id"    { value = aws_cognito_user_pool_client.web.id }

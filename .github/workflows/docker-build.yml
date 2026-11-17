@@ -208,6 +208,22 @@ jobs:
               --dry-run=client -o yaml | kubectl apply -f -
           done
 
+      # ---- ADDED: Amazon Cognito ids for the auth-service (pool + app client created by terraform/cognito.tf) ----
+      - name: Create Cognito connection secret (user pool + app client discovered automatically)
+        run: |
+          POOL=$(aws cognito-idp list-user-pools --max-results 60 --query "UserPools[?Name=='hms-users'].Id | [0]" --output text)
+          if [ -z "$POOL" ] || [ "$POOL" = "None" ]; then
+            echo "::error::Cognito user pool 'hms-users' not found. Did terraform-infra apply cognito.tf?"; exit 1
+          fi
+          CLIENT=$(aws cognito-idp list-user-pool-clients --user-pool-id "$POOL" --max-results 60 --query "UserPoolClients[?ClientName=='hms-web'].ClientId | [0]" --output text)
+          if [ -z "$CLIENT" ] || [ "$CLIENT" = "None" ]; then
+            echo "::error::Cognito app client 'hms-web' not found in pool $POOL"; exit 1
+          fi
+          echo "cognito: pool=$POOL client=$CLIENT"
+          kubectl -n hms create secret generic cognito-conn \
+            --from-literal=COGNITO_USER_POOL_ID="$POOL" --from-literal=COGNITO_CLIENT_ID="$CLIENT" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Deploy with ArgoCD
         run: kubectl apply -f argocd/application.yaml
 
