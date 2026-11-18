@@ -82,7 +82,7 @@ def save_bill(sale, lines):
 
 
 @app.get("/pharmacy/medicines")
-def medicines(_=Depends(current_user)):
+def medicines(_=Depends(need("pharmacy"))):
     return write("SELECT id,name,unit,unit_price,stock FROM medicines ORDER BY name", fetch=True)  # primary: stock is always current
 
 
@@ -105,7 +105,7 @@ def restock(mid: int, r: RestockIn, _=Depends(admin_only)):
 
 
 @app.post("/pharmacy/sales")
-def sell(b: SaleIn, u=Depends(current_user)):
+def sell(b: SaleIn, u=Depends(need("pharmacy"))):
     if b.payment_method not in ("cash", "upi", "card"):
         raise HTTPException(400, "Payment must be cash, upi or card")
     if not b.items or len(b.items) > 50:
@@ -144,7 +144,7 @@ def sell(b: SaleIn, u=Depends(current_user)):
 
 
 @app.get("/pharmacy/sales")
-def sales(u=Depends(current_user)):
+def sales(u=Depends(need("pharmacy"))):
     q = "SELECT id,patient_name,items,total,payment_method,created_at FROM pharmacy_sales "
     if u["role"] == "admin":
         return write(q + "ORDER BY id DESC", fetch=True)
@@ -152,7 +152,7 @@ def sales(u=Depends(current_user)):
 
 
 @app.get("/pharmacy/sales/{sid}/bill")
-def bill(sid: int, u=Depends(current_user)):
+def bill(sid: int, u=Depends(need("pharmacy"))):
     rows = write("SELECT * FROM pharmacy_sales WHERE id=%s", (sid,), fetch=True)
     if not rows:
         raise HTTPException(404, "Sale not found")
