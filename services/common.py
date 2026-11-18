@@ -62,8 +62,14 @@ def init_db(ddl, tables):
 
 
 # ---------- auth ----------
-def make_token(email, role):
-    return jwt.encode({"sub": email, "role": role, "exp": int(time.time()) + 8 * 3600}, SECRET, algorithm="HS256")
+SERVICES = ("appointments", "laboratory", "pharmacy", "queue")   # services an admin can give to a staff user
+
+
+def make_token(email, role, perms=None):
+    claims = {"sub": email, "role": role, "exp": int(time.time()) + 8 * 3600}
+    if perms is not None:
+        claims["perms"] = list(perms)          # services this staff user may use
+    return jwt.encode(claims, SECRET, algorithm="HS256")
 
 
 def current_user(authorization: str = Header("")):
@@ -77,6 +83,17 @@ def admin_only(u=Depends(current_user)):
     if u["role"] != "admin":
         raise HTTPException(403, "Admins only")
     return u
+
+
+def need(service):
+    """Dependency: admins, internal services and staff who were given `service` may pass; everyone else gets 403.
+    (Tokens issued before per-service access existed have no 'perms' claim and keep working until they expire.)"""
+    def check(u=Depends(current_user)):
+        perms = u.get("perms")
+        if u["role"] in ("admin", "service") or perms is None or service in perms:
+            return u
+        raise HTTPException(403, f"You do not have access to the {service} service. Ask an administrator.")
+    return check
 
 
 # ---------- S3 ----------
