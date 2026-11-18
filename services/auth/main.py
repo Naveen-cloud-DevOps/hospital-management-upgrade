@@ -12,7 +12,8 @@ app = base_app()
 DDL = """CREATE TABLE IF NOT EXISTS users(
  id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL, password_hash TEXT NOT NULL,
  role TEXT NOT NULL CHECK (role IN ('admin','employee')), created_at TIMESTAMPTZ DEFAULT now());
-ALTER TABLE users ADD COLUMN IF NOT EXISTS cognito_sub TEXT;"""
+ALTER TABLE users ADD COLUMN IF NOT EXISTS cognito_sub TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS services TEXT;"""   # comma list of allowed services; NULL = old account, all services
 
 POOL = os.environ.get("COGNITO_USER_POOL_ID", "")
 CLIENT = os.environ.get("COGNITO_CLIENT_ID", "")
@@ -115,6 +116,23 @@ def sign_in(email, password):
         raise
 
 
+def parse_services(raw):
+    """DB text -> list. NULL (accounts made before this feature) means every service."""
+    if raw is None:
+        return list(SERVICES)
+    return [x for x in raw.split(",") if x in SERVICES]
+
+
+def clean_services(role, services):
+    """Validate the services an admin picked. Admins always have everything, so nothing is stored for them."""
+    if role == "admin":
+        return list(SERVICES)
+    bad = [x for x in (services or []) if x not in SERVICES]
+    if bad:
+        raise HTTPException(400, "Unknown service: " + ", ".join(bad))
+    return [x for x in SERVICES if x in (services or [])]
+
+
 def sync_profile(email, name, role, sub=None):
     rows = write("UPDATE users SET name=%s, role=%s, password_hash=%s, cognito_sub=COALESCE(%s, cognito_sub) "
                  "WHERE lower(email)=lower(%s) RETURNING id", (name, role, MARK, sub, email), fetch=True)
@@ -134,6 +152,8 @@ def finish_login(email, resp):
     role = "admin" if "admin" in claims.get("cognito:groups", []) else "employee"
     name = claims.get("name") or email.split("@")[0]
     sync_profile(email, name, role, claims.get("sub"))
+    row = write("SELECT services FROM users WHERE lower(email)=lower(%s)", (email,), fetch=True)
+    services = list(SERVICES) if role == "admin" else parse_services(row[0]["services"] if row else None)
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     notify(email, "Welcome to our CarePulse",
            f"Hi {name},\n\nWelcome to our CarePulse system!\n"
@@ -141,7 +161,7 @@ def finish_login(email, resp):
            "You can now book a doctor appointment from the Appointments page. "
            "We will email you the doctor name, date and time as soon as it is booked.\n\n"
            "Thank you,\nCarePulse Team")
-    return {"token": make_token(email, role), "role": role, "name": name}
+    return {"token": make_token(email, role, services), "role": role, "name": name, "services": services}
 
 
 def migrate_legacy(email, password):
@@ -180,6 +200,7 @@ class NewUser(BaseModel):
     name: str
     password: str
     role: str = "employee"
+    services: list[str] = []          # which services a staff user may use (ignored for admins)
 
 
 class Login(BaseModel):
@@ -282,19 +303,26 @@ def register(u: NewUser, _=Depends(admin_only)):
         raise HTTPException(400, "Role must be admin or employee")
     if write("SELECT 1 FROM users WHERE lower(email)=lower(%s)", (email,), fetch=True):
         raise HTTPException(409, "User already exists")
+    services = clean_services(u.role, u.services)
+    if u.role == "employee" and not services:
+        raise HTTPException(400, "Choose at least one service for this user (or make them an admin)")
     cognito_create(email, name, u.role, u.password)
     try:
-        write("INSERT INTO users(email,name,password_hash,role) VALUES(%s,%s,%s,%s)", (email, name, MARK, u.role))
+        write("INSERT INTO users(email,name,password_hash,role,services) VALUES(%s,%s,%s,%s,%s)",
+              (email, name, MARK, u.role, ",".join(services)))
     except psycopg2.errors.UniqueViolation:
         raise HTTPException(409, "User already exists")
-    put_json(os.environ["USER_BUCKET"], f"users/{email}.json", {"email": email, "name": name, "role": u.role})
+    put_json(os.environ["USER_BUCKET"], f"users/{email}.json", {"email": email, "name": name, "role": u.role, "services": services})
     subscribe(email)
     return {"ok": True}
 
 
 @app.get("/auth/users")
 def users(_=Depends(admin_only)):
-    return read("SELECT id,email,name,role,created_at FROM users ORDER BY id")
+    rows = read("SELECT id,email,name,role,services,created_at FROM users ORDER BY id")
+    for r in rows:
+        r["services"] = list(SERVICES) if r["role"] == "admin" else parse_services(r["services"])
+    return rows
 
 
 @app.post("/auth/notifications/resend")
@@ -314,6 +342,7 @@ class UserEdit(BaseModel):
     name: str
     role: str
     password: str = ""
+    services: list[str] | None = None   # None = leave the user's services as they are
 
 
 def main_admin(email):
@@ -330,10 +359,18 @@ def edit_user(uid: int, b: UserEdit, adm=Depends(admin_only)):
         raise HTTPException(400, "Role must be admin or employee")
     if b.password and len(b.password) < 8:
         raise HTTPException(400, "Password needs at least 8 characters")
-    rows = write("SELECT email, role, password_hash FROM users WHERE id=%s", (uid,), fetch=True)
+    rows = write("SELECT email, role, password_hash, services FROM users WHERE id=%s", (uid,), fetch=True)
     if not rows:
         raise HTTPException(404, "User not found")
     row = rows[0]
+    if b.role == "admin":
+        services = list(SERVICES)
+    elif b.services is not None:
+        services = clean_services(b.role, b.services)
+        if not services:
+            raise HTTPException(400, "Choose at least one service for this user (or make them an admin)")
+    else:
+        services = parse_services(row["services"])
     email = row["email"].lower()
     if b.role != row["role"] and (email == adm["sub"].lower() or main_admin(email)):
         raise HTTPException(400, "The role of your own account or of the main administrator cannot be changed")
@@ -354,9 +391,10 @@ def edit_user(uid: int, b: UserEdit, adm=Depends(admin_only)):
     elif b.password:
         cognito_create(email, name, b.role, b.password)
         password_hash = MARK
-    write("UPDATE users SET name=%s, role=%s, password_hash=%s WHERE id=%s", (name, b.role, password_hash, uid))
+    write("UPDATE users SET name=%s, role=%s, password_hash=%s, services=%s WHERE id=%s",
+          (name, b.role, password_hash, ",".join(services), uid))
     try:
-        put_json(os.environ["USER_BUCKET"], f"users/{row['email']}.json", {"email": row["email"], "name": name, "role": b.role})
+        put_json(os.environ["USER_BUCKET"], f"users/{row['email']}.json", {"email": row["email"], "name": name, "role": b.role, "services": services})
     except Exception as e:
         print("user s3 record failed", e)
     return {"ok": True}
