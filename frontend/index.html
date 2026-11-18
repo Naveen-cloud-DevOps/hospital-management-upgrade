@@ -237,6 +237,14 @@ select,option,optgroup{background-color:var(--surface);color:var(--ink)}
 .pill.dx{background:var(--soft);color:var(--muted);margin:1px 4px 1px 0;border:1px solid var(--line)}
 .pill.role{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
 .pill.admin{background:color-mix(in srgb,#8b5cf6 16%,transparent);color:#7c3aed;border-color:transparent}
+.svcs{border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0;min-width:0}
+.svcs legend{font-size:13px;font-weight:600;padding:0 6px;color:var(--ink)}
+.svc{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;background:var(--soft)}
+.svc span{display:inline-flex;align-items:center;gap:6px}
+.svc input{accent-color:var(--acc);width:16px;height:16px;flex:none}
+.svc:has(input:checked){background:var(--acc-l);border-color:var(--acc);color:var(--brand-d);font-weight:600}
+form:has(select[name=role] option[value=admin]:checked) .svcs{display:none}
+.pills{display:flex;flex-wrap:wrap;gap:4px}
 [data-theme=dark] .pill.admin{color:#c4b5fd}
 
 .empty{padding:44px 20px;text-align:center;color:var(--muted)}
@@ -553,7 +561,7 @@ const BLOOD=['A+','A-','B+','B-','O+','O-','AB+','AB-'];
 
 /* ---------- state + helpers ---------- */
 const store={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
-const S={tok:store.get('tok'),role:store.get('role'),name:store.get('name'),lang:['en','hi','or','te'].includes(store.get('lang'))?store.get('lang'):'en',mode:'login',
+const S={tok:store.get('tok'),role:store.get('role'),name:store.get('name'),services:(()=>{try{const v=JSON.parse(store.get('services')||'null');return Array.isArray(v)?v:null}catch(e){return null}})(),lang:['en','hi','or','te'].includes(store.get('lang'))?store.get('lang'):'en',mode:'login',
  pts:[],queue:[],pays:[],docs:[],appts:[],users:[],wrep:[],detail:null,wk:0,q:''};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -585,10 +593,19 @@ async function api(path,o={}){
   throw new Error(typeof m==='string'&&m?m:(r.statusText||'Something went wrong'))}
  return d}
 
-function saveSession(r){S.tok=r.token;S.role=r.role;S.name=r.name;store.set('tok',r.token);store.set('role',r.role);store.set('name',r.name)}
-function signOut(){['tok','role','name'].forEach(store.del);S.tok=S.role=S.name='';S.mode='login';S.ch=null;S.detail=null;closeDrawer();history.replaceState(null,'','#/');render()}
+function saveSession(r){S.tok=r.token;S.role=r.role;S.name=r.name;S.services=Array.isArray(r.services)?r.services:null;store.set('tok',r.token);store.set('role',r.role);store.set('name',r.name);store.set('services',JSON.stringify(S.services))}
+function signOut(){['tok','role','name','services'].forEach(store.del);S.tok=S.role=S.name='';S.services=null;S.mode='login';S.ch=null;S.detail=null;closeDrawer();history.replaceState(null,'','#/');render()}
 const route=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');return{page:h[0]||'dashboard',id:h[1]}};
 const go=h=>{location.hash=h};
+/* ---- per-service access ---- */
+const SERVICES=[['appointments','cal','Appointments'],['laboratory','flask','Laboratory'],['pharmacy','pill','Pharmacy']];
+const svcLabel=k=>(SERVICES.find(x=>x[0]===k)||[0,0,k])[2];
+/* admin: everything. Staff with a services list: only those pages (+ account). Old sessions without a list keep the old behaviour. */
+const canPage=p=>S.role==='admin'||p==='account'||(Array.isArray(S.services)?S.services.includes(p):!['reports','users'].includes(p));
+const home=()=>S.role==='admin'||!Array.isArray(S.services)?'dashboard':(SERVICES.map(x=>x[0]).find(k=>S.services.includes(k))||'account');
+const getSvc=f=>[...f.querySelectorAll('input[name=svc]:checked')].map(x=>x.value);
+const svcPicker=(role,services)=>{const sel=Array.isArray(services)?services:[];return `<label class="fld"><span>Access type</span><select name="role"><option value="employee"${role!=='admin'?' selected':''}>Staff - only the services I tick</option><option value="admin"${role==='admin'?' selected':''}>Admin - everything</option></select></label><fieldset class="svcs"><legend>Services this user can use</legend>${SERVICES.map(([k,i,l])=>`<label class="svc"><input type="checkbox" name="svc" value="${k}"${sel.includes(k)?' checked':''}><span>${ic(i,17)}${l}</span></label>`).join('')}</fieldset>`};
+const svcPills=u=>u.role==='admin'?'<span class="pill role admin">Admin - everything</span>':(Array.isArray(u.services)?(u.services.length?`<div class="pills">${u.services.map(k=>`<span class="pill role">${esc(svcLabel(k))}</span>`).join('')}</div>`:'<small>No service given</small>'):'<span class="pill role">employee</span>');
 
 async function busy(btn,label,fn){
  const old=btn?btn.innerHTML:'';if(btn){btn.disabled=true;btn.textContent=label}
@@ -652,7 +669,7 @@ function authHTML(){
 async function doLogin(email,password){
  const r=await api('/auth/login',{json:{email:email.trim(),password},noLogout:true});
  if(r.challenge){S.ch=r;S.mode='newpw';await render();return}
- saveSession(r);history.replaceState(null,'','#/dashboard');await render()}
+ saveSession(r);history.replaceState(null,'','#/'+home());await render()}
 
 const mailKey=()=>'mail_'+me();
 function mailBanner(){
@@ -665,12 +682,13 @@ function shell(page,inner){
  const admin=S.role==='admin';
  const groups=[['sec_overview',[['dashboard','grid']]],['sec_care',[['patients','users'],['queue','clock'],['appointments','cal'],['doctors','steth']]],['sec_services',[['laboratory','flask'],['pharmacy','pill'],['payments','card']]]];
  if(admin)groups.push(['sec_admin',[['reports','file'],['users','shield']]]);
+ const vis=groups.map(([g,l])=>[g,l.filter(([k])=>canPage(k))]).filter(([g,l])=>l.length);
  const title=t(page==='patient'?'patients':page);
  return `<div class="shell">
  <div class="hot" aria-hidden="true"></div>
  <aside class="side">
   <div class="brandrow">${logo()}<span>${t('app')}</span></div>
-  <nav class="nav">${groups.map(([g,l])=>`<div class="nav-sec">${t(g)}</div>`+l.map(([k,i])=>`<a href="#/${k}" class="${k===page?'on':''}">${ic(i,19)}<span>${t(k)}</span></a>`).join('')).join('')}</nav>
+  <nav class="nav">${vis.map(([g,l])=>`<div class="nav-sec">${t(g)}</div>`+l.map(([k,i])=>`<a href="#/${k}" class="${k===page?'on':''}">${ic(i,19)}<span>${t(k)}</span></a>`).join('')).join('')}</nav>
   <a class="side-foot" href="#/account" style="color:inherit;text-decoration:none"><span class="av">${esc((S.name||'?').slice(0,2).toUpperCase())}</span><div><b>${esc(S.name)}</b><small>${esc(admin?'Administrator':'Staff')}</small></div></a>
   <button class="side-out" data-act="logout">${ic('out',18)}<span>${t('logout')}</span></button>
  </aside>
@@ -687,8 +705,9 @@ async function render(){
  const root=$('#root');
  if(!S.tok){root.innerHTML=authHTML();return}
  let {page,id}=route();
- if(['reports','users'].includes(page)&&S.role!=='admin'){go('#/dashboard');return}
+ if(['reports','users'].includes(page)&&S.role!=='admin'){go('#/'+home());return}
  if(!['dashboard','patients','doctors','queue','payments','appointments','laboratory','pharmacy','reports','users','account','revenue'].includes(page))page='dashboard';
+ if(!canPage(page)){go('#/'+home());return}
  const navPage=page;
  const rid=++renderId;
  root.innerHTML=shell(navPage==='patients'&&id?'patient':navPage,`<div class="loading">…</div>`);
@@ -916,12 +935,12 @@ async function loadSlots(){
  catch(e){box.innerHTML=`<p class="hint">${esc(e.message)}</p>`}}
 async function refreshAppts(){try{S.appts=await api('/appointments')}catch(e){return}const b=$('#abody');if(b)b.innerHTML=apptRows()}
 
-function userRows(){return S.users.map(u=>`<tr><td><div class="who"><span class="av">${esc((u.name||'?').slice(0,2).toUpperCase())}</span><b>${esc(u.name)}</b></div></td><td>${esc(u.email)}</td><td><span class="pill role ${u.role==='admin'?'admin':''}">${esc(u.role)}</span></td><td>${fmtD(u.created_at)}</td><td><button class="btn ghost sm" type="button" data-act="editUser" data-id="${u.id}">Edit</button>${u.email===me()?'':` <button class="btn ghost sm" type="button" style="color:var(--red)" data-act="delUser" data-id="${u.id}">Delete</button>`}</td></tr>`).join('')}
+function userRows(){return S.users.map(u=>`<tr><td><div class="who"><span class="av">${esc((u.name||'?').slice(0,2).toUpperCase())}</span><b>${esc(u.name)}</b></div></td><td>${esc(u.email)}</td><td>${svcPills(u)}</td><td>${fmtD(u.created_at)}</td><td><button class="btn ghost sm" type="button" data-act="editUser" data-id="${u.id}">Edit</button>${u.email===me()?'':` <button class="btn ghost sm" type="button" style="color:var(--red)" data-act="delUser" data-id="${u.id}">Delete</button>`}</td></tr>`).join('')}
 function pUsers(){
- return `<div class="page-h"><div><h1>${t('users')}</h1></div></div><div class="cols"><div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>${t('name')}</th><th>${t('email')}</th><th>${t('role')}</th><th>${t('joined')}</th><th></th></tr></thead><tbody id="ubody">${userRows()}</tbody></table></div></div>
+ return `<div class="page-h"><div><h1>${t('users')}</h1></div></div><div class="cols"><div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>${t('name')}</th><th>${t('email')}</th><th>Access</th><th>${t('joined')}</th><th></th></tr></thead><tbody id="ubody">${userRows()}</tbody></table></div></div>
  <div class="panel"><div class="panel-h"><h3>${t('add_user')}</h3></div><div class="panel-b"><form data-form="user" style="display:grid;gap:14px">
   ${field('name','text',t('name'),'required')}${field('email','email',t('email'),'required')}${pwField('password',t('password'),'new-password',t('pw_hint'))}
-  <label class="fld"><span>${t('role')}</span><select name="role"><option value="employee">employee</option><option value="admin">admin</option></select></label>
+  ${svcPicker('employee',[])}
   <p class="ferr" id="ferr" role="alert"></p><div><button class="btn" type="submit">${t('add_user')}</button></div></form></div></div></div>`}
 
 function pAccount(){
@@ -1149,7 +1168,7 @@ const FORMS={
    if(d.password!==d.confirm)return ferr(t('pw_mismatch'));
    if(d.password.length<8)return ferr(t('pw_hint')+'.');
    const r=await busy(btn,'…',()=>api('/auth/new-password',{json:{email:S.ch.email,username:S.ch.username,session:S.ch.session,new_password:d.password},noLogout:true}));
-   S.ch=null;saveSession(r);history.replaceState(null,'','#/dashboard');await render()},
+   S.ch=null;saveSession(r);history.replaceState(null,'','#/'+home());await render()},
  async login(f,btn){
   const d=Object.fromEntries(new FormData(f));
   if(!d.email.trim()||!d.password)return ferr('Enter your email and password.');
@@ -1193,6 +1212,9 @@ const FORMS={
  async user(f,btn){
   const d=Object.fromEntries(new FormData(f));d.email=d.email.trim().toLowerCase();d.name=d.name.trim();
   if(d.password.length<8)return ferr(t('pw_hint')+'.');
+  const svc=getSvc(f);delete d.svc;
+  if(d.role!=='admin'&&!svc.length)return ferr('Tick at least one service for this user.');
+  d.services=d.role==='admin'?SERVICES.map(x=>x[0]):svc;
   await busy(btn,'…',()=>api('/auth/register',{json:d}));toast(t('user_added'));render()}
 };
 /* ---------- edit / delete (added) ---------- */
@@ -1240,7 +1262,7 @@ Object.assign(ACT,{
   openDrawer('Edit medicine',eForm('medEdit',m.id,field('name','text','Medicine name','required maxlength="120" '+val(m.name))+field('unit','text','Unit (tablet, capsule, bottle...)','maxlength="30" '+val(m.unit))+field('unit_price','number','Price per unit (₹)','required min="0" step="0.01" inputmode="decimal" '+val(m.unit_price))+field('stock','number','Stock','required min="0" step="1" inputmode="numeric" '+val(m.stock))))},
  delMed:b=>{const m=byId(S.meds,b.dataset.id);if(!m||!confirm('Delete '+m.name+' permanently? Past bills keep their own copy of it.'))return;delReq('/pharmacy/medicines/'+m.id,'Medicine deleted',()=>refreshPharmacy())},
  editUser:b=>{const u=byId(S.users,b.dataset.id);if(!u)return;
-  openDrawer('Edit user',eForm('userEdit',u.id,field('name','text',t('name'),'required '+val(u.name))+`<label class="fld"><span>${t('email')}</span><input type="email" value="${esc(u.email)}" disabled></label>`+`<label class="fld"><span>${t('role')}</span><select name="role"><option value="employee"${u.role==='employee'?' selected':''}>employee</option><option value="admin"${u.role==='admin'?' selected':''}>admin</option></select></label>`+`<label class="fld"><span>${t('password')} <small>(leave empty to keep the current one)</small></span><input name="password" type="password" autocomplete="new-password" minlength="8"></label>`))},
+  openDrawer('Edit user',eForm('userEdit',u.id,field('name','text',t('name'),'required '+val(u.name))+`<label class="fld"><span>${t('email')}</span><input type="email" value="${esc(u.email)}" disabled></label>`+svcPicker(u.role,u.services)+`<label class="fld"><span>${t('password')} <small>(leave empty to keep the current one)</small></span><input name="password" type="password" autocomplete="new-password" minlength="8"></label>`))},
  delUser:b=>{const u=byId(S.users,b.dataset.id);if(!u||!confirm('Delete the account of '+u.name+' ('+u.email+')? This cannot be undone.'))return;delReq('/auth/users/'+u.id,'User deleted',()=>render())}
 });
 Object.assign(FORMS,{
@@ -1254,7 +1276,10 @@ Object.assign(FORMS,{
   await busy(btn,'…',()=>api('/pharmacy/medicines/'+d.id,{method:'PUT',json:{name:d.name.trim(),unit:(d.unit||'tablet').trim(),unit_price:+d.unit_price,stock:+d.stock}}));closeDrawer();toast('Medicine updated');await refreshPharmacy()}),
  userEdit:G(async(f,btn)=>{const d=Object.fromEntries(new FormData(f));
   if(d.password&&d.password.length<8)throw new Error(t('pw_hint')+'.');
-  await busy(btn,'…',()=>api('/auth/users/'+d.id,{method:'PUT',json:{name:d.name.trim(),role:d.role,password:d.password||''}}));closeDrawer();toast('User updated');render()})
+  const svc=getSvc(f);
+  if(d.role!=='admin'&&!svc.length)throw new Error('Tick at least one service for this user.');
+  const services=d.role==='admin'?SERVICES.map(x=>x[0]):svc;
+  await busy(btn,'…',()=>api('/auth/users/'+d.id,{method:'PUT',json:{name:d.name.trim(),role:d.role,services,password:d.password||''}}));closeDrawer();toast('User updated');render()})
 });
 
 document.addEventListener('submit',async e=>{
@@ -1264,7 +1289,7 @@ document.addEventListener('submit',async e=>{
 
 window.addEventListener('hashchange',()=>render());
 setInterval(()=>{if(S.tok&&!document.hidden&&['queue','dashboard'].includes(route().page)&&!$('#overlay').innerHTML)refreshQueue()},20000);
-applyTheme();applyAccent();try{if(store.get('remember')==='0'&&!sessionStorage.getItem('alive')){['tok','role','name'].forEach(store.del);S.tok=S.role=S.name=''}}catch(e){}
+applyTheme();applyAccent();try{if(store.get('remember')==='0'&&!sessionStorage.getItem('alive')){['tok','role','name','services'].forEach(store.del);S.tok=S.role=S.name='';S.services=null}}catch(e){}
 render();
 </script>
 </body>
