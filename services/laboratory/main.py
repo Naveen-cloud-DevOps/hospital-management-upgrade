@@ -64,11 +64,11 @@ def order_text(o, title):
              f"Test: {o['test_name']}", f"Price: Rs. {float(o['price']):.2f}", f"Status: {o['status']}"]
     if o.get("result_text"):
         lines += ["", "RESULT", o["result_text"]]
-    return "\n".join(lines + ["", "Thank you - Ritik HMS", ""])
+    return "\n".join(lines + ["", "Thank you - Ritik CarePluse", ""])
 
 
 @app.get("/lab/tests")
-def tests(_=Depends(current_user)):
+def tests(_=Depends(need("laboratory")))
     return read("SELECT id,name,sample_type,price FROM lab_tests WHERE active ORDER BY id")
 
 
@@ -83,7 +83,7 @@ def add_test(t: TestIn, _=Depends(admin_only)):
 
 
 @app.post("/lab/orders")
-def order(b: OrderIn, u=Depends(current_user)):
+def order(b: OrderIn, u=Depends(need("laboratory"))):
     t = write("SELECT id,name,price FROM lab_tests WHERE id=%s AND active", (b.test_id,), fetch=True)
     if not t:
         raise HTTPException(404, "Test not found")
@@ -98,7 +98,7 @@ def order(b: OrderIn, u=Depends(current_user)):
 
 
 @app.get("/lab/orders")
-def orders(u=Depends(current_user)):
+def orders(u=Depends(need("laboratory"))):
     q = ("SELECT id,test_id,test_name,price,patient_id,patient_name,patient_email,ordered_by,status,result_text,"
          "(report_key IS NOT NULL) AS has_report,completed_at,created_at FROM lab_orders ")
     if u["role"] == "admin":
@@ -107,7 +107,7 @@ def orders(u=Depends(current_user)):
 
 
 @app.patch("/lab/orders/{oid}/status")
-def set_status(oid: int, s: StatusIn, u=Depends(current_user)):
+def set_status(oid: int, s: StatusIn, u=Depends(need("laboratory"))):
     o = get_order(oid, u)
     if s.status not in ("sample-collected", "cancelled"):
         raise HTTPException(400, "Status must be sample-collected or cancelled")
@@ -121,7 +121,7 @@ def set_status(oid: int, s: StatusIn, u=Depends(current_user)):
 
 @app.post("/lab/orders/{oid}/result")
 async def add_result(oid: int, result_text: str = Form(...), report: Optional[UploadFile] = File(None),
-                     u=Depends(current_user)):
+                     u=Depends(need("laboratory"))):
     o = get_order(oid, u)
     if o["status"] in ("completed", "cancelled"):
         raise HTTPException(409, f"This order is already {o['status']}")
@@ -141,13 +141,13 @@ async def add_result(oid: int, result_text: str = Form(...), report: Optional[Up
         put_bytes(BUCKET, key, await report.read(), report.content_type or "application/octet-stream")
     o = {**o, "status": "completed", "result_text": text}
     if o.get("patient_email"):
-        notify(o["patient_email"], f"Lab result ready - {o['test_name']} - Ritik HMS", order_text(o, "LAB RESULT READY"),
+        notify(o["patient_email"], f"Lab result ready - {o['test_name']} - Ritik CarePulse", order_text(o, "LAB RESULT READY"),
                attachments=[(f"lab-result-{oid}.txt", order_text(o, "LAB RESULT"))])
     return {"ok": True, "status": "completed"}
 
 
 @app.get("/lab/orders/{oid}/report")
-def report_link(oid: int, u=Depends(current_user)):
+def report_link(oid: int, u=Depends(need("laboratory"))):
     o = get_order(oid, u)
     if not o.get("report_key"):
         raise HTTPException(404, "No report file was uploaded for this order")
