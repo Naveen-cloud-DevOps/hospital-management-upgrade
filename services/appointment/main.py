@@ -54,7 +54,7 @@ def receipt_text(a):
     return "\n".join(["RITIK HMS - PAYMENT RECEIPT", "", f"Booking ID: {a['id']}", f"Patient: {a['patient_name']}",
                       f"Doctor: {a['doctor']} ({a['speciality']})", f"Appointment: {day}, {tm}",
                       f"Amount paid: Rs. {a['fee']}", f"Method: {PAY_METHODS.get(a.get('payment_method'), '-')}",
-                      "Status: Paid", "", "Thank you - Ritik HMS", ""])
+                      "Status: Paid", "", "Thank you - Ritik CarePulse", ""])
 
 
 @app.on_event("startup")
@@ -169,12 +169,12 @@ class Booking(BaseModel):
 
 
 @app.get("/doctors")
-def doctors(_=Depends(current_user)):
+def doctors(_=):
     return read("SELECT id,name,speciality,qualification,fee FROM doctors ORDER BY id")
 
 
 @app.get("/doctors/{did}/slots")
-def slots(did: int, date: Date, _=Depends(current_user)):
+def slots(did: int, date: Date, _=Depends(need("appointments"))):
     taken = {r["appt_time"] for r in write("SELECT appt_time FROM appointments WHERE doctor_id=%s AND appt_date=%s "
                                            "AND status<>'cancelled'", (did, date), fetch=True)}
     now = now_ist()
@@ -183,7 +183,7 @@ def slots(did: int, date: Date, _=Depends(current_user)):
 
 
 @app.post("/appointments")
-def book(b: Booking, u=Depends(current_user), authorization: str = Header("")):
+def book(b: Booking, u=Depends(need("appointments")), authorization: str = Header("")):
     if b.time not in SLOTS:
         raise HTTPException(400, "Choose a valid time slot")
     now = now_ist()
@@ -216,7 +216,7 @@ def book(b: Booking, u=Depends(current_user), authorization: str = Header("")):
 
 
 @app.get("/appointments")
-def my_appointments(u=Depends(current_user)):
+def my_appointments(u=Depends(need("appointments"))):
     q = ("SELECT a.id,a.appt_date,a.appt_time,a.patient_name,a.patient_mobile,a.patient_email,a.alt_email,a.payment_method,a.payment_status,a.reason,a.status,a.booked_by,"
          "a.confirmed_at,a.sms_sent,d.name AS doctor,d.speciality,COALESCE(a.fee,d.fee) AS fee "
          "FROM appointments a JOIN doctors d ON d.id=a.doctor_id ")
@@ -282,7 +282,7 @@ def confirm(aid: int, _=Depends(admin_only)):
 
 
 @app.post("/appointments/{aid}/cancel")
-def cancel(aid: int, u=Depends(current_user)):
+def cancel(aid: int, u=Depends(need("appointments"))):
     a = get_full(aid)
     if u["role"] != "admin" and a["booked_by"] != u["sub"]:
         raise HTTPException(403, "This appointment belongs to another user")
@@ -299,7 +299,7 @@ class PayIn(BaseModel):
 
 
 @app.post("/appointments/{aid}/pay")
-def pay_appointment(aid: int, p: PayIn, u=Depends(current_user)):
+def pay_appointment(aid: int, p: PayIn, u=Depends(need("appointments"))):
     """Pay the consultation fee after booking (for bookings made with 'Pay at hospital')."""
     a = get_full(aid)
     if u["role"] != "admin" and a["booked_by"] != u["sub"]:
@@ -328,6 +328,6 @@ def complete(aid: int, _=Depends(admin_only)):
 
 
 @app.get("/appointments/slots/{did}")
-def booking_slots(did: int, date: Date, u=Depends(current_user)):
+def booking_slots(did: int, date: Date, u=Depends(need("appointments"))):
     """The booking page asks for free times here (/appointments goes to this service); same answer as /doctors/{did}/slots."""
     return slots(did, date, u)
