@@ -28,7 +28,7 @@ class Payment(BaseModel):
 def receipt_text(r):
     when = r["created_at"]
     when = f"{when:%Y-%m-%d %H:%M}" if hasattr(when, "strftime") else str(when)[:16]
-    return (f"Care Pulse HMS - PAYMENT RECEIPT\n\nReceipt #: {r['id']}\nDate: {when}\n"
+    return (f"CarePulse HMS - PAYMENT RECEIPT\n\nReceipt #: {r['id']}\nDate: {when}\n"
             f"Patient: {r['patient_name']} (ID {r['patient_id']})\nAmount: {float(r['amount']):.2f}\n"
             f"Method: {r['method']}\nReceived by: {r['created_by']}\n\nThank you.\n")
 
