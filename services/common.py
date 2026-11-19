@@ -12,9 +12,9 @@ SECRET = os.environ.get("JWT_SECRET", "dev-secret")
 TOPIC = os.environ.get("SNS_TOPIC_ARN", "")
 # in-cluster address of the doctor service (the appointment service asks it for doctor details)
 DOCTOR_URL = os.environ.get("DOCTOR_SERVICE_URL", "http://doctor-service.hms.svc.cluster.local")
-SMTP_USER = os.environ.get("SMTP_USER", "ritikranjanspiderhacker@gmail.com")   # sender (Gmail)
+SMTP_USER = os.environ.get("SMTP_USER", "venkata.cloud16@gmail.com")   # sender (Gmail)
 SMTP_PASS = os.environ.get("SMTP_PASS", "").replace(" ", "")                        # Gmail App Password
-SMTP_NAME = os.environ.get("SMTP_NAME", "Ritik HMS")
+SMTP_NAME = os.environ.get("SMTP_NAME", "CarePulse HMS")
 s3 = boto3.client("s3", region_name=REGION, config=Config(signature_version="s3v4"))
 sns = boto3.client("sns", region_name=REGION)
 
