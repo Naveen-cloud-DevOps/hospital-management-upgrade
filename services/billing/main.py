@@ -58,7 +58,7 @@ def pay(p: Payment, u=Depends(current_user)):
     write("UPDATE payments SET receipt_key=%s WHERE id=%s", (key, row["id"]))
     sent = unique(u["sub"], p.patient_email)          # staff member who took the payment + the patient
     for to in sent:
-        notify(to, f"Payment receipt #{row['id']} - Care Pulse HMS", text)
+        notify(to, f"Payment receipt #{row['id']} - CarePulse HMS", text)
     return {"id": row["id"], "receipt_url": presign(BUCKET, key), "emailed_to": sent,
             "created_at": row["created_at"].isoformat()}
 
