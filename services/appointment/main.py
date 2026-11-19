@@ -51,10 +51,10 @@ def pay_line(a):
 
 def receipt_text(a):
     day, tm = pretty(a["appt_date"], a["appt_time"])
-    return "\n".join(["RITIK HMS - PAYMENT RECEIPT", "", f"Booking ID: {a['id']}", f"Patient: {a['patient_name']}",
+    return "\n".join([" CarePulse HMS - PAYMENT RECEIPT", "", f"Booking ID: {a['id']}", f"Patient: {a['patient_name']}",
                       f"Doctor: {a['doctor']} ({a['speciality']})", f"Appointment: {day}, {tm}",
                       f"Amount paid: Rs. {a['fee']}", f"Method: {PAY_METHODS.get(a.get('payment_method'), '-')}",
-                      "Status: Paid", "", "Thank you - Ritik CarePulse", ""])
+                      "Status: Paid", "", "Thank you -  CarePulse", ""])
 
 
 @app.on_event("startup")
@@ -123,13 +123,13 @@ def pretty(d, tm):
 
 def appt_text(a, title):
     day, tm = pretty(a["appt_date"], a["appt_time"])
-    return "\n".join([f"RITIK HMS - {title}", "",
+    return "\n".join([f"CarePulse HMS - {title}", "",
                       f"Appointment ID: {a['id']}", f"Patient: {a['patient_name']}",
                       f"Doctor: {a['doctor']} ({a['speciality']})", f"Consultation fee: Rs. {a['fee']}",
                       f"Mobile: {a.get('patient_mobile') or '-'}", f"Date: {day}", f"Time: {tm}",
                       f"Status: {a['status']}", f"Payment: {pay_line(a)}", f"Reason: {a.get('reason') or '-'}", "",
                       "Please arrive 10 minutes early." if a["status"] == "booked" else "",
-                      "Thank you for choosing Ritik HMS.", ""])
+                      "Thank you for choosing CarePulse HMS.", ""])
 
 
 def save_record(a):
@@ -209,7 +209,7 @@ def book(b: Booking, u=Depends(need("appointments")), authorization: str = Heade
     a = get_full(row["id"])
     save_record(a)
     files = [(f"receipt-booking-{a['id']}.txt", receipt_text(a))] if pstatus == "Paid" else None   # receipt attached only when paid
-    notify(email, "Booking done from Ritik HMS", appt_text(a, "BOOKING DONE FROM RITIK HMS"), attachments=files)
+    notify(email, "Booking done from CarePusle HMS", appt_text(a, "BOOKING DONE FROM CAREPUSLE HMS"), attachments=files)
     day, tm = pretty(b.date, b.time)
     return {"id": a["id"], "doctor": a["doctor"], "date": day, "time": tm, "status": a["status"],
             "fee": a["fee"], "payment_status": pstatus, "emailed_to": email}
@@ -233,14 +233,14 @@ def refund_amount(a):
 def refund_text(a):
     day, tm = pretty(a["appt_date"], a["appt_time"])
     r = refund_amount(a)
-    return "\n".join(["RITIK HMS - REFUND RECEIPT", "", f"Booking ID: {a['id']}", f"Patient: {a['patient_name']}",
+    return "\n".join(["CAREPULSE HMS - REFUND RECEIPT", "", f"Booking ID: {a['id']}", f"Patient: {a['patient_name']}",
                       f"Doctor: {a['doctor']} ({a['speciality']})", f"Cancelled appointment: {day}, {tm}",
                       f"Amount paid: Rs. {a['fee']}", f"Refund (50%): Rs. {r}",
                       f"Cancellation charge (50%): Rs. {int(a['fee']) - r}",
                       f"Original payment method: {PAY_METHODS.get(a.get('payment_method'), '-')}",
                       "Refund status: Partially refunded (50%)", "",
                       "The refund will be returned to your original payment method.",
-                      "For cash payments, please collect it from the Ritik HMS billing desk.", "", "Ritik HMS", ""])
+                      "For cash payments, please collect it from the CarePulse HMS billing desk.", "", "Ritik HMS", ""])
 
 
 def change_status(a, status, title):
@@ -253,7 +253,7 @@ def change_status(a, status, title):
     save_record(a)
     to = a.get("patient_email") or a["booked_by"]
     if refund:
-        notify(to, f"Appointment cancelled - Refund of Rs. {refund_amount(a)} (50%) - Ritik HMS",
+        notify(to, f"Appointment cancelled - Refund of Rs. {refund_amount(a)} (50%) - CarePulse HMS",
                appt_text(a, title) + "\n" + refund_text(a),
                attachments=[(f"refund-booking-{a['id']}.txt", refund_text(a))])
     else:
@@ -313,7 +313,7 @@ def pay_appointment(aid: int, p: PayIn, u=Depends(need("appointments"))):
     write("UPDATE appointments SET payment_method=%s, payment_status='Paid' WHERE id=%s", (p.method, aid))
     a["payment_method"], a["payment_status"] = p.method, "Paid"
     save_record(a)
-    notify(a.get("patient_email") or a["booked_by"], "Payment received - Ritik HMS",
+    notify(a.get("patient_email") or a["booked_by"], "Payment received - CarePulse HMS",
            appt_text(a, "PAYMENT RECEIVED"), attachments=[(f"receipt-booking-{aid}.txt", receipt_text(a))])
     return {"ok": True, "payment_status": "Paid", "fee": a["fee"]}
 
