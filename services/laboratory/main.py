@@ -60,11 +60,11 @@ def get_order(oid, u):
 
 
 def order_text(o, title):
-    lines = [f"RITIK HMS - {title}", "", f"Lab order ID: {o['id']}", f"Patient: {o['patient_name']}",
+    lines = [f"CarePulse HMS - {title}", "", f"Lab order ID: {o['id']}", f"Patient: {o['patient_name']}",
              f"Test: {o['test_name']}", f"Price: Rs. {float(o['price']):.2f}", f"Status: {o['status']}"]
     if o.get("result_text"):
         lines += ["", "RESULT", o["result_text"]]
-    return "\n".join(lines + ["", "Thank you - Ritik CarePluse", ""])
+    return "\n".join(lines + ["", "Thank you - CarePluse", ""])
 
 
 @app.get("/lab/tests")
@@ -93,7 +93,7 @@ def order(b: OrderIn, u=Depends(need("laboratory"))):
                 (t[0]["id"], t[0]["name"], t[0]["price"], b.patient_id, b.patient_name.strip(), email, u["sub"]), fetch=True)[0]
     o = get_order(row["id"], u)
     if email:
-        notify(email, f"Lab test ordered - {o['test_name']} - Ritik HMS", order_text(o, "LAB TEST ORDERED"))
+        notify(email, f"Lab test ordered - {o['test_name']} - CarePulse HMS", order_text(o, "LAB TEST ORDERED"))
     return {"id": row["id"], "emailed_to": email}
 
 
@@ -141,7 +141,7 @@ async def add_result(oid: int, result_text: str = Form(...), report: Optional[Up
         put_bytes(BUCKET, key, await report.read(), report.content_type or "application/octet-stream")
     o = {**o, "status": "completed", "result_text": text}
     if o.get("patient_email"):
-        notify(o["patient_email"], f"Lab result ready - {o['test_name']} - Ritik CarePulse", order_text(o, "LAB RESULT READY"),
+        notify(o["patient_email"], f"Lab result ready - {o['test_name']} - CarePulse", order_text(o, "LAB RESULT READY"),
                attachments=[(f"lab-result-{oid}.txt", order_text(o, "LAB RESULT"))])
     return {"ok": True, "status": "completed"}
 
