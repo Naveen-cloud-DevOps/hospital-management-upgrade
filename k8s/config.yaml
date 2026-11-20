@@ -1,24 +1,24 @@
-# Replace 789535501101 (and region if changed). Values = terraform outputs.
+# Replace 637423280402 (and region if changed). Values = terraform outputs.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: hms-sa
   namespace: hms
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::789535501101:role/hms-app
+    eks.amazonaws.com/role-arn: arn:aws:iam::637423280402:role/hms-app
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata: {name: hms-config, namespace: hms}
 data:
   AWS_REGION: us-east-1
-  SNS_TOPIC_ARN: arn:aws:sns:us-east-1:789535501101:hms-notifications
-  USER_BUCKET: hms-789535501101-user-data
-  RECEIPT_BUCKET: hms-789535501101-payment-receipts
-  PHOTO_BUCKET: hms-789535501101-patient-photos
-  APPOINTMENT_BUCKET: hms-789535501101-appointments
-  LAB_BUCKET: hms-789535501101-lab-reports
-  PHARMACY_BUCKET: hms-789535501101-pharmacy-bills
+  SNS_TOPIC_ARN: arn:aws:sns:us-east-1:637423280402:hms-notifications
+  USER_BUCKET: hms-637423280402-user-data
+  RECEIPT_BUCKET: hms-637423280402-payment-receipts
+  PHOTO_BUCKET: hms-637423280402-patient-photos
+  APPOINTMENT_BUCKET: hms-637423280402-appointments
+  LAB_BUCKET: hms-637423280402-lab-reports
+  PHARMACY_BUCKET: hms-637423280402-pharmacy-bills
   DOCTOR_SERVICE_URL: http://doctor-service.hms.svc.cluster.local
   SMTP_USER: venkata.cloud16@gmail.com
   SMTP_NAME: CarePulse
