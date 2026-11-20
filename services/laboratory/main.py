@@ -68,7 +68,7 @@ def order_text(o, title):
 
 
 @app.get("/lab/tests")
-def tests(_=Depends(need("laboratory")))
+def tests(_=Depends(need("laboratory"))):
     return read("SELECT id,name,sample_type,price FROM lab_tests WHERE active ORDER BY id")
 
 
