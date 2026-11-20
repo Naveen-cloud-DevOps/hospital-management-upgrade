@@ -43,7 +43,6 @@ module "eks" {
   eks_managed_node_groups = {
     default = {
       instance_types = var.node_instance_types
-      ami_tpe        = var.ami_type
       min_size       = var.node_min_size
       max_size       = var.node_max_size
       desired_size   = var.node_desired_size
@@ -176,7 +175,6 @@ module "app_irsa" {
     main = { provider_arn = module.eks.oidc_provider_arn, namespace_service_accounts = ["${var.k8s_namespace}:${var.k8s_service_account}"] }
   }
 }
-
 
 
 
