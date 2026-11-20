@@ -162,50 +162,27 @@ resource "aws_acm_certificate" "cf" {
 resource "aws_route53_record" "cert_validation" {
   for_each = local.edge_enabled ? {
     for dvo in aws_acm_certificate.cf[0].domain_validation_options :
-    dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-    }
+    dvo.domain_name => dvo
   } : {}
 
   zone_id = data.aws_route53_zone.this[0].zone_id
 
-  name = each.value.name
+  name    = each.value.resource_record_name
+  type    = each.value.resource_record_type
+  records = [each.value.resource_record_value]
 
-  type = each.value.type
-
-  records = [
-    each.value.record
-  ]
-
-  ttl = 60
-
+  ttl             = 60
   allow_overwrite = true
 }
 
-
-# ---------------------------------------------------------------------------
-# ACM Certificate Validation
-# ---------------------------------------------------------------------------
-
 resource "aws_acm_certificate_validation" "cf" {
-  count = local.edge_enabled ? 1 : 0
-
-  provider = aws.use1
-
-  certificate_arn = aws_acm_certificate.cf[0].arn
-
+  count                   = local.edge_enabled ? 1 : 0
+  provider                = aws.use1
+  certificate_arn         = aws_acm_certificate.cf[0].arn
   validation_record_fqdns = [
-    for record in aws_route53_record.cert_validation :
-    record.fqdn
-  ]
-
-  depends_on = [
-    aws_route53_record.cert_validation
+    for r in aws_route53_record.cert_validation : r.fqdn
   ]
 }
-
 
 # ---------------------------------------------------------------------------
 # CloudFront Cache Policy
