@@ -169,7 +169,7 @@ class Booking(BaseModel):
 
 
 @app.get("/doctors")
-def doctors(_=):
+def doctors(_=Depends(need("appointments"))):
     return read("SELECT id,name,speciality,qualification,fee FROM doctors ORDER BY id")
 
 
