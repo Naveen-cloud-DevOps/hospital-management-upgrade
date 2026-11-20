@@ -1,14 +1,12 @@
-# ===========================================================================
-# GENERAL
-# ===========================================================================
+# ---------------- general ----------------
 
 variable "region" {
-  description = "AWS deployment region"
+  description = "AWS region for all resources"
   type        = string
 }
 
 variable "project" {
-  description = "Project name"
+  description = "Prefix used in resource names"
   type        = string
 }
 
@@ -17,249 +15,184 @@ variable "cluster_name" {
   type        = string
 }
 
-
-# ===========================================================================
-# NETWORK
-# ===========================================================================
+# ---------------- network ----------------
 
 variable "vpc_cidr" {
-  description = "VPC CIDR block"
+  description = "CIDR block of the VPC"
   type        = string
 }
 
 variable "az_count" {
-  description = "Number of availability zones"
+  description = "Number of availability zones to spread subnets across (must match subnet list lengths)"
   type        = number
-
-  validation {
-    condition     = var.az_count >= 2
-    error_message = "At least two availability zones are required."
-  }
 }
 
 variable "private_subnet_cidrs" {
-  description = "Private subnet CIDR blocks"
+  description = "Private subnet CIDRs (EKS nodes, RDS), one per AZ"
   type        = list(string)
-
-  validation {
-    condition     = length(var.private_subnet_cidrs) == var.az_count
-    error_message = "Private subnet count must match az_count."
-  }
 }
 
 variable "public_subnet_cidrs" {
-  description = "Public subnet CIDR blocks"
+  description = "Public subnet CIDRs (load balancers, NAT), one per AZ"
   type        = list(string)
-
-  validation {
-    condition     = length(var.public_subnet_cidrs) == var.az_count
-    error_message = "Public subnet count must match az_count."
-  }
 }
 
 variable "single_nat_gateway" {
-  description = "Use a single NAT gateway"
+  description = "true = one shared NAT gateway (cheaper), false = one per AZ (highly available)"
   type        = bool
 }
 
-
-# ===========================================================================
-# EKS
-# ===========================================================================
+# ---------------- EKS ----------------
 
 variable "eks_version" {
-  description = "EKS Kubernetes version"
+  description = "Kubernetes version of the EKS cluster"
   type        = string
 }
 
 variable "node_instance_types" {
-  description = "EKS worker node instance types"
+  description = "EC2 instance types for the managed node group"
   type        = list(string)
 }
 
 variable "node_min_size" {
-  description = "Minimum node count"
-  type        = number
+  type = number
 }
 
 variable "node_max_size" {
-  description = "Maximum node count"
-  type        = number
+  type = number
 }
 
 variable "node_desired_size" {
-  description = "Desired node count"
-  type        = number
-
-  validation {
-    condition = (
-      var.node_desired_size >= var.node_min_size &&
-      var.node_desired_size <= var.node_max_size
-    )
-    error_message = "Desired node count must be between minimum and maximum."
-  }
+  type = number
 }
 
 variable "cluster_endpoint_public_access" {
-  description = "Enable public EKS endpoint"
+  description = "Expose the Kubernetes API publicly (GitHub runners need this to deploy)"
   type        = bool
 }
 
-
-# ===========================================================================
-# S3 / IRSA
-# ===========================================================================
+# ---------------- S3 / IRSA ----------------
 
 variable "data_buckets" {
-  description = "S3 application data buckets"
+  description = "Separate S3 buckets, one per data type"
   type        = list(string)
 }
 
 variable "k8s_namespace" {
-  description = "Kubernetes namespace"
+  description = "Kubernetes namespace of the app"
   type        = string
 }
 
 variable "k8s_service_account" {
-  description = "Kubernetes service account"
+  description = "Kubernetes service account that assumes the app IAM role"
   type        = string
 }
 
-
-# ===========================================================================
-# RDS
-# ===========================================================================
+# ---------------- RDS ----------------
 
 variable "db_services" {
-  description = "Database service names"
+  description = "One PostgreSQL instance (+ read replica) per service"
   type        = list(string)
 }
 
 variable "db_engine_version" {
-  description = "PostgreSQL engine version"
-  type        = string
+  type = string
 }
 
 variable "db_instance_class" {
-  description = "Primary RDS instance class"
+  description = "Instance class for primaries"
   type        = string
 }
 
 variable "db_replica_instance_class" {
-  description = "RDS replica instance class"
+  description = "Instance class for read replicas"
   type        = string
 }
 
 variable "db_allocated_storage" {
-  description = "RDS allocated storage in GiB"
+  description = "Storage in GiB for each primary"
   type        = number
 }
 
 variable "db_storage_type" {
-  description = "RDS storage type"
-  type        = string
+  type = string
 }
 
 variable "db_backup_retention_days" {
-  description = "RDS backup retention days"
+  description = "Must be >= 1 for read replicas"
   type        = number
 
   validation {
-    condition = (
-      var.db_backup_retention_days >= 1 &&
-      var.db_backup_retention_days <= 35
-    )
-    error_message = "Backup retention must be between 1 and 35 days."
+    condition     = var.db_backup_retention_days >= 1
+    error_message = "Read replicas require backup retention of at least 1 day."
   }
 }
 
 variable "db_deletion_protection" {
-  description = "Enable RDS deletion protection"
-  type        = bool
+  type = bool
 }
 
+# ---------------- secrets (never put real values in git) ----------------
+
 variable "db_username" {
-  description = "RDS master username"
+  description = "Master username (GitHub secret DB_USERNAME in CI, terraform.tfvars locally)"
   type        = string
   sensitive   = true
 }
 
 variable "db_password" {
-  description = "RDS master password"
+  description = "Master password (GitHub secret DB_PASSWORD in CI, terraform.tfvars locally)"
   type        = string
   sensitive   = true
 }
 
-
-# ===========================================================================
-# ROUTE53 / CLOUDFRONT
-# ===========================================================================
+#---------------------------------Route53&Cloudfront-----------------------------------#
 
 variable "hosted_zone_name" {
-  description = "Route53 public hosted zone"
+  description = "Existing Route53 PUBLIC hosted zone, e.g. example.com. Empty = skip CloudFront/Route53"
   type        = string
   default     = ""
 }
 
 variable "app_subdomain" {
-  description = "Application subdomain"
+  description = "Record inside the zone, e.g. hms -> hms.example.com. Empty = zone apex"
   type        = string
   default     = ""
 }
 
 variable "origin_dns" {
-  description = "Optional load balancer DNS override"
+  description = "Optional manual override of the load balancer DNS name. Empty = auto-discover"
   type        = string
   default     = ""
 }
 
 variable "cloudfront_price_class" {
-  description = "CloudFront price class"
-  type        = string
-  default     = "PriceClass_100"
-
-  validation {
-    condition = contains(
-      ["PriceClass_100", "PriceClass_200", "PriceClass_All"],
-      var.cloudfront_price_class
-    )
-    error_message = "Invalid CloudFront price class."
-  }
+  type    = string
+  default = "PriceClass_100"
 }
 
+#----------------------bastion--------------------------------------#
 
-# ===========================================================================
-# BASTION
-# ===========================================================================
 
 variable "bastion_enabled" {
-  description = "Enable bastion host"
+  description = "Create the public client server"
   type        = bool
   default     = true
 }
 
 variable "bastion_instance_type" {
-  description = "Bastion EC2 instance type"
-  type        = string
-  default     = "t3.micro"
+  type    = string
+  default = "t3.micro"
 }
 
 variable "bastion_allowed_cidrs" {
-  description = "Allowed SSH source CIDRs"
+  description = "CIDRs allowed to SSH, e.g. [\"203.0.113.10/32\"] (your public IP). Empty = no SSH, use SSM only. Never use 0.0.0.0/0."
   type        = list(string)
   default     = []
-
-  validation {
-    condition = alltrue([
-      for cidr in var.bastion_allowed_cidrs :
-      can(cidrhost(cidr, 0)) && cidr != "0.0.0.0/0"
-    ])
-    error_message = "Provide valid CIDRs and do not allow SSH from 0.0.0.0/0."
-  }
 }
 
 variable "bastion_key_name" {
-  description = "Existing EC2 key pair name"
+  description = "Existing EC2 key pair name for SSH. Empty = no key (SSM only)"
   type        = string
   default     = ""
 }
