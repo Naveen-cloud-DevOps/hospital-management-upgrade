@@ -11,29 +11,6 @@
 # (keep it there permanently, otherwise a later run would remove CloudFront).
 # ---------------------------------------------------------------------------
 
-variable "hosted_zone_name" {
-  description = "Existing Route53 PUBLIC hosted zone, e.g. example.com. Empty = skip CloudFront/Route53"
-  type        = string
-  default     = ""
-}
-
-variable "app_subdomain" {
-  description = "Record inside the zone, e.g. hms -> hms.example.com. Empty = zone apex"
-  type        = string
-  default     = "hms"
-}
-
-variable "origin_dns" {
-  description = "Optional manual override of the load balancer DNS name. Empty = auto-discover"
-  type        = string
-  default     = ""
-}
-
-variable "cloudfront_price_class" {
-  type    = string
-  default = "PriceClass_100"
-}
-
 # CloudFront only accepts ACM certificates from us-east-1
 provider "aws" {
   alias  = "use1"
@@ -187,7 +164,3 @@ resource "aws_route53_record" "app_aaaa" {
     evaluate_target_health = false
   }
 }
-
-output "app_url" { value = local.edge_enabled ? "https://${local.fqdn}" : "" }
-output "cloudfront_domain" { value = local.edge_enabled ? aws_cloudfront_distribution.hms[0].domain_name : "" }
-output "ingress_lb_dns" { value = local.origin }
