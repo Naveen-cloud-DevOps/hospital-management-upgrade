@@ -20,5 +20,5 @@ data:
   LAB_BUCKET: hms-756859458109-lab-reports
   PHARMACY_BUCKET: hms-756859458109-pharmacy-bills
   DOCTOR_SERVICE_URL: http://doctor-service.hms.svc.cluster.local
-  SMTP_USER: ritikranjanspiderhacker@gmail.com
-  SMTP_NAME: Ritik CarePulse
+  SMTP_USER: venkata.cloud16@gmail.com
+  SMTP_NAME: CarePulse
