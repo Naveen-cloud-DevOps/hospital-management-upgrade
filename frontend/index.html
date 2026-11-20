@@ -463,6 +463,16 @@ form:has(select[name=role] option[value=admin]:checked) .svcs{display:none}
 @media(max-width:860px){.dh-in{max-width:none}.dtog{display:none}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.ecg polyline{stroke-dashoffset:0}}
 .rvgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.rvbox{margin-bottom:0}.rvamt{font-size:28px;font-weight:800;letter-spacing:-.03em;color:var(--c,var(--ink))}@media(max-width:760px){.rvgrid{grid-template-columns:1fr}}
+/* ---------- billing: card form + UPI QR ---------- */
+.p-card,.p-upi{margin-top:16px}
+.p-upi{text-align:center}
+.qrbox{background:#fff;padding:12px;border-radius:16px;width:min(250px,100%);margin:0 auto 12px;border:1px solid var(--line);box-shadow:var(--sh-1);color:#000}
+.qrbox svg{display:block;width:100%;height:auto}
+.qrbox .hint{padding:70px 8px;color:#55607a}
+.qrcap{font-weight:600}.qrid{color:var(--muted);margin:2px 0 8px}
+.paydone{display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:16px;border-radius:14px;background:var(--green-l);color:var(--green)}
+.paydone>span{width:34px;height:34px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:800;flex:none}
+.paydone b{display:block;font-size:16px}.paydone small{opacity:.85}
 </style>
 </head>
 <body>
@@ -523,16 +533,16 @@ en:{sec_overview:'Overview',sec_care:'Patient care',sec_services:'Services',sec_
  account:'Account',mail_banner:'Turn on email alerts: AWS sent a confirmation email to {e}. Open it and click "Confirm subscription".',resend_mail:'Resend email',mail_done:"I've confirmed",
  email_details:'Email details',receipt_title:'Payment receipt',print:'Print',download:'Download file',email_again:'Email again',emailed_to:'Emailed to',sent_to:'Sent to {e}',
  no_patient_email:'This patient has no email on file, so the details were sent to you only.',test_mail:'Send test email',mail_h:'Email notifications',
- mail_p:'Emails are sent from venkata.cloud16@gmail.com. No confirmation is needed.',
+ mail_p:'Emails are sent from ritikranjanspiderhacker@gmail.com. No confirmation is needed.',
  mail_login:'A welcome email each time you sign in',mail_receipts:'A receipt whenever you record a payment',mail_appt:'Doctor name, date and time whenever you book an appointment',mail_details:'Patient details when you press Email details',
- email_hint:'Optional. Registration details and receipts are emailed here.',view_receipt:'Receipt',pay_done:'Payment saved',
+ email_hint:'Optional. Registration details and receipts are emailed here.',view_receipt:'Receipt',pay_done:'Payment done',
  mail_resent:'Confirmation email sent to {e}',mail_test_sent:'Test email sent to {e}',
  appointments:'Appointments',book_title:'Book a doctor',book_sub:'Pick a doctor, a date and a time. A confirmation email is sent to you straight away.',
  doctor:'Doctor',pick_doctor:'Choose a doctor',appt_date:'Date',appt_time:'Time slot',pick_time:'Choose a date and a doctor to see free times',no_slots:'No free slots on this date',
  appt_patient:'Patient name',appt_mobile:'Mobile number',appt_alt:'Patient email',fee:'Doctor fee',confirm_yes:'Yes, confirm',confirmed:'Confirmed',sms_ok:'Confirmed. SMS sent to {m}',sms_fail:'Confirmed, but the SMS could not be sent to {m}',bad_mobile:'Enter a valid 10-digit mobile number',reason:'Reason for visit',book_now:'Book appointment',booked_ok:'Booked with {d} on {dt} at {tm}. Confirmation sent to {e}',
  my_appts:'My appointments',all_appts:'All appointments',no_appts:'No appointments yet',no_appts_s:'Book your first doctor appointment above.',
  cancel_appt:'Cancel',complete_appt:'Mark completed',cancelled:'Cancelled',completed:'Completed',booked:'Booked',appt_cancelled:'Appointment cancelled. Email sent.',pick_all:'Choose a doctor, date and time.',
- other:'Other',male:'Male',female:'Female',cash:'Cash',card_m:'Card',upi:'UPI'},
+ other:'Other',male:'Male',female:'Female',cash:'Cash',card_m:'Card',upi:'UPI / QR code'},
 te:{dashboard:'డాష్‌బోర్డ్',patients:'రోగులు',doctors:'వైద్యులు',queue:'క్యూ',payments:'చెల్లింపులు',appointments:'అపాయింట్‌మెంట్లు',laboratory:'ప్రయోగశాల',pharmacy:'ఫార్మసీ',reports:'నివేదికలు',users:'వినియోగదారులు',account:'ఖాతా',logout:'లాగౌట్',sec_overview:'అవలోకనం',sec_care:'రోగి సంరక్షణ',sec_services:'సేవలు',sec_admin:'నిర్వహణ',hero_h:'ప్రతి గుండె చప్పుడుకు సంరక్షణ',hero_p:'రోగులు, అపాయింట్‌మెంట్లు, ప్రయోగశాల, ఫార్మసీ మరియు బిల్లింగ్ — అన్నీ ఒకే చోట.',greet_m:'శుభోదయం',greet_a:'శుభ మధ్యాహ్నం',greet_e:'శుభ సాయంత్రం',total_patients:'మొత్తం రోగులు',total_doctors:'మొత్తం వైద్యులు',todays_appts:'నేటి అపాయింట్‌మెంట్లు',pend_appr:'ఆమోదం కోసం వేచి ఉన్నవి',waiting:'వేచి ఉన్నవారు',rev_total:'మొత్తం ఆదాయం',appt_chart:'అపాయింట్‌మెంట్లు - గత 7 రోజులు',rev_chart:'ఆదాయం - గత 7 రోజులు',upcoming:'రాబోయే అపాయింట్‌మెంట్లు',collected:'వసూలైనది',todays_queue:'నేటి క్యూ',new_patient:'కొత్త రోగి',add_queue:'క్యూలో చేర్చు',doctors_sub:'నిపుణులు మరియు సంప్రదింపు రుసుములు.',d_fee:'రుసుము',no_doctors:'వైద్యులు కనిపించలేదు',no_upcoming:'రాబోయే అపాయింట్‌మెంట్లు లేవు',signin:'సైన్ ఇన్',email:'ఇమెయిల్',password:'పాస్‌వర్డ్',remember:'నన్ను గుర్తుంచుకో',forgot:'పాస్‌వర్డ్ మర్చిపోయారా?',forgot_msg:'పాస్‌వర్డ్ రీసెట్ కోసం మీ అడ్మిన్‌ను అడగండి.',theme:'థీమ్',f1:'రోగి రికార్డులు మరియు చరిత్ర',f2:'రోజువారీ క్యూ మరియు అపాయింట్‌మెంట్లు',f3:'సురక్షితం, పాత్ర ఆధారిత ప్రవేశం',search:'వెతకండి',cancel:'రద్దు',back:'వెనుకకు',save:'సేవ్',name:'పేరు',mobile:'మొబైల్',address:'చిరునామా',city:'నగరం',age:'వయస్సు',gender:'లింగం',amount:'మొత్తం',method:'పద్ధతి',start:'ప్రారంభించు',finish:'ముగించు',done:'పూర్తయింది',in_progress:'కొనసాగుతోంది',save_patient:'రోగిని సేవ్ చేయి',save_payment:'చెల్లింపును సేవ్ చేయి',record_payment:'చెల్లింపు నమోదు',generate_token:'టోకెన్ రూపొందించు',first_name:'మొదటి పేరు',last_name:'ఇంటి పేరు',blood_group:'రక్త వర్గం',role:'పాత్ర',add_user:'వినియోగదారుని చేర్చు'},
 hi:{sec_overview:'अवलोकन',sec_care:'रोगी सेवा',sec_services:'सेवाएँ',sec_admin:'प्रशासन',hero_h:'हर धड़कन की देखभाल',hero_p:'रोगी, अपॉइंटमेंट, प्रयोगशाला, फार्मेसी और बिलिंग — सब एक ही जगह।',doctors:'डॉक्टर',doctors_sub:'विशेषज्ञ और परामर्श शुल्क।',d_fee:'शुल्क',total_doctors:'कुल डॉक्टर',todays_appts:'आज की अपॉइंटमेंट',pend_appr:'अनुमोदन की प्रतीक्षा',rev_total:'कुल आय',appt_chart:'अपॉइंटमेंट - पिछले 7 दिन',rev_chart:'आय - पिछले 7 दिन',upcoming:'आगामी अपॉइंटमेंट',no_doctors:'कोई डॉक्टर नहीं मिला',no_upcoming:'कोई आगामी अपॉइंटमेंट नहीं',remember:'मुझे याद रखें',forgot:'पासवर्ड भूल गए?',forgot_msg:'पासवर्ड रीसेट के लिए अपने एडमिन से कहें।',theme:'लाइट / डार्क मोड',f1:'रोगी रिकॉर्ड और इतिहास',f2:'दैनिक कतार और अपॉइंटमेंट',f3:'सुरक्षित, भूमिका-आधारित पहुँच',tagline:'मरीज़ों का रिकॉर्ड, रोज़ की कतार और भुगतान - एक ही जगह।',signin:'साइन इन',signup:'खाता बनाएँ',signin_t:'वापसी पर स्वागत है',signup_t:'अपना खाता बनाएँ',email:'ईमेल पता',password:'पासवर्ड',confirm:'पासवर्ड दोबारा लिखें',fullname:'पूरा नाम',
  dashboard:'डैशबोर्ड',patients:'मरीज़',queue:'कतार',payments:'भुगतान',reports:'साप्ताहिक रिपोर्ट',users:'उपयोगकर्ता',logout:'लॉग आउट',
@@ -854,7 +864,18 @@ function payForm(pid){
   <label class="fld full"><span>${t('patient')}</span><select name="pid" required><option value="">${t('pick_patient')}</option>${S.pts.map(p=>`<option value="${p.id}" ${String(p.id)===String(pid)?'selected':''}>${esc(pname(p))} (#${p.id})</option>`).join('')}</select></label>
   ${field('amount','number',t('amount')+' (₹)','required min="1" step="0.01" inputmode="decimal"')}
   <label class="fld"><span>${t('method')}</span><select name="method"><option value="cash">${t('cash')}</option><option value="card">${t('card_m')}</option><option value="upi">${t('upi')}</option></select></label>
- </div><p class="ferr" id="ferr" role="alert"></p>
+  </div>
+  <div class="p-card" hidden><div class="fg">
+   <label class="fld full"><span>Name on card</span><input name="cc_name" type="text" autocomplete="off" maxlength="60" placeholder="As printed on the card"></label>
+   <label class="fld full"><span>Card number</span><input name="cc_number" type="text" inputmode="numeric" autocomplete="off" maxlength="23" placeholder="1234 5678 9012 3456"></label>
+   <label class="fld"><span>Expiry (MM/YY)</span><input name="cc_exp" type="text" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="MM/YY"></label>
+   <label class="fld"><span>CVV</span><input name="cc_cvv" type="password" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="•••"></label>
+  </div><p class="hint" style="margin-top:8px">Card details are only checked on this screen. They are not saved or sent to the server.</p></div>
+  <div class="p-upi" hidden><div class="qrbox"></div>
+   <p class="qrcap">Scan with PhonePe, Google Pay, Paytm or any UPI app</p>
+   <p class="qrid">UPI ID: <b>${UPI_ID}</b></p>
+   <p class="hint">Press Pay after the payment shows in your UPI app.</p></div>
+  <p class="ferr" id="ferr" role="alert"></p>
  <div class="drawer-f"><button class="btn" type="submit">${t('save_payment')}</button></div></form>`}
 function payRows(){
  if(!S.pays.length)return `<tr><td colspan="7"><div class="empty"><b>${t('empty_pay')}</b></div></td></tr>`;
@@ -923,7 +944,18 @@ function pAppointments(){
   <label class="fld full"><span>${t('appt_time')}</span><input type="hidden" name="time"><div id="slots" class="slots"><p class="hint">${t('pick_time')}</p></div></label>
   <label class="fld full"><span>Payment</span><select name="payment_method"><option value="later">Pay at hospital (later)</option><option value="cash">Cash - received now</option><option value="upi">UPI - received now</option><option value="card">Card - received now</option></select><small class="hint">If you cancel after paying, only 50% of the fee is refunded.</small></label>
   <label class="fld full"><span>${t('reason')}</span><input name="reason" maxlength="300"></label>
- </div><p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">${t('book_now')}</button></div></form></div>
+ </div>
+ <div class="p-card" hidden><div class="fg">
+  <label class="fld full"><span>Name on card</span><input name="cc_name" type="text" autocomplete="off" maxlength="60" placeholder="As printed on the card"></label>
+  <label class="fld full"><span>Card number</span><input name="cc_number" type="text" inputmode="numeric" autocomplete="off" maxlength="23" placeholder="1234 5678 9012 3456"></label>
+  <label class="fld"><span>Expiry (MM/YY)</span><input name="cc_exp" type="text" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="MM/YY"></label>
+  <label class="fld"><span>CVV</span><input name="cc_cvv" type="password" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="•••"></label>
+ </div><p class="hint" style="margin-top:8px">Card details are only checked on this screen. They are not saved or sent to the server.</p></div>
+ <div class="p-upi" hidden><div class="qrbox"></div>
+  <p class="qrcap">Scan with PhonePe, Google Pay, Paytm or any UPI app</p>
+  <p class="qrid">UPI ID: <b>${UPI_ID}</b></p>
+  <p class="hint">Press Pay &amp; book after the payment shows in your UPI app.</p></div>
+ <p class="ferr" id="ferr" role="alert"></p><div style="margin-top:12px"><button class="btn" type="submit">${t('book_now')}</button></div></form></div>
  <div class="page-h" style="margin-top:22px"><div><h1 style="font-size:18px">${t(S.role==='admin'?'all_appts':'my_appts')}</h1></div></div>
  <div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>${t('doctor')}</th><th>${t('appt_date')}</th><th>${t('appt_time')}</th><th>${t('patient')}</th><th>${t('fee')}</th><th>${t('appt_mobile')}</th><th></th><th></th></tr></thead><tbody id="abody">${apptRows()}</tbody></table></div></div>`}
 async function loadSlots(){
@@ -1121,6 +1153,144 @@ document.addEventListener('input',e=>{
  const f=e.target.closest('form');
  if(f&&f.dataset.form==='signup'&&e.target.name==='password'){const m=$('#meter');if(m)m.className='meter s'+strength(e.target.value)}});
 
+/* ---------- QR code generator (byte mode, error correction level M, versions 1-10) ---------- */
+const QR=(()=>{
+ const EXP=new Array(512),LOG=new Array(256);
+ for(let i=0,x=1;i<255;i++){EXP[i]=x;LOG[x]=i;x<<=1;if(x&256)x^=0x11d}
+ for(let i=255;i<512;i++)EXP[i]=EXP[i-255];
+ const mul=(a,b)=>a&&b?EXP[LOG[a]+LOG[b]]:0;
+ const rs=(data,n)=>{
+  let g=[1];
+  for(let i=0;i<n;i++){const h=new Array(g.length+1).fill(0);g.forEach((c,j)=>{h[j]^=c;h[j+1]^=mul(c,EXP[i])});g=h}
+  const r=new Array(n).fill(0);
+  for(const d of data){const f=d^r.shift();r.push(0);if(f)for(let i=0;i<n;i++)r[i]^=mul(g[i+1],f)}
+  return r};
+ /* per version: [error-correction codewords per block, [blocks, data codewords per block], ...] */
+ const V=[null,[10,[1,16]],[16,[1,28]],[26,[1,44]],[18,[2,32]],[24,[2,43]],[16,[4,27]],[18,[4,31]],[22,[2,38],[2,39]],[22,[3,36],[2,37]],[26,[4,43],[1,44]]];
+ const AP=[null,[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50]];
+ const MASK=[(r,c)=>(r+c)%2===0,r=>r%2===0,(r,c)=>c%3===0,(r,c)=>(r+c)%3===0,(r,c)=>(Math.floor(r/2)+Math.floor(c/3))%2===0,(r,c)=>(r*c)%2+(r*c)%3===0,(r,c)=>((r*c)%2+(r*c)%3)%2===0,(r,c)=>((r+c)%2+(r*c)%3)%2===0];
+ const P1=[1,0,1,1,1,0,1,0,0,0,0],P2=[0,0,0,0,1,0,1,1,1,0,1];
+ const penalty=g=>{
+  const n=g.length;let p=0;
+  for(let a=0;a<2;a++)for(let i=0;i<n;i++){
+   let run=1;
+   for(let j=1;j<n;j++){
+    const cur=a?g[j][i]:g[i][j],prev=a?g[j-1][i]:g[i][j-1];
+    if(cur===prev){run++;if(run===5)p+=3;else if(run>5)p++}else run=1}
+   for(let j=0;j+10<n;j++){
+    let A=true,B=true;
+    for(let k=0;k<11;k++){const x=a?g[j+k][i]:g[i][j+k];if(x!==P1[k])A=false;if(x!==P2[k])B=false}
+    if(A||B)p+=40}}
+  for(let r=0;r<n-1;r++)for(let c=0;c<n-1;c++){const x=g[r][c];if(x===g[r][c+1]&&x===g[r+1][c]&&x===g[r+1][c+1])p+=3}
+  let dark=0;g.forEach(row=>row.forEach(x=>dark+=x));
+  const prev5=Math.floor(dark*100/(n*n)/5)*5;
+  return p+Math.min(Math.abs(prev5-50),Math.abs(prev5+5-50))/5*10};
+ function make(text){
+  const bytes=Array.from(new TextEncoder().encode(String(text)));
+  const dc=v=>V[v].slice(1).reduce((a,[n,k])=>a+n*k,0),cc=v=>v<10?8:16;
+  let v=1;while(v<=10&&bytes.length>Math.floor((dc(v)*8-4-cc(v))/8))v++;
+  if(v>10)throw new Error('QR text too long');
+  const bits=[],put=(val,len)=>{for(let i=len-1;i>=0;i--)bits.push((val>>>i)&1)};
+  put(4,4);put(bytes.length,cc(v));bytes.forEach(b=>put(b,8));
+  const total=dc(v)*8;put(0,Math.min(4,total-bits.length));
+  while(bits.length%8)bits.push(0);
+  for(let p=0xEC;bits.length<total;p^=0xEC^0x11)put(p,8);
+  const cw=[];for(let i=0;i<bits.length;i+=8)cw.push(parseInt(bits.slice(i,i+8).join(''),2));
+  const ecn=V[v][0],blocks=[];let pos=0;
+  V[v].slice(1).forEach(([n,k])=>{for(let i=0;i<n;i++){blocks.push(cw.slice(pos,pos+k));pos+=k}});
+  const ecs=blocks.map(b=>rs(b,ecn)),out=[];
+  for(let i=0;i<Math.max(...blocks.map(b=>b.length));i++)blocks.forEach(b=>{if(i<b.length)out.push(b[i])});
+  for(let i=0;i<ecn;i++)ecs.forEach(e=>out.push(e[i]));
+  const all=[];out.forEach(c=>{for(let i=7;i>=0;i--)all.push((c>>i)&1)});
+  const n=17+4*v,m=Array.from({length:n},()=>new Array(n).fill(0)),fn=Array.from({length:n},()=>new Array(n).fill(false));
+  const set=(x,y,val)=>{m[y][x]=val?1:0;fn[y][x]=true},bit=(x,i)=>((x>>>i)&1)!==0;
+  for(let i=0;i<n;i++){set(6,i,i%2===0);set(i,6,i%2===0)}
+  const finder=(cx,cy)=>{for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const x=cx+dx,y=cy+dy;if(x>=0&&x<n&&y>=0&&y<n){const d=Math.max(Math.abs(dx),Math.abs(dy));set(x,y,d!==2&&d!==4)}}};
+  finder(3,3);finder(n-4,3);finder(3,n-4);
+  const ap=AP[v];
+  ap.forEach((cy,i)=>ap.forEach((cx,j)=>{
+   if((i===0&&j===0)||(i===0&&j===ap.length-1)||(i===ap.length-1&&j===0))return;
+   for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)set(cx+dx,cy+dy,Math.max(Math.abs(dx),Math.abs(dy))!==1)}));
+  const format=mask=>{
+   let rem=mask;for(let i=0;i<10;i++)rem=(rem<<1)^((rem>>>9)*0x537);
+   const b=((mask<<10)|rem)^0x5412;          /* level M = 00, then the 3 mask bits */
+   for(let i=0;i<=5;i++)set(8,i,bit(b,i));
+   set(8,7,bit(b,6));set(8,8,bit(b,7));set(7,8,bit(b,8));
+   for(let i=9;i<15;i++)set(14-i,8,bit(b,i));
+   for(let i=0;i<8;i++)set(n-1-i,8,bit(b,i));
+   for(let i=8;i<15;i++)set(8,n-15+i,bit(b,i));
+   set(8,n-8,true)};
+  format(0);
+  if(v>=7){let rem=v;for(let i=0;i<12;i++)rem=(rem<<1)^((rem>>>11)*0x1F25);const b=(v<<12)|rem;
+   for(let i=0;i<18;i++){const a=n-11+i%3,c=Math.floor(i/3);set(a,c,bit(b,i));set(c,a,bit(b,i))}}
+  let k=0;
+  for(let right=n-1,up=true;right>=1;right-=2,up=!up){
+   if(right===6)right=5;
+   for(let vert=0;vert<n;vert++)for(let j=0;j<2;j++){
+    const x=right-j,y=up?n-1-vert:vert;
+    if(!fn[y][x]){m[y][x]=k<all.length?all[k]:0;k++}}}
+  let best=null,bestP=Infinity,bestM=0;
+  for(let mk=0;mk<8;mk++){
+   const g=m.map((row,r)=>row.map((x,c)=>fn[r][c]?x:x^(MASK[mk](r,c)?1:0)));
+   const p=penalty(g);if(p<bestP){bestP=p;best=g;bestM=mk}}
+  best.forEach((row,r)=>row.forEach((x,c)=>{m[r][c]=x}));
+  format(bestM);
+  return m}
+ const svg=text=>{
+  const g=make(text),n=g.length,q=4,d=[];
+  for(let r=0;r<n;r++){let c=0;while(c<n){if(g[r][c]){const s=c;while(c<n&&g[r][c])c++;d.push('M'+(s+q)+' '+(r+q)+'h'+(c-s)+'v1h-'+(c-s)+'z')}else c++}}
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(n+2*q)+' '+(n+2*q)+'" shape-rendering="crispEdges" role="img" aria-label="UPI payment QR code"><rect width="100%" height="100%" fill="#fff"/><path d="'+d.join('')+'" fill="#000"/></svg>'};
+ return {svg,make}})();
+
+/* ---------- billing: card details and UPI QR ---------- */
+const UPI_ID='9348520919@axl',UPI_NAME='CarePulse';       /* the QR code is made from this UPI ID */
+const upiLink=(amt,who)=>'upi://pay?pa='+UPI_ID+'&pn='+encodeURIComponent(UPI_NAME)+'&am='+Number(amt).toFixed(2)+'&cu=INR&tn='+encodeURIComponent(('Payment '+(who||'')).trim().slice(0,40));
+const luhn=n=>{let sum=0,alt=false;for(let i=n.length-1;i>=0;i--){let x=+n[i];if(alt){x*=2;if(x>9)x-=9}sum+=x;alt=!alt}return sum%10===0};
+function cardError(d){
+ const num=(d.cc_number||'').replace(/\D/g,'');
+ if(!(d.cc_name||'').trim())return 'Enter the name on the card.';
+ if(num.length<13||num.length>19||!luhn(num))return 'Enter a valid card number.';
+ const m=/^(\d{2})\/(\d{2})$/.exec((d.cc_exp||'').trim());
+ if(!m||+m[1]<1||+m[1]>12)return 'Enter the expiry date as MM/YY.';
+ if(new Date(2000+ +m[2],+m[1],1)<=new Date())return 'This card has expired.';
+ const need=/^3[47]/.test(num)?4:3;
+ if(!new RegExp('^\\d{'+need+'}$').test((d.cc_cvv||'').trim()))return 'Enter the '+need+'-digit security code (CVV).';
+ return ''}
+/* show the card fields or the QR code for the chosen method, keep the button label and QR in step with the amount */
+function payUI(f){
+ if(!f||!f.elements||!f.elements.method)return;
+ const E=f.elements,m=E.method.value,amt=+E.amount.value,ok=amt>0;
+ const card=f.querySelector('.p-card'),upi=f.querySelector('.p-upi'),btn=f.querySelector('button[type=submit]'),q=f.querySelector('.qrbox');
+ if(card)card.hidden=m!=='card';
+ if(upi)upi.hidden=m!=='upi';
+ if(btn)btn.textContent=m==='cash'?t('save_payment'):(ok?'Pay '+money(amt):'Pay');
+ if(q&&m==='upi'){
+  if(!ok)q.innerHTML='<p class="hint">Enter the amount to see the QR code.</p>';
+  else{const p=S.pts.find(x=>String(x.id)===E.pid.value);q.innerHTML=QR.svg(upiLink(amt,p?pname(p):''))}}}
+document.addEventListener('input',e=>{
+ const f=e.target.closest('form[data-form="pay"],form[data-form="book"]');if(!f)return;
+ const n=e.target.name;
+ if(n==='cc_number')e.target.value=e.target.value.replace(/\D/g,'').slice(0,19).replace(/(\d{4})(?=\d)/g,'$1 ');
+ else if(n==='cc_exp'){let v=e.target.value.replace(/\D/g,'').slice(0,4);if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);e.target.value=v}
+ else if(n==='cc_cvv')e.target.value=e.target.value.replace(/\D/g,'').slice(0,4);
+ else if(n==='amount')payUI(f)});
+document.addEventListener('change',e=>{
+ const f=e.target.closest('form[data-form="pay"]');
+ if(f&&(e.target.name==='method'||e.target.name==='pid'))payUI(f)});
+
+/* booking form: show card fields or QR (amount = the chosen doctor's fee) */
+function bookPayUI(f){
+ if(!f||!f.elements||!f.elements.payment_method)return;
+ const m=f.elements.payment_method.value,o=f.elements.doctor_id.selectedOptions[0],fee=+((o&&o.dataset.fee)||0),ok=fee>0;
+ const card=f.querySelector('.p-card'),upi=f.querySelector('.p-upi'),btn=f.querySelector('button[type=submit]'),q=f.querySelector('.qrbox');
+ if(card)card.hidden=m!=='card';
+ if(upi)upi.hidden=m!=='upi';
+ if(btn)btn.textContent=(m==='upi'||m==='card')&&ok?'Pay '+money(fee)+' & book':t('book_now');
+ if(q&&m==='upi')q.innerHTML=ok?QR.svg(upiLink(fee,f.elements.patient_name.value)):'<p class="hint">Choose a doctor to see the QR code.</p>'}
+document.addEventListener('change',e=>{
+ const f=e.target.closest('form[data-form="book"]');
+ if(f&&['payment_method','doctor_id','existing_pid','patient_kind','patient_name'].includes(e.target.name))bookPayUI(f)});
+
 const FORMS={
  async doctor(f,btn){
   const d=Object.fromEntries(new FormData(f));
@@ -1191,15 +1361,19 @@ const FORMS={
  async pay(f,btn){
   const d=Object.fromEntries(new FormData(f)),p=S.pts.find(x=>String(x.id)===d.pid);
   if(!p)return ferr(t('pick_patient'));
-  const r=await busy(btn,'…',()=>api('/payments',{json:{patient_id:p.id,patient_name:pname(p),patient_email:p.email||null,amount:+d.amount,method:d.method}}));
+  if(!(+d.amount>0))return ferr('Enter the amount.');
+  if(d.method==='card'){const ce=cardError(d);if(ce)return ferr(ce)}      /* card number, expiry and CVV stay in this browser */
+  const r=await busy(btn,d.method==='cash'?'…':'Processing…',()=>api('/payments',{json:{patient_id:p.id,patient_name:pname(p),patient_email:p.email||null,amount:+d.amount,method:d.method}}));
   const row={id:r.id,patient_name:pname(p),amount:+d.amount,method:d.method,created_at:r.created_at,created_by:me(),receipt_url:r.receipt_url};
-  openDrawer(t('pay_done'),receiptHTML(row,r.emailed_to));
+  f.reset();payUI(f);
+  openDrawer(t('pay_done'),`<div class="paydone"><span>✓</span><div><b>Payment done</b><small>${esc(money(row.amount))} received by ${esc(({cash:'cash',card:'card',upi:'UPI'})[row.method]||row.method)}</small></div></div>`+receiptHTML(row,r.emailed_to));
   if(route().page==='payments')refreshPays()},
  async book(f,btn){
   const d=Object.fromEntries(new FormData(f));
   if(!d.doctor_id||!d.date||!d.time)return ferr(t('pick_all'));
   if(d.patient_kind==='existing'&&!d.existing_pid)return ferr(t('pick_patient')+' (or change Patient type to New patient)');
   if(!/^(\+?91|0)?[6-9]\d{9}$/.test(d.patient_mobile.replace(/[\s-]/g,'')))return ferr(t('bad_mobile'));
+  if(d.payment_method==='card'){const ce=cardError(d);if(ce)return ferr(ce)}      /* card number, expiry and CVV stay in this browser */
   const r=await busy(btn,'…',()=>api('/appointments',{json:{doctor_id:+d.doctor_id,date:d.date,time:d.time,patient_name:d.patient_name.trim(),patient_mobile:d.patient_mobile.trim(),patient_email:d.patient_email.trim(),payment_method:d.payment_method,reason:d.reason.trim()}}));
   let extra='';
   if(d.patient_kind!=='existing'){
@@ -1207,7 +1381,7 @@ const FORMS={
     extra=q.created?' · New patient #'+q.id+' added to the patient list':' · Same name and mobile already in the patient list as #'+q.id;
     S.pts=await api('/patients')}catch(e){extra=' · (Booked, but the patient could not be added to the patient list: '+e.message+')'}}
   toast(t('booked_ok',{d:r.doctor,dt:r.date,tm:r.time,e:r.emailed_to})+extra);
-  f.reason.value='';if(d.patient_kind!=='existing'){f.patient_name.value=f.patient_mobile.value=f.patient_email.value=''}
+  f.reason.value='';f.querySelectorAll('[name^="cc_"]').forEach(i=>{i.value=''});if(d.patient_kind!=='existing'){f.patient_name.value=f.patient_mobile.value=f.patient_email.value=''}
   await loadSlots();await refreshAppts()},
  async user(f,btn){
   const d=Object.fromEntries(new FormData(f));d.email=d.email.trim().toLowerCase();d.name=d.name.trim();
