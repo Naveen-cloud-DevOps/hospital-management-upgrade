@@ -1,14 +1,16 @@
+
 # ---------------------------------------------------------------------------
-# dns.tf  -  ingress-nginx load balancer  ->  CloudFront  ->  Route53
+# dns.tf - ingress-nginx load balancer -> CloudFront -> Route53
 #
-# Lives in the same Terraform folder/state as main.tf (no existing file is edited).
-# The load balancer is created later by ArgoCD (ingress-nginx), so it is discovered
-# automatically by its Kubernetes tag. Until it exists (first terraform-infra run) and
-# until hosted_zone_name is set, every resource below is skipped (count = 0).
-# The "edge-cloudfront" workflow re-applies this folder after "cicd" finishes.
+# Lives in the same Terraform folder/state as main.tf.
+# The load balancer is created later by ArgoCD (ingress-nginx), so it is
+# discovered automatically by its Kubernetes tag.
 #
-# Required: put   hosted_zone_name = "yourdomain.com"   in the TFVARS secret / terraform.tfvars
-# (keep it there permanently, otherwise a later run would remove CloudFront).
+# Until the load balancer exists and hosted_zone_name is set,
+# edge resources are skipped (count = 0).
+#
+# Required:
+# hosted_zone_name = "yourdomain.com"
 # ---------------------------------------------------------------------------
 
 # CloudFront only accepts ACM certificates from us-east-1
@@ -17,9 +19,11 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# ---------------- find the ingress-nginx load balancer ----------------
+# ---------------- Find ingress-nginx load balancer ----------------
+
 data "aws_resourcegroupstaggingapi_resources" "ingress_lb" {
   resource_type_filters = ["elasticloadbalancing:loadbalancer"]
+
   tag_filter {
     key    = "kubernetes.io/service-name"
     values = ["ingress-nginx/ingress-nginx-controller"]
@@ -27,11 +31,11 @@ data "aws_resourcegroupstaggingapi_resources" "ingress_lb" {
 }
 
 locals {
-  lb_arn        = try(data.aws_resourcegroupstaggingapi_resources.ingress_lb.resource_tag_mapping_list[0].resource_arn, "")
-  lb_is_v2      = can(regex("loadbalancer/(net|app)/", local.lb_arn))
-  lb_name       = local.lb_arn == "" ? "" : element(split("/", local.lb_arn), length(split("/", local.lb_arn)) - 1)
-  use_classic   = local.lb_arn != "" && !local.lb_is_v2
-  use_v2        = local.lb_arn != "" && local.lb_is_v2
+  lb_arn      = try(data.aws_resourcegroupstaggingapi_resources.ingress_lb.resource_tag_mapping_list[0].resource_arn, "")
+  lb_is_v2    = can(regex("loadbalancer/(net|app)/", local.lb_arn))
+  lb_name     = local.lb_arn == "" ? "" : element(split("/", local.lb_arn), length(split("/", local.lb_arn)) - 1)
+  use_classic = local.lb_arn != "" && !local.lb_is_v2
+  use_v2      = local.lb_arn != "" && local.lb_is_v2
 }
 
 data "aws_elb" "ingress" {
@@ -45,11 +49,17 @@ data "aws_lb" "ingress" {
 }
 
 locals {
-  discovered_origin = local.use_classic ? data.aws_elb.ingress[0].dns_name : (local.use_v2 ? data.aws_lb.ingress[0].dns_name : "")
-  origin            = var.origin_dns != "" ? var.origin_dns : local.discovered_origin
-  edge_enabled      = var.hosted_zone_name != "" && local.origin != ""
-  fqdn              = var.app_subdomain == "" ? var.hosted_zone_name : "${var.app_subdomain}.${var.hosted_zone_name}"
+  discovered_origin = local.use_classic ? data.aws_elb.ingress[0].dns_name : (
+    local.use_v2 ? data.aws_lb.ingress[0].dns_name : ""
+  )
+
+  origin       = var.origin_dns != "" ? var.origin_dns : local.discovered_origin
+  edge_enabled = var.hosted_zone_name != "" && local.origin != ""
+
+  fqdn = var.app_subdomain == "" ? var.hosted_zone_name : "${var.app_subdomain}.${var.hosted_zone_name}"
 }
+
+# ---------------- Route53 Hosted Zone ----------------
 
 data "aws_route53_zone" "this" {
   count        = var.hosted_zone_name != "" ? 1 : 0
@@ -57,39 +67,63 @@ data "aws_route53_zone" "this" {
   private_zone = false
 }
 
-# ---------------- ACM certificate (DNS validated in Route53) ----------------
+# ---------------- ACM Certificate ----------------
+
 resource "aws_acm_certificate" "cf" {
   count             = local.edge_enabled ? 1 : 0
   provider          = aws.use1
   domain_name       = local.fqdn
   validation_method = "DNS"
-  lifecycle { create_before_destroy = true }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
+# ---------------- ACM DNS Validation Records ----------------
+# FIX: Use a plan-time-known for_each key.
+# ACM record values are resolved during Terraform apply.
+
 resource "aws_route53_record" "cert_validation" {
-  for_each = local.edge_enabled ? {
-    for o in aws_acm_certificate.cf[0].domain_validation_options : o.domain_name => {
-      name   = o.resource_record_name
-      type   = o.resource_record_type
-      record = o.resource_record_value
-    }
-  } : {}
-  zone_id         = data.aws_route53_zone.this[0].zone_id
-  name            = each.value.name
-  type            = each.value.type
-  records         = [each.value.record]
+  for_each = local.edge_enabled ? toset([local.fqdn]) : toset([])
+
+  zone_id = data.aws_route53_zone.this[0].zone_id
+
+  name = one([
+    for o in aws_acm_certificate.cf[0].domain_validation_options :
+    o.resource_record_name if o.domain_name == each.value
+  ])
+
+  type = one([
+    for o in aws_acm_certificate.cf[0].domain_validation_options :
+    o.resource_record_type if o.domain_name == each.value
+  ])
+
+  records = [
+    one([
+      for o in aws_acm_certificate.cf[0].domain_validation_options :
+      o.resource_record_value if o.domain_name == each.value
+    ])
+  ]
+
   ttl             = 60
   allow_overwrite = true
 }
 
+# ---------------- ACM Certificate Validation ----------------
+
 resource "aws_acm_certificate_validation" "cf" {
-  count                   = local.edge_enabled ? 1 : 0
-  provider                = aws.use1
-  certificate_arn         = aws_acm_certificate.cf[0].arn
-  validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
+  count           = local.edge_enabled ? 1 : 0
+  provider        = aws.use1
+  certificate_arn = aws_acm_certificate.cf[0].arn
+
+  validation_record_fqdns = [
+    for r in aws_route53_record.cert_validation : r.fqdn
+  ]
 }
 
-# ---------------- CloudFront ----------------
+# ---------------- CloudFront Policies ----------------
+
 data "aws_cloudfront_cache_policy" "no_cache" {
   name = "Managed-CachingDisabled"
 }
@@ -97,6 +131,8 @@ data "aws_cloudfront_cache_policy" "no_cache" {
 data "aws_cloudfront_origin_request_policy" "all_viewer" {
   name = "Managed-AllViewer"
 }
+
+# ---------------- CloudFront Distribution ----------------
 
 resource "aws_cloudfront_distribution" "hms" {
   count           = local.edge_enabled ? 1 : 0
@@ -113,7 +149,7 @@ resource "aws_cloudfront_distribution" "hms" {
     custom_origin_config {
       http_port              = 80
       https_port             = 443
-      origin_protocol_policy = "http-only" # CloudFront -> load balancer on port 80
+      origin_protocol_policy = "http-only"
       origin_ssl_protocols   = ["TLSv1.2"]
       origin_read_timeout    = 60
     }
@@ -130,7 +166,9 @@ resource "aws_cloudfront_distribution" "hms" {
   }
 
   restrictions {
-    geo_restriction { restriction_type = "none" }
+    geo_restriction {
+      restriction_type = "none"
+    }
   }
 
   viewer_certificate {
@@ -140,12 +178,14 @@ resource "aws_cloudfront_distribution" "hms" {
   }
 }
 
-# ---------------- Route53 -> CloudFront ----------------
+# ---------------- Route53 -> CloudFront (A Record) ----------------
+
 resource "aws_route53_record" "app_a" {
   count   = local.edge_enabled ? 1 : 0
   zone_id = data.aws_route53_zone.this[0].zone_id
   name    = local.fqdn
   type    = "A"
+
   alias {
     name                   = aws_cloudfront_distribution.hms[0].domain_name
     zone_id                = aws_cloudfront_distribution.hms[0].hosted_zone_id
@@ -153,11 +193,14 @@ resource "aws_route53_record" "app_a" {
   }
 }
 
+# ---------------- Route53 -> CloudFront (AAAA Record) ----------------
+
 resource "aws_route53_record" "app_aaaa" {
   count   = local.edge_enabled ? 1 : 0
   zone_id = data.aws_route53_zone.this[0].zone_id
   name    = local.fqdn
   type    = "AAAA"
+
   alias {
     name                   = aws_cloudfront_distribution.hms[0].domain_name
     zone_id                = aws_cloudfront_distribution.hms[0].hosted_zone_id
