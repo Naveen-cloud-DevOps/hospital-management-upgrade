@@ -5,30 +5,6 @@
 # Access:  AWS Systems Manager Session Manager (no inbound port needed)
 #          + optional SSH, only from the CIDRs you list in bastion_allowed_cidrs.
 # ---------------------------------------------------------------------------
-
-variable "bastion_enabled" {
-  description = "Create the public client server"
-  type        = bool
-  default     = true
-}
-
-variable "bastion_instance_type" {
-  type    = string
-  default = "t3.micro"
-}
-
-variable "bastion_allowed_cidrs" {
-  description = "CIDRs allowed to SSH, e.g. [\"203.0.113.10/32\"] (your public IP). Empty = no SSH, use SSM only. Never use 0.0.0.0/0."
-  type        = list(string)
-  default     = []
-}
-
-variable "bastion_key_name" {
-  description = "Existing EC2 key pair name for SSH. Empty = no key (SSM only)"
-  type        = string
-  default     = ""
-}
-
 # ---------------- AMI (Amazon Linux 2023, latest) ----------------
 data "aws_ssm_parameter" "al2023" {
   count = var.bastion_enabled ? 1 : 0
@@ -147,7 +123,7 @@ resource "aws_instance" "bastion" {
   subnet_id                   = module.vpc.public_subnets[0]
   vpc_security_group_ids      = [aws_security_group.bastion[0].id]
   iam_instance_profile        = aws_iam_instance_profile.bastion[0].name
-  key_name                    = var.bastion_key_name != "" ? var.bastion_key_name : null
+  #key_name                    = var.bastion_key_name != "" ? var.bastion_key_name : null
   associate_public_ip_address = true
 
   metadata_options {
@@ -189,8 +165,3 @@ resource "aws_eip" "bastion" {
   tags     = { Name = "${var.project}-bastion" }
 }
 
-output "bastion_public_ip" { value = var.bastion_enabled ? aws_eip.bastion[0].public_ip : "" }
-output "bastion_instance_id" { value = var.bastion_enabled ? aws_instance.bastion[0].id : "" }
-output "bastion_ssm_command" {
-  value = var.bastion_enabled ? "aws ssm start-session --target ${aws_instance.bastion[0].id} --region ${var.region}" : ""
-}
